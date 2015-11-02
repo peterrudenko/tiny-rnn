@@ -1,0 +1,50 @@
+# sudo: false instructs travis to build our project in a docker VM (faster)
+# Can not yet install fglrx packages with 'false'
+sudo: required # false
+
+language: cpp
+
+compiler:
+  - gcc
+  - clang
+
+os:
+  - linux
+
+env:
+  - BUILD_TYPE=Debug
+  - BUILD_TYPE=Release
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-4.8
+    - g++-4.8
+    - clang
+
+before_install:
+  - sudo apt-get update -qq -y;
+  - sudo apt-get install -qq opencl-headers fglrx=2:13.350.1-0ubuntu0.0.1;
+  - export OPENCL_ROOT="${TRAVIS_BUILD_DIR}/Source/OpenCL";
+  - pip install --user cpp-coveralls
+
+install:
+  - mkdir -p ${OPENCL_ROOT};
+  - pushd ${OPENCL_ROOT};
+  - wget -w 1 -r -np -nd -nv -A h,hpp https://www.khronos.org/registry/cl/api/1.2/cl.hpp;
+  - popd;
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+  - cmake -HProjects/CMake -BBuild -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+  - cd Build
+  - make
+  - cd ..
+
+script:
+  - cd Build
+  - ctest -V
+  - cd ..
+
+after_success:
+  - coveralls --exclude 'Tests' --exclude ${OPENCL_ROOT} --exclude-pattern '.*CompilerId.*' --gcov-options '\-lp'
