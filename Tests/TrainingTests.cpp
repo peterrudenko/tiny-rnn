@@ -39,23 +39,25 @@ SCENARIO("A perceptron can be trained to model a xor function", "[training]")
         const auto contextName = Uuid::generate();
         const auto networkName = Uuid::generate();
         
-        TrainingContext::Ptr context(new TrainingContext(contextName));
-        REQUIRE(context->getName() == contextName);
+//        TrainingContext::Ptr context(new TrainingContext(contextName));
+//        REQUIRE(context->getName() == contextName);
+//        
+//        Layer::Ptr inputLayer(new Layer(context, 2));
+//        Layer::Ptr hiddenLayer(new Layer(context, 10));
+//        Layer::Ptr outputLayer(new Layer(context, 1));
+//        
+//        REQUIRE(inputLayer->getUuid() != hiddenLayer->getUuid());
+//        REQUIRE(hiddenLayer->getUuid() != outputLayer->getUuid());
+//        REQUIRE(outputLayer->getUuid() != inputLayer->getUuid());
+//        
+//        inputLayer->connectAllToAll(hiddenLayer);
+//        hiddenLayer->connectAllToAll(outputLayer);
+//        
+//        Network::Ptr network(new Network(networkName, context, inputLayer, {hiddenLayer}, outputLayer));
+//        REQUIRE(network->getName() == networkName);
+//        REQUIRE(network->getContext() == context);
         
-        Layer::Ptr inputLayer(new Layer(context, 2));
-        Layer::Ptr hiddenLayer(new Layer(context, 10));
-        Layer::Ptr outputLayer(new Layer(context, 1));
-        
-        REQUIRE(inputLayer->getUuid() != hiddenLayer->getUuid());
-        REQUIRE(hiddenLayer->getUuid() != outputLayer->getUuid());
-        REQUIRE(outputLayer->getUuid() != inputLayer->getUuid());
-        
-        inputLayer->connectAllToAll(hiddenLayer);
-        hiddenLayer->connectAllToAll(outputLayer);
-        
-        Network::Ptr network(new Network(networkName, context, inputLayer, {hiddenLayer}, outputLayer));
-        REQUIRE(network->getName() == networkName);
-        REQUIRE(network->getContext() == context);
+        Network::Ptr network = Network::Prefabs::longShortTermMemory(networkName, 2, {3, 3}, 1);
         
         WHEN("the network is trained with some random number of iterations (from 1500 to 2000)")
         {
