@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="PhuwAI" name="TinyRNN" projectType="consoleapp" version="0.1.0"
+              bundleIdentifier="com.peterrudenko.tinyrnn" includeBinaryInAppConfig="0"
+              jucerVersion="3.1.1">
+  <MAINGROUP id="BlmyBH" name="TinyRNN">
+    <GROUP id="{229ADAC7-2B67-4150-EF50-69F48AE93020}" name="Source">
+      <GROUP id="{37081272-07CE-E346-3FD7-D4EAB058F64C}" name="OpenCL">
+        <FILE id="O6cXY4" name="HardcodedTrainingContext.h" compile="0" resource="0"
+              file="../../Source/HardcodedTrainingContext.h"/>
+        <FILE id="I2ifKf" name="HardcodedNetwork.h" compile="0" resource="0"
+              file="../../Source/HardcodedNetwork.h"/>
+        <FILE id="bBmZR7" name="HardcodedNeuron.h" compile="0" resource="0"
+              file="../../Source/HardcodedNeuron.h"/>
+      </GROUP>
+      <GROUP id="{E007B9B6-D63A-B5C4-2323-F627E0E71AE4}" name="Network">
+        <FILE id="IqD0qC" name="Network.h" compile="0" resource="0" file="../../Source/Network.h"/>
+        <FILE id="B45LBw" name="Layer.h" compile="0" resource="0" file="../../Source/Layer.h"/>
+        <FILE id="Fwl423" name="Neuron.h" compile="0" resource="0" file="../../Source/Neuron.h"/>
+        <FILE id="XVAQSE" name="TrainingContext.h" compile="0" resource="0"
+              file="../../Source/TrainingContext.h"/>
+      </GROUP>
+      <GROUP id="{F2DEDA53-1230-630C-0024-A35C4195E930}" name="Serialization">
+        <FILE id="sMkGMF" name="SerializedObject.h" compile="0" resource="0"
+              file="../../Source/SerializedObject.h"/>
+        <FILE id="EKvGl6" name="SerializationContext.h" compile="0" resource="0"
+              file="../../Source/SerializationContext.h"/>
+        <FILE id="cO8l7i" name="SerializationKeys.h" compile="0" resource="0"
+              file="../../Source/SerializationKeys.h"/>
+        <FILE id="VgZOKo" name="Serializer.h" compile="0" resource="0" file="../../Source/Serializer.h"/>
+      </GROUP>
+      <GROUP id="{56659214-05EC-C8E9-6225-0E8F8A1F34D6}" name="Tools">
+        <FILE id="EUTNqw" name="ScopedMemoryBlock.h" compile="0" resource="0"
+              file="../../Source/ScopedMemoryBlock.h"/>
+        <FILE id="mRAFkW" name="ScopedSubscription.h" compile="0" resource="0"
+              file="../../Source/ScopedSubscription.h"/>
+        <FILE id="zFQWpn" name="ScopedTimer.h" compile="0" resource="0" file="../../Source/ScopedTimer.h"/>
+        <FILE id="wv0qWa" name="Uuid.h" compile="0" resource="0" file="../../Source/Uuid.h"/>
+      </GROUP>
+      <FILE id="z752VW" name="TinyRNN.h" compile="0" resource="0" file="../../Source/TinyRNN.h"/>
+      <FILE id="AfuId9" name="Common.h" compile="0" resource="0" file="../../Source/Common.h"/>
+    </GROUP>
+    <GROUP id="{4CA1E7BC-4892-AAD0-EB15-BE1840F65C53}" name="Tests">
+      <GROUP id="{C9039B32-4A88-8A9C-6422-3EDF20F8920F}" name="ThirdParty">
+        <FILE id="BysXHM" name="pugixml.cpp" compile="1" resource="0" file="../../Tests/ThirdParty/pugixml.cpp"/>
+      </GROUP>
+      <FILE id="IjueW4" name="Main.cpp" compile="1" resource="0" file="../../Tests/Main.cpp"/>
+      <FILE id="RPttLp" name="LayerTests.cpp" compile="1" resource="0" file="../../Tests/LayerTests.cpp"/>
+      <FILE id="CUGxk9" name="NetworkTests.cpp" compile="1" resource="0"
+            file="../../Tests/NetworkTests.cpp"/>
+      <FILE id="woV93A" name="NeuronTests.cpp" compile="1" resource="0" file="../../Tests/NeuronTests.cpp"/>
+      <FILE id="CN0NPA" name="TrainingTests.cpp" compile="1" resource="0"
+            file="../../Tests/TrainingTests.cpp"/>
+      <FILE id="pcvDd6" name="SerializationTests.cpp" compile="1" resource="0"
+            file="../../Tests/SerializationTests.cpp"/>
+    </GROUP>
+  </MAINGROUP>
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="../MacOSX" extraFrameworks="OpenCL" extraDefs="TINYRNN_OPENCL_ACCELERATION=1">
+      <CONFIGURATIONS>
+        <CONFIGURATION name="Debug" osxSDK="default" osxCompatibility="default" osxArchitecture="default"
+                       isDebug="1" optimisation="1" targetName="TinyRNN"/>
+        <CONFIGURATION name="Release" osxSDK="default" osxCompatibility="default" osxArchitecture="default"
+                       isDebug="0" optimisation="3" targetName="TinyRNN"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS/>
+    </XCODE_MAC>
+    <LINUX_MAKE targetFolder="../LinuxMakefile" extraDefs="TINYRNN_OPENCL_ACCELERATION=1">
+      <CONFIGURATIONS>
+        <CONFIGURATION name="Debug" libraryPath="/usr/X11R6/lib/" isDebug="1" optimisation="1"
+                       targetName="TinyRNN"/>
+        <CONFIGURATION name="Release" libraryPath="/usr/X11R6/lib/" isDebug="0" optimisation="3"
+                       targetName="TinyRNN"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS/>
+    </LINUX_MAKE>
+  </EXPORTFORMATS>
+  <MODULES/>
+  <JUCEOPTIONS/>
+</JUCERPROJECT>
