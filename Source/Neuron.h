@@ -383,12 +383,12 @@ namespace TinyRNN
                 this->eligibility[inputConnection->getUuid()] += selfConnectionData->gain * selfConnectionData->weight * oldElegibility;
             }
             
-            for (auto &id : this->extended)
+            for (auto &i : this->extended)
             {
                 // extended elegibility trace
-                const std::string neuronId = id.first;
+                const std::string neuronId = i.first;
                 const double influence = influences[neuronId];
-                EligibilityMap &xtrace = id.second;
+                EligibilityMap &xtrace = i.second;
                 Neuron::Ptr neighbour = this->neighbours[neuronId];
                 
                 const auto neighbourData = neighbour->getTrainingData();

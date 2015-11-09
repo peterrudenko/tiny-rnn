@@ -26,7 +26,7 @@
 
 using namespace TinyRNN;
 
-SCENARIO("A perceptron can be trained to model a xor function", "[training]")
+SCENARIO("A perceptron can be trained with a xor function", "[training]")
 {
     GIVEN("A single-layer perceptron")
     {
@@ -36,9 +36,9 @@ SCENARIO("A perceptron can be trained to model a xor function", "[training]")
         
         const int numIterations = distribution(mt19937);
         
-        const auto contextName = Uuid::generate();
         const auto networkName = Uuid::generate();
-        
+//        const auto contextName = Uuid::generate();
+//
 //        TrainingContext::Ptr context(new TrainingContext(contextName));
 //        REQUIRE(context->getName() == contextName);
 //        
@@ -208,6 +208,90 @@ private:
     
 };
 
+#if TINYRNN_OPENCL_ACCELERATION
+
+SCENARIO("Network can be recovered back from the trained hardcoded version", "[training]")
+{
+    GIVEN("LSTM network and its hardcoded version")
+    {
+        const auto networkName = Uuid::generate();
+        Network::Ptr network = Network::Prefabs::longShortTermMemory(networkName, 2, {3, 3}, 1);
+        
+        HardcodedNetwork::Ptr clNetwork = network->hardcode();
+        clNetwork->compile();
+        
+        WHEN("The hardcoded hetwork is trained and the usual network context is restored from the hardcoded one")
+        {
+            {
+                const ScopedTimer timer("Training hardcoded network");
+                double rate = 0.5;
+                
+                std::random_device randomDevice;
+                std::mt19937 mt(randomDevice());
+                std::uniform_int_distribution<unsigned int> distribution(500, 1000);
+                const int numIterations = distribution(mt);
+                
+                for (int i = 0; i < numIterations; ++i)
+                {
+                    const auto result1 = clNetwork->feed({0.0, 1.0});
+                    clNetwork->train(rate, {1.0});
+                    
+                    const auto result2 = clNetwork->feed({1.0, 0.0});
+                    clNetwork->train(rate, {1.0});
+                    
+                    const auto result3 = clNetwork->feed({0.0, 0.0});
+                    clNetwork->train(rate, {0.0});
+                    
+                    const auto result4 = clNetwork->feed({1.0, 1.0});
+                    clNetwork->train(rate, {0.0});
+                }
+            }
+            
+            network->restore(clNetwork->getContext());
+            
+            THEN("The trained network should output sane results")
+            {
+                const auto result1 = clNetwork->feed({0.0, 1.0});
+                REQUIRE(result1.front() > 0.9);
+                
+                const auto result2 = clNetwork->feed({1.0, 0.0});
+                REQUIRE(result2.front() > 0.9);
+                
+                const auto result3 = clNetwork->feed({0.0, 0.0});
+                REQUIRE(result3.front() < 0.1);
+                
+                const auto result4 = clNetwork->feed({1.0, 1.0});
+                REQUIRE(result4.front() < 0.1);
+            }
+            
+            THEN("The usual network should act like it was trained")
+            {
+                const auto result1 = network->feed({0.0, 1.0});
+                REQUIRE(result1.size() == 1);
+                INFO(result1.front());
+                REQUIRE(result1.front() > 0.9);
+                
+                const auto result2 = network->feed({1.0, 0.0});
+                REQUIRE(result2.size() == 1);
+                INFO(result2.front());
+                REQUIRE(result2.front() > 0.9);
+                
+                const auto result3 = network->feed({0.0, 0.0});
+                REQUIRE(result3.size() == 1);
+                INFO(result3.front());
+                REQUIRE(result3.front() < 0.1);
+                
+                const auto result4 = network->feed({1.0, 1.0});
+                REQUIRE(result4.size() == 1);
+                INFO(result4.front());
+                REQUIRE(result4.front() < 0.1);
+            }
+        }
+    }
+}
+
+#endif
+
 //SCENARIO("A perceptron can be trained with a custom function", "[training]")
 //{
 //    GIVEN("A multi-layer perceptron")
@@ -265,4 +349,3 @@ private:
 //        }
 //    }
 //}
-

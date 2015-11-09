@@ -10,31 +10,31 @@
 	<string>TinyRNN</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>F020B6693D92772D2BB9E28E26A5770D980F6D91</key>
-		<string>https://github.com/peterrudenko/TinyRNN.git</string>
+		<key>581472FE46A8D84AEF54472B538BE0C9ABF6D0E1</key>
+		<string>https://github.com/peterrudenko/TinyRNN</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>Projects/MacOSX/TinyRNN.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>F020B6693D92772D2BB9E28E26A5770D980F6D91</key>
+		<key>581472FE46A8D84AEF54472B538BE0C9ABF6D0E1</key>
 		<string>../../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>https://github.com/peterrudenko/TinyRNN.git</string>
+	<string>https://github.com/peterrudenko/TinyRNN</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>F020B6693D92772D2BB9E28E26A5770D980F6D91</string>
+	<string>581472FE46A8D84AEF54472B538BE0C9ABF6D0E1</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>F020B6693D92772D2BB9E28E26A5770D980F6D91</string>
+			<string>581472FE46A8D84AEF54472B538BE0C9ABF6D0E1</string>
 			<key>IDESourceControlWCCName</key>
-			<string>NNBB</string>
+			<string>TinyRNN</string>
 		</dict>
 	</array>
 </dict>

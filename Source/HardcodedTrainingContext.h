@@ -27,6 +27,7 @@
 
 #include "Common.h"
 #include "SerializedObject.h"
+#include <iostream>
 
 namespace TinyRNN
 {
@@ -70,7 +71,7 @@ namespace TinyRNN
         
         HardcodedTrainingContext();
         
-        double evaluateVariable(const VariableKey &variableKey, double defaultValue = 0.0);
+        double evaluateVariable(const VariableKey &variableKey, double defaultValue);
         size_t allocateOrReuseVariable(double value, const VariableKey &variableKey);
         
         void registerInputVariable(size_t variableIndex);
@@ -223,9 +224,12 @@ namespace TinyRNN
         
         if (variableExists)
         {
-            return this->mapping[key];
+            const size_t variableIndex = this->mapping[key];
+            //std::cout << "Variable: " << key << " = " << std::to_string(this->memory[variableIndex]) << std::endl;
+            return this->memory[variableIndex];
         }
         
+        //std::cout << "Variable missing: " << key << ", default to " << std::to_string(defaultValue) << std::endl;
         return defaultValue;
     }
     

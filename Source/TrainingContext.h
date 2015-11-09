@@ -126,10 +126,6 @@ namespace TinyRNN
         NeuronData::Ptr getNeuronContext(const std::string &uuid);
         ConnectionData::Ptr getConnectionContext(const std::string &uuid);
         
-#if TINYRNN_OPENCL_ACCELERATION
-        void restoreFromHardcoded(HardcodedTrainingContext::Ptr hardcodedContext);
-#endif
-        
         void clear();
         
     public:
@@ -197,15 +193,6 @@ namespace TinyRNN
         this->neuronContexts.clear();
         this->connectionContexts.clear();
     }
-    
-#if TINYRNN_OPENCL_ACCELERATION
-    
-    inline void TrainingContext::restoreFromHardcoded(HardcodedTrainingContext::Ptr hardcodedContext)
-    {
-        // todo!
-    }
-    
-#endif
     
     // =============================================================================
     // Serialization

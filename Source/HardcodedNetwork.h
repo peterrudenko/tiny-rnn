@@ -51,6 +51,8 @@ namespace TinyRNN
         // todo:
         //bool compileAsStandalone();
         
+        HardcodedTrainingContext::Ptr getContext() const noexcept;
+        
         HardcodedTrainingContext::RawData feed(const HardcodedTrainingContext::RawData &values);
         void train(double rate, const HardcodedTrainingContext::RawData &target);
         
@@ -126,6 +128,11 @@ namespace TinyRNN
     isBuilt(false)
     {
         this->isInitialized = this->initialize();
+    }
+    
+    inline HardcodedTrainingContext::Ptr HardcodedNetwork::getContext() const noexcept
+    {
+        return this->trainingContext;
     }
     
     inline bool HardcodedNetwork::compile()
