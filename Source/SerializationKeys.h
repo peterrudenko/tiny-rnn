@@ -25,7 +25,7 @@
 
 namespace TinyRNN
 {
-    namespace Serialization
+    namespace Keys
     {
         namespace Core
         {
@@ -85,6 +85,16 @@ namespace TinyRNN
             
             static const std::string TrainingContext = "HardcodedTrainingContext";
             
+            static const std::string FeedKernels = "FeedKernels";
+            static const std::string FeedKernel = "FeedKernel";
+            static const std::string TrainKernels = "TrainKernels";
+            static const std::string TrainKernel = "TrainKernel";
+            
+            static const std::string NumExpressions = "NumExpressions";
+            static const std::string FullSource = "FullSource";
+            static const std::string EntryPoint = "EntryPoint";
+            
+            static const std::string IsBuilt = "IsBuilt";
             static const std::string KernelBinaries = "KernelBinaries";
             static const std::string KernelBinary = "KernelBinary";
             static const std::string KernelSentence = "KernelSentence";
@@ -94,6 +104,14 @@ namespace TinyRNN
             static const std::string FeedChunk = "FeedChunk";
             static const std::string TrainChunk = "TrainChunk";
             static const std::string TraceChunk = "TraceChunk";
+
+            static const std::string RawMemory = "RawMemory";
+            static const std::string VariablesMapping = "VariablesMapping";
+            static const std::string MemorySize = "MemorySize";
+            static const std::string OutputsSize = "OutputsSize";
+            static const std::string Variable = "Variable";
+            static const std::string Key = "Key";
+            static const std::string Index = "Index";
         }
     }
 }

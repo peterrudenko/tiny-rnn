@@ -43,13 +43,16 @@ namespace TinyRNN
         
     public:
         
-        HardcodedNetwork(HardcodedLayers targetLayers, HardcodedTrainingContext::Ptr targetContext);
+        explicit HardcodedNetwork(HardcodedTrainingContext::Ptr targetContext);
+        HardcodedNetwork(HardcodedLayers targetLayers,
+                         HardcodedTrainingContext::Ptr targetContext);
         
-        // Takes *a lot* of time, so it's to be called explicitly.
         bool compile();
         
         // todo:
         //bool compileAsStandalone();
+        
+        HardcodedTrainingContext::Ptr getContext() const noexcept;
         
         HardcodedTrainingContext::RawData feed(const HardcodedTrainingContext::RawData &values);
         void train(double rate, const HardcodedTrainingContext::RawData &target);
@@ -60,8 +63,6 @@ namespace TinyRNN
         virtual void serialize(SerializationContext::Ptr context) const override;
         
     private:
-        
-        HardcodedLayers hardcodedLayers;
         
         HardcodedTrainingContext::Ptr trainingContext;
         
@@ -78,7 +79,7 @@ namespace TinyRNN
         cl::Buffer clTargetsBuffer;
         cl::Buffer clRateBuffer;
         
-        class Kernel final
+        class Kernel final : public SerializedObject
         {
         public:
             
@@ -93,6 +94,11 @@ namespace TinyRNN
             std::string entryPoint;
             cl::Kernel clKernel;
             
+        public:
+            
+            virtual void deserialize(SerializationContext::Ptr context) override;
+            virtual void serialize(SerializationContext::Ptr context) const override;
+            
         private:
             
             TINYRNN_DISALLOW_COPY_AND_ASSIGN(Kernel);
@@ -105,40 +111,42 @@ namespace TinyRNN
         Kernel::Array feedKernels;
         Kernel::Array trainKernels;
         
-        Kernel::Array compileFeedKernels() const;
-        Kernel::Array compileTrainKernels() const;
+        Kernel::Array compileFeedKernels(const HardcodedLayers &targetLayers) const;
+        Kernel::Array compileTrainKernels(const HardcodedLayers &targetLayers) const;
         
-        bool initialize();
+        bool initialize(const HardcodedLayers &targetLayers);
         bool build();
         
-        bool isInitialized;
-        bool isBuilt;
+        bool isBuilt() const;
         
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(HardcodedNetwork);
     };
     
-    
+    inline HardcodedNetwork::HardcodedNetwork(HardcodedTrainingContext::Ptr targetContext) :
+    trainingContext(targetContext)
+    {
+        HardcodedLayers empty;
+        this->initialize(empty);
+    }
+
     inline HardcodedNetwork::HardcodedNetwork(HardcodedLayers targetLayers,
                                               HardcodedTrainingContext::Ptr targetContext) :
-    hardcodedLayers(targetLayers),
-    trainingContext(targetContext),
-    isInitialized(false),
-    isBuilt(false)
+    trainingContext(targetContext)
     {
-        this->isInitialized = this->initialize();
+        this->initialize(targetLayers);
+    }
+    
+    inline HardcodedTrainingContext::Ptr HardcodedNetwork::getContext() const noexcept
+    {
+        return this->trainingContext;
     }
     
     inline bool HardcodedNetwork::compile()
     {
-        if (this->isInitialized)
-        {
-            this->isBuilt = this->build();
-        }
-
-        return this->isBuilt;
+        return this->build();
     }
-
-    inline bool HardcodedNetwork::initialize()
+    
+    inline bool HardcodedNetwork::initialize(const HardcodedLayers &targetLayers)
     {
         const ScopedTimer timer("HardcodedNetwork::initialize");
         
@@ -168,15 +176,15 @@ namespace TinyRNN
         
         this->clContext = cl::Context(this->clDevice);
         
+        this->feedKernels = this->compileFeedKernels(targetLayers);
+        this->trainKernels = this->compileTrainKernels(targetLayers);
+        
         return true;
     }
     
     inline bool HardcodedNetwork::build()
     {
         const ScopedTimer timer("HardcodedNetwork::build");
-        
-        this->feedKernels = this->compileFeedKernels();
-        this->trainKernels = this->compileTrainKernels();
         
         cl::Program::Sources clSources;
         
@@ -221,18 +229,32 @@ namespace TinyRNN
                                           sizeof(double) * this->trainingContext->getMemory().size(),
                                           (void *)this->trainingContext->getMemory().data());
         
-        this->hardcodedLayers.clear(); // they are not needed anymore
-        
         return true;
+    }
+    
+    inline bool HardcodedNetwork::isBuilt() const
+    {
+        bool built = (!this->feedKernels.empty() &&
+                      !this->trainKernels.empty());
+        
+        for (auto &kernel : this->feedKernels)
+        {
+            built = built && kernel->isBuilt;
+        }
+        
+        for (auto &kernel : this->trainKernels)
+        {
+            built = built && kernel->isBuilt;
+        }
+        
+        return built;
     }
     
     inline HardcodedTrainingContext::RawData HardcodedNetwork::feed(const HardcodedTrainingContext::RawData &inputs)
     {
-        if (! this->isBuilt)
-        {
-            HardcodedTrainingContext::RawData result;
-            return result;
-        }
+        std::fill(this->trainingContext->getOutputs().begin(),
+                  this->trainingContext->getOutputs().end(),
+                  0.0);
         
         this->clInputsBuffer = cl::Buffer(this->clContext,
                                           CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
@@ -258,11 +280,6 @@ namespace TinyRNN
     
     inline void HardcodedNetwork::train(double rate, const HardcodedTrainingContext::RawData &targets)
     {
-        if (! this->isBuilt)
-        {
-            return;
-        }
-        
         this->clTargetsBuffer = cl::Buffer(this->clContext,
                                            CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
                                            sizeof(double) * targets.size(),
@@ -285,14 +302,14 @@ namespace TinyRNN
     
     #define trnn_max(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
     
-    inline HardcodedNetwork::Kernel::Array HardcodedNetwork::compileFeedKernels() const
+    inline HardcodedNetwork::Kernel::Array HardcodedNetwork::compileFeedKernels(const HardcodedLayers &targetLayers) const
     {
         Kernel::Array result;
         Kernel::Ptr currentKernel;
         size_t currentKernelExpressionsCounter = 0;
         const size_t maxExpressions = trnn_max(TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL, 100);
         
-        for (const auto &layer : this->hardcodedLayers)
+        for (const auto &layer : targetLayers)
         {
             for (const auto &neuron : layer)
             {
@@ -338,16 +355,16 @@ namespace TinyRNN
         return result;
     }
     
-    inline HardcodedNetwork::Kernel::Array HardcodedNetwork::compileTrainKernels() const
+    inline HardcodedNetwork::Kernel::Array HardcodedNetwork::compileTrainKernels(const HardcodedLayers &targetLayers) const
     {
         Kernel::Array result;
         Kernel::Ptr currentKernel;
         size_t currentKernelExpressionsCounter = 0;
         const size_t maxExpressions = trnn_max(TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL, 100);
         
-        for (size_t l = this->hardcodedLayers.size(); l --> 0 ;)
+        for (size_t l = targetLayers.size(); l --> 0 ;)
         {
-            const auto &layer = this->hardcodedLayers[l];
+            const auto &layer = targetLayers[l];
             
             for (size_t n = layer.size(); n --> 0 ;)
             {
@@ -400,42 +417,83 @@ namespace TinyRNN
     
     inline void HardcodedNetwork::deserialize(SerializationContext::Ptr context)
     {
-        SerializationContext::Ptr trainingContext(context->getChildContext(Serialization::Hardcoded::Network));
-        SerializationContext::Ptr root((trainingContext != nullptr) ? trainingContext : context);
+        this->feedKernels.clear();
+        this->trainKernels.clear();
         
-        // todo if not built, save hardcoded layers
-        // todo if built, save binary opencl program
+        SerializationContext::Ptr feedKernelsNode(context->getChildContext(Keys::Hardcoded::FeedKernels));
         
+        for (size_t i = 0; i < feedKernelsNode->getNumChildrenContexts(); ++i)
+        {
+            SerializationContext::Ptr kernelNode(feedKernelsNode->getChildContext(i));
+            Kernel::Ptr kernel(new Kernel());
+            kernel->deserialize(kernelNode);
+            this->feedKernels.push_back(kernel);
+        }
         
+        SerializationContext::Ptr trainKernelsNode(context->getChildContext(Keys::Hardcoded::TrainKernels));
+        
+        for (size_t i = 0; i < trainKernelsNode->getNumChildrenContexts(); ++i)
+        {
+            SerializationContext::Ptr kernelNode(trainKernelsNode->getChildContext(i));
+            Kernel::Ptr kernel(new Kernel());
+            kernel->deserialize(kernelNode);
+            this->trainKernels.push_back(kernel);
+        }
     }
     
     inline void HardcodedNetwork::serialize(SerializationContext::Ptr context) const
     {
-        SerializationContext::Ptr networkNode(context->createChildContext(Serialization::Hardcoded::Network));
+        SerializationContext::Ptr feedKernelsNode(context->createChildContext(Keys::Hardcoded::FeedKernels));
         
-        // todo if not built, save hardcoded layers
-        // todo if built, save binary opencl program
-        
-        if (this->isBuilt)
+        for (const auto &kernel : this->feedKernels)
         {
-            SerializationContext::Ptr binariesNode(networkNode->createChildContext(Serialization::Hardcoded::KernelBinaries));
-            const std::vector<size_t> sizes = this->clProgram.getInfo<CL_PROGRAM_BINARY_SIZES>();
-            const std::vector<char *> binaries = this->clProgram.getInfo<CL_PROGRAM_BINARIES>();
-            
-            for (size_t i = 0; i < binaries.size(); ++i)
-            {
-                SerializationContext::Ptr binaryNode(binariesNode->createChildContext(Serialization::Hardcoded::KernelBinary));
-                const size_t size = sizes[i];
-                const std::string binary(context->encodeBase64((unsigned const char *)binaries[i], size));
-                
-                //std::cout << binary << std::endl;
-                // todo base64encode?
-                
-                //binaryNode->setStringProperty(binary, Serialization::Hardcoded::Content);
-            }
+            SerializationContext::Ptr kernelNode(feedKernelsNode->createChildContext(Keys::Hardcoded::FeedKernel));
+            kernel->serialize(kernelNode);
         }
         
-        // todo save feed kernels and train kernels
+        SerializationContext::Ptr trainKernelsNode(context->createChildContext(Keys::Hardcoded::TrainKernels));
+        
+        for (const auto &kernel : this->trainKernels)
+        {
+            SerializationContext::Ptr kernelNode(trainKernelsNode->createChildContext(Keys::Hardcoded::TrainKernel));
+            kernel->serialize(kernelNode);
+        }
+        
+        // TODO also save the compiled program binaries, if any
+//        context->setNumberProperty(this->isBuilt(), Keys::Hardcoded::IsBuilt);
+//        
+//        if (this->isBuilt())
+//        {
+//            SerializationContext::Ptr binariesNode(context->createChildContext(Keys::Hardcoded::KernelBinaries));
+//            const std::vector<size_t> sizes = this->clProgram.getInfo<CL_PROGRAM_BINARY_SIZES>();
+//            const std::vector<char *> binaries = this->clProgram.getInfo<CL_PROGRAM_BINARIES>();
+//            
+//            for (size_t i = 0; i < binaries.size(); ++i)
+//            {
+//                SerializationContext::Ptr binaryNode(binariesNode->createChildContext(Keys::Hardcoded::KernelBinary));
+//                const size_t size = sizes[i];
+//                const std::string binary(context->encodeBase64((unsigned const char *)binaries[i], size));
+//                
+//                //std::cout << binary << std::endl;
+//                // todo base64encode?
+//                
+//                //binaryNode->setStringProperty(binary, Keys::Hardcoded::Content);
+//            }
+//        }
+    }
+    
+    inline void HardcodedNetwork::Kernel::deserialize(SerializationContext::Ptr context)
+    {
+        this->numExpressions = context->getNumberProperty(Keys::Hardcoded::NumExpressions);
+        this->entryPoint = context->getStringProperty(Keys::Hardcoded::EntryPoint);
+        this->fullSource = context->getStringProperty(Keys::Hardcoded::FullSource);
+    }
+    
+    inline void HardcodedNetwork::Kernel::serialize(SerializationContext::Ptr context) const
+    {
+        context->setNumberProperty(this->numExpressions, Keys::Hardcoded::NumExpressions);
+        context->setStringProperty(this->entryPoint, Keys::Hardcoded::EntryPoint);
+        context->setStringProperty(this->fullSource, Keys::Hardcoded::FullSource);
     }
 }
 

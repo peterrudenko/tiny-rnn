@@ -27,6 +27,7 @@
 
 #include "Common.h"
 #include "SerializedObject.h"
+#include <iostream>
 
 namespace TinyRNN
 {
@@ -62,15 +63,15 @@ namespace TinyRNN
         
         using Ptr = std::shared_ptr<HardcodedTrainingContext>;
         using RawData = std::vector<double>;
-        using VariablesIndexes = std::vector<size_t>;
-        using VariablesMapping = std::unordered_map<std::string, size_t>;
+        using Indices = std::vector<size_t>;
+        using Mapping = std::map<std::string, size_t>;
         using VariableKey = std::vector<std::string>;
         
     public:
         
         HardcodedTrainingContext();
         
-        double evaluateVariable(const VariableKey &variableKey, double defaultValue = 0.0);
+        double evaluateVariable(const VariableKey &variableKey, double defaultValue);
         size_t allocateOrReuseVariable(double value, const VariableKey &variableKey);
         
         void registerInputVariable(size_t variableIndex);
@@ -83,8 +84,8 @@ namespace TinyRNN
         std::string buildTargetsExpressions() const;
         std::string buildRateExpression() const;
         
-        const RawData &getMemory() const;
-        const RawData &getOutputs() const;
+        RawData &getMemory();
+        RawData &getOutputs();
         
         void clear();
         
@@ -96,17 +97,17 @@ namespace TinyRNN
     private:
         
         RawData memory;                         // the actual data passed to the kernel
-        RawData outputs;                        // the actual data passed to the kernel
+        Mapping mapping;                        // variable name connected to its index in memory
         
-        VariablesMapping mapping;               // variable name connected to its index in memory
-        VariablesIndexes inputVariables;        // indexes of input variables
-        VariablesIndexes outputVariables;       // indexes of output variables
-        VariablesIndexes targetVariables;       // indexes of target variables
+    private: // temporary stuff, never serialized:
+        
+        RawData outputs;                        // holds the most recent output
+        Indices inputVariables;                 // indexes of input variables
+        Indices outputVariables;                // indexes of output variables
+        Indices targetVariables;                // indexes of target variables
         size_t rateVariable;
         
-        // todo #2
-        //ScopedMemoryBlock<float> memory;
-        //ScopedMemoryBlock<float> outputs;
+    private:
         
         std::string getKeyForVariable(const VariableKey &variableKey) const;
         
@@ -150,7 +151,7 @@ namespace TinyRNN
     
     inline void operator << (KernelSentence &i, std::ostream&(*f)(std::ostream&))
     {
-        // What a mess, I just wanted to have endl to finish the current line..
+        // What a mess, I just wanted to have std::endl to finish the current line..
         if (f == (std::ostream&(*)(std::ostream&)) &std::endl)
         {
             if (i.expressionBuilder.back() != ';')
@@ -172,7 +173,7 @@ namespace TinyRNN
         for (size_t i = 0; i < context->getNumChildrenContexts(); ++i)
         {
             SerializationContext::Ptr lineNode(context->getChildContext(i));
-            const std::string &line = lineNode->getStringProperty(Serialization::Hardcoded::Content);
+            const std::string &line = lineNode->getStringProperty(Keys::Hardcoded::Content);
             this->expressions.push_back(line);
         }
     }
@@ -181,8 +182,8 @@ namespace TinyRNN
     {
         for (const auto &expression : this->expressions)
         {
-            SerializationContext::Ptr lineNode(context->createChildContext(Serialization::Hardcoded::KernelLine));
-            lineNode->setStringProperty(expression, Serialization::Hardcoded::Content);
+            SerializationContext::Ptr lineNode(context->createChildContext(Keys::Hardcoded::KernelLine));
+            lineNode->setStringProperty(expression, Keys::Hardcoded::Content);
         }
     }
     
@@ -223,22 +224,26 @@ namespace TinyRNN
         
         if (variableExists)
         {
-            return this->mapping[key];
+            const size_t variableIndex = this->mapping[key];
+            //std::cout << "Variable: " << key << " = " << std::to_string(this->memory[variableIndex]) << std::endl;
+            return this->memory[variableIndex];
         }
         
+        //std::cout << "Variable missing: " << key << ", default to " << std::to_string(defaultValue) << std::endl;
         return defaultValue;
     }
     
     inline std::string HardcodedTrainingContext::getKeyForVariable(const VariableKey &variableKey) const
     {
-        std::string key;
+        std::ostringstream key;
         
-        for (auto &i : variableKey)
-        {
-            key += (i + "#");
-        }
+        std::copy(variableKey.begin(),
+                  variableKey.end() - 1,
+                  std::ostream_iterator<std::string>(key, "::"));
         
-        return key;
+        key << variableKey.back();
+        
+        return key.str();
     }
     
     inline void HardcodedTrainingContext::registerInputVariable(size_t variableIndex)
@@ -305,12 +310,12 @@ namespace TinyRNN
         return sentence.build();
     }
     
-    inline const HardcodedTrainingContext::RawData &HardcodedTrainingContext::getMemory() const
+    inline HardcodedTrainingContext::RawData &HardcodedTrainingContext::getMemory()
     {
         return this->memory;
     }
     
-    inline const HardcodedTrainingContext::RawData &HardcodedTrainingContext::getOutputs() const
+    inline HardcodedTrainingContext::RawData &HardcodedTrainingContext::getOutputs()
     {
         return this->outputs;
     }
@@ -333,16 +338,43 @@ namespace TinyRNN
     inline void HardcodedTrainingContext::deserialize(SerializationContext::Ptr context)
     {
         this->clear();
-        //
+        
+        const std::string &memoryEncoded = context->getStringProperty(Keys::Hardcoded::RawMemory);
+        const size_t memorySize = context->getNumberProperty(Keys::Hardcoded::MemorySize);
+        
+        this->memory.resize(memorySize);
+        const std::vector<unsigned char> &memoryDecoded = context->decodeBase64(memoryEncoded);
+        memcpy(this->memory.data(), memoryDecoded.data(), sizeof(double) * memorySize);
+        
+        const size_t outputsSize = context->getNumberProperty(Keys::Hardcoded::OutputsSize);
+        this->outputs.resize(outputsSize);
+        
+        SerializationContext::Ptr mappingNode(context->getChildContext(Keys::Hardcoded::VariablesMapping));
+        
+        for (size_t i = 0; i < mappingNode->getNumChildrenContexts(); ++i)
+        {
+            SerializationContext::Ptr variableNode(mappingNode->getChildContext(i));
+            const std::string &key = variableNode->getStringProperty(Keys::Hardcoded::Key);
+            const size_t index = variableNode->getNumberProperty(Keys::Hardcoded::Index);
+            this->mapping[key] = index;
+        }
     }
     
     inline void HardcodedTrainingContext::serialize(SerializationContext::Ptr context) const
     {
-        SerializationContext::Ptr contextNode(context->createChildContext(Serialization::Hardcoded::TrainingContext));
         const std::string memoryEncoded = context->encodeBase64((const unsigned char *)this->memory.data(), sizeof(double) * this->memory.size());
-        const std::string outputsEncoded = context->encodeBase64((const unsigned char *)this->outputs.data(), sizeof(double) * this->outputs.size());
-        // todo write memory size
+        context->setStringProperty(memoryEncoded, Keys::Hardcoded::RawMemory);
+        context->setNumberProperty(this->memory.size(), Keys::Hardcoded::MemorySize);
+        context->setNumberProperty(this->outputs.size(), Keys::Hardcoded::OutputsSize);
         
+        SerializationContext::Ptr mappingNode(context->createChildContext(Keys::Hardcoded::VariablesMapping));
+        
+        for (const auto &i : this->mapping)
+        {
+            SerializationContext::Ptr variableNode(mappingNode->createChildContext(Keys::Hardcoded::Variable));
+            variableNode->setStringProperty(i.first, Keys::Hardcoded::Key);
+            variableNode->setNumberProperty(i.second, Keys::Hardcoded::Index);
+        }
     }
 }
 

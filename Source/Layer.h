@@ -401,11 +401,11 @@ namespace TinyRNN
     
     inline void Layer::deserialize(SerializationContext::Ptr context)
     {
-        this->uuid = context->getStringProperty(Serialization::Core::Uuid);
-        this->name = context->getStringProperty(Serialization::Core::Name);
+        this->uuid = context->getStringProperty(Keys::Core::Uuid);
+        this->name = context->getStringProperty(Keys::Core::Name);
         
         this->neurons.clear();
-        SerializationContext::Ptr neuronsNode(context->getChildContext(Serialization::Core::Neurons));
+        SerializationContext::Ptr neuronsNode(context->getChildContext(Keys::Core::Neurons));
         
         for (size_t i = 0; i < neuronsNode->getNumChildrenContexts(); ++i)
         {
@@ -418,13 +418,13 @@ namespace TinyRNN
     
     inline void Layer::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->uuid, Serialization::Core::Uuid);
-        context->setStringProperty(this->name, Serialization::Core::Name);
+        context->setStringProperty(this->uuid, Keys::Core::Uuid);
+        context->setStringProperty(this->name, Keys::Core::Name);
         
-        SerializationContext::Ptr allNeuronsNode(context->createChildContext(Serialization::Core::Neurons));
+        SerializationContext::Ptr allNeuronsNode(context->createChildContext(Keys::Core::Neurons));
         for (const auto &neuron : this->neurons)
         {
-            SerializationContext::Ptr neuronNode(allNeuronsNode->createChildContext(Serialization::Core::Neuron));
+            SerializationContext::Ptr neuronNode(allNeuronsNode->createChildContext(Keys::Core::Neuron));
             neuron->serialize(neuronNode);
         }
     }
