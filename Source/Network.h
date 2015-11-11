@@ -231,24 +231,21 @@ namespace TinyRNN
     
     inline void Network::deserialize(SerializationContext::Ptr context)
     {
-        SerializationContext::Ptr networkContext(context->getChildContext(Serialization::Core::Network));
-        SerializationContext::Ptr root((networkContext != nullptr) ? networkContext : context);
-        
-        this->uuid = root->getStringProperty(Serialization::Core::Uuid);
-        this->name = root->getStringProperty(Serialization::Core::Name);
+        this->uuid = context->getStringProperty(Keys::Core::Uuid);
+        this->name = context->getStringProperty(Keys::Core::Name);
         
         this->inputLayer.reset();
-        SerializationContext::Ptr inputLayerNode(root->getChildContext(Serialization::Core::InputLayer));
+        SerializationContext::Ptr inputLayerNode(context->getChildContext(Keys::Core::InputLayer));
         this->inputLayer = Layer::Ptr(new Layer(this->context, 0));
         this->inputLayer->deserialize(inputLayerNode);
         
         this->outputLayer.reset();
-        SerializationContext::Ptr outputLayerNode(root->getChildContext(Serialization::Core::OutputLayer));
+        SerializationContext::Ptr outputLayerNode(context->getChildContext(Keys::Core::OutputLayer));
         this->outputLayer = Layer::Ptr(new Layer(this->context, 0));
         this->outputLayer->deserialize(outputLayerNode);
         
         this->hiddenLayers.clear();
-        SerializationContext::Ptr allHiddenLayersNode(root->getChildContext(Serialization::Core::HiddenLayers));
+        SerializationContext::Ptr allHiddenLayersNode(context->getChildContext(Keys::Core::HiddenLayers));
         
         for (size_t i = 0; i < allHiddenLayersNode->getNumChildrenContexts(); ++i)
         {
@@ -258,7 +255,7 @@ namespace TinyRNN
             this->hiddenLayers.push_back(layer);
         }
         
-        SerializationContext::Ptr connectionsNode(root->getChildContext(Serialization::Core::Connections));
+        SerializationContext::Ptr connectionsNode(context->getChildContext(Keys::Core::Connections));
         
         for (size_t i = 0; i < connectionsNode->getNumChildrenContexts(); ++i)
         {
@@ -286,30 +283,29 @@ namespace TinyRNN
     
     inline void Network::serialize(SerializationContext::Ptr context) const
     {
-        SerializationContext::Ptr networkNode(context->createChildContext(Serialization::Core::Network));
-        networkNode->setStringProperty(this->uuid, Serialization::Core::Uuid);
-        networkNode->setStringProperty(this->name, Serialization::Core::Name);
+        context->setStringProperty(this->uuid, Keys::Core::Uuid);
+        context->setStringProperty(this->name, Keys::Core::Name);
         
-        SerializationContext::Ptr inputLayerNode(networkNode->createChildContext(Serialization::Core::InputLayer));
+        SerializationContext::Ptr inputLayerNode(context->createChildContext(Keys::Core::InputLayer));
         this->inputLayer->serialize(inputLayerNode);
         
-        SerializationContext::Ptr allHiddenLayersNode(networkNode->createChildContext(Serialization::Core::HiddenLayers));
+        SerializationContext::Ptr allHiddenLayersNode(context->createChildContext(Keys::Core::HiddenLayers));
         
         for (const auto &layer : this->hiddenLayers)
         {
-            SerializationContext::Ptr hiddenLayerNode(allHiddenLayersNode->createChildContext(Serialization::Core::Layer));
+            SerializationContext::Ptr hiddenLayerNode(allHiddenLayersNode->createChildContext(Keys::Core::Layer));
             layer->serialize(hiddenLayerNode);
         }
         
-        SerializationContext::Ptr outputLayerNode(networkNode->createChildContext(Serialization::Core::OutputLayer));
+        SerializationContext::Ptr outputLayerNode(context->createChildContext(Keys::Core::OutputLayer));
         this->outputLayer->serialize(outputLayerNode);
         
-        SerializationContext::Ptr allConnectionsNode(networkNode->createChildContext(Serialization::Core::Connections));
+        SerializationContext::Ptr allConnectionsNode(context->createChildContext(Keys::Core::Connections));
         Neuron::Connection::SortedMap allConnections(this->findAllConnections());
         
         for (const auto &i : allConnections)
         {
-            SerializationContext::Ptr connectionNode(allConnectionsNode->createChildContext(Serialization::Core::Connection));
+            SerializationContext::Ptr connectionNode(allConnectionsNode->createChildContext(Keys::Core::Connection));
             const Neuron::Connection::Ptr connection = i.second;
             connection->serialize(connectionNode);
         }

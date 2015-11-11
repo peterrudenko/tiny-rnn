@@ -40,6 +40,9 @@ namespace TinyRNN
         virtual void setRealProperty(double value, const std::string &key) = 0;
         virtual double getRealProperty(const std::string &key) const = 0;
         
+        virtual void setNumberProperty(long long value, const std::string &key) = 0;
+        virtual long long getNumberProperty(const std::string &key) const = 0;
+        
         virtual void setStringProperty(const std::string &value, const std::string &key) = 0;
         virtual std::string getStringProperty(const std::string &key) const = 0;
         
@@ -51,7 +54,7 @@ namespace TinyRNN
         
         static inline std::string encodeBase64(unsigned char const *bytesToEncode, size_t inLen);
         static inline std::string encodeBase64(const std::string &sourceString);
-        static inline std::string decodeBase64(const std::string &encodedString);
+        static inline std::vector<unsigned char> decodeBase64(const std::string &encodedString);
     };
     
     static const std::string base64Chars =
@@ -84,7 +87,9 @@ namespace TinyRNN
                 char_array_4[3] = char_array_3[2] & 0x3f;
                 
                 for (i = 0; (i < 4) ; i++)
-                { ret += base64Chars[char_array_4[i]]; }
+                {
+                    ret += base64Chars[char_array_4[i]];
+                }
                 
                 i = 0;
             }
@@ -93,7 +98,9 @@ namespace TinyRNN
         if (i)
         {
             for (j = i; j < 3; j++)
-            { char_array_3[j] = '\0'; }
+            {
+                char_array_3[j] = '\0';
+            }
             
             char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
             char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
@@ -101,10 +108,14 @@ namespace TinyRNN
             char_array_4[3] = char_array_3[2] & 0x3f;
             
             for (j = 0; (j < i + 1); j++)
-            { ret += base64Chars[char_array_4[j]]; }
+            {
+                ret += base64Chars[char_array_4[j]];
+            }
             
             while ((i++ < 3))
-            { ret += '='; }
+            {
+                ret += '=';
+            }
         }
         
         return ret;
@@ -115,14 +126,14 @@ namespace TinyRNN
         return SerializationContext::encodeBase64((const unsigned char *)s.data(), s.length());
     }
     
-    inline std::string SerializationContext::decodeBase64(const std::string &encodedString)
+    inline std::vector<unsigned char> SerializationContext::decodeBase64(const std::string &encodedString)
     {
         size_t in_len = encodedString.size();
         int i = 0;
         int j = 0;
         int in_ = 0;
         unsigned char char_array_4[4], char_array_3[3];
-        std::string ret;
+        std::vector<unsigned char> ret;
         
         while (in_len-- && (encodedString[in_] != '=') && is_base64(encodedString[in_]))
         {
@@ -132,14 +143,18 @@ namespace TinyRNN
             if (i == 4)
             {
                 for (i = 0; i < 4; i++)
-                { char_array_4[i] = base64Chars.find(char_array_4[i]); }
+                {
+                    char_array_4[i] = base64Chars.find(char_array_4[i]);
+                }
                 
                 char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
                 char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
                 char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
                 
                 for (i = 0; (i < 3); i++)
-                { ret += char_array_3[i]; }
+                {
+                    ret.push_back(char_array_3[i]);
+                }
                 
                 i = 0;
             }
@@ -148,16 +163,23 @@ namespace TinyRNN
         if (i)
         {
             for (j = i; j < 4; j++)
-            { char_array_4[j] = 0; }
+            {
+                char_array_4[j] = 0;
+            }
             
             for (j = 0; j < 4; j++)
-            { char_array_4[j] = base64Chars.find(char_array_4[j]); }
+            {
+                char_array_4[j] = base64Chars.find(char_array_4[j]);
+            }
             
             char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
             char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
             char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
             
-            for (j = 0; (j < i - 1); j++) { ret += char_array_3[j]; }
+            for (j = 0; (j < i - 1); j++)
+            {
+                ret.push_back(char_array_3[j]);
+            }
         }
         
         return ret;

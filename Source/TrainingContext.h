@@ -200,14 +200,11 @@ namespace TinyRNN
     
     inline void TrainingContext::deserialize(SerializationContext::Ptr context)
     {
-        SerializationContext::Ptr stateNode(context->getChildContext(Serialization::Core::TrainingContext));
-        SerializationContext::Ptr root((stateNode != nullptr) ? stateNode : context);
-        
-        this->uuid = root->getStringProperty(Serialization::Core::Uuid);
-        this->name = root->getStringProperty(Serialization::Core::Name);
+        this->uuid = context->getStringProperty(Keys::Core::Uuid);
+        this->name = context->getStringProperty(Keys::Core::Name);
         
         this->neuronContexts.clear();
-        SerializationContext::Ptr neuronStatesNode(root->getChildContext(Serialization::Core::NeuronContexts));
+        SerializationContext::Ptr neuronStatesNode(context->getChildContext(Keys::Core::NeuronContexts));
         
         for (size_t i = 0; i < neuronStatesNode->getNumChildrenContexts(); ++i)
         {
@@ -218,7 +215,7 @@ namespace TinyRNN
         }
         
         this->connectionContexts.clear();
-        SerializationContext::Ptr connectionStatesNode(root->getChildContext(Serialization::Core::ConnectionContexts));
+        SerializationContext::Ptr connectionStatesNode(context->getChildContext(Keys::Core::ConnectionContexts));
         
         for (size_t i = 0; i < connectionStatesNode->getNumChildrenContexts(); ++i)
         {
@@ -231,24 +228,22 @@ namespace TinyRNN
     
     inline void TrainingContext::serialize(SerializationContext::Ptr context) const
     {
-        SerializationContext::Ptr stateNode(context->createChildContext(Serialization::Core::TrainingContext));
+        context->setStringProperty(this->uuid, Keys::Core::Uuid);
+        context->setStringProperty(this->name, Keys::Core::Name);
         
-        stateNode->setStringProperty(this->uuid, Serialization::Core::Uuid);
-        stateNode->setStringProperty(this->name, Serialization::Core::Name);
-        
-        SerializationContext::Ptr neuronStatesNode(stateNode->createChildContext(Serialization::Core::NeuronContexts));
+        SerializationContext::Ptr neuronStatesNode(context->createChildContext(Keys::Core::NeuronContexts));
         const NeuronData::SortedMap sortedNeuronContexts(this->neuronContexts.begin(), this->neuronContexts.end());
         for (const auto &i : sortedNeuronContexts)
         {
-            SerializationContext::Ptr neuronNode(neuronStatesNode->createChildContext(Serialization::Core::TrainingNeuronContext));
+            SerializationContext::Ptr neuronNode(neuronStatesNode->createChildContext(Keys::Core::TrainingNeuronContext));
             i.second->serialize(neuronNode);
         }
         
-        SerializationContext::Ptr connectionStatesNode(stateNode->createChildContext(Serialization::Core::ConnectionContexts));
+        SerializationContext::Ptr connectionStatesNode(context->createChildContext(Keys::Core::ConnectionContexts));
         const ConnectionData::SortedMap sortedConnectionContexts(this->connectionContexts.begin(), this->connectionContexts.end());
         for (const auto &i : sortedConnectionContexts)
         {
-            SerializationContext::Ptr connectionNode(connectionStatesNode->createChildContext(Serialization::Core::TrainingConnectionContext));
+            SerializationContext::Ptr connectionNode(connectionStatesNode->createChildContext(Keys::Core::TrainingConnectionContext));
             i.second->serialize(connectionNode);
         }
     }
@@ -292,28 +287,28 @@ namespace TinyRNN
     
     inline void TrainingContext::NeuronData::deserialize(SerializationContext::Ptr context)
     {
-        this->neuronUuid = context->getStringProperty(Serialization::Core::NeuronUuid);
-        this->bias = context->getRealProperty(Serialization::Core::Bias);
-        this->activation = context->getRealProperty(Serialization::Core::Activation);
-        this->derivative = context->getRealProperty(Serialization::Core::Derivative);
-        this->state = context->getRealProperty(Serialization::Core::State);
-        this->oldState = context->getRealProperty(Serialization::Core::OldState);
-        this->errorResponsibility = context->getRealProperty(Serialization::Core::ErrorResponsibility);
-        this->projectedActivity = context->getRealProperty(Serialization::Core::ProjectedActivity);
-        this->gatingActivity = context->getRealProperty(Serialization::Core::GatingActivity);
+        this->neuronUuid = context->getStringProperty(Keys::Core::NeuronUuid);
+        this->bias = context->getRealProperty(Keys::Core::Bias);
+        this->activation = context->getRealProperty(Keys::Core::Activation);
+        this->derivative = context->getRealProperty(Keys::Core::Derivative);
+        this->state = context->getRealProperty(Keys::Core::State);
+        this->oldState = context->getRealProperty(Keys::Core::OldState);
+        this->errorResponsibility = context->getRealProperty(Keys::Core::ErrorResponsibility);
+        this->projectedActivity = context->getRealProperty(Keys::Core::ProjectedActivity);
+        this->gatingActivity = context->getRealProperty(Keys::Core::GatingActivity);
     }
     
     inline void TrainingContext::NeuronData::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->neuronUuid, Serialization::Core::NeuronUuid);
-        context->setRealProperty(this->bias, Serialization::Core::Bias);
-        context->setRealProperty(this->activation, Serialization::Core::Activation);
-        context->setRealProperty(this->derivative, Serialization::Core::Derivative);
-        context->setRealProperty(this->state, Serialization::Core::State);
-        context->setRealProperty(this->oldState, Serialization::Core::OldState);
-        context->setRealProperty(this->errorResponsibility, Serialization::Core::ErrorResponsibility);
-        context->setRealProperty(this->projectedActivity, Serialization::Core::ProjectedActivity);
-        context->setRealProperty(this->gatingActivity, Serialization::Core::GatingActivity);
+        context->setStringProperty(this->neuronUuid, Keys::Core::NeuronUuid);
+        context->setRealProperty(this->bias, Keys::Core::Bias);
+        context->setRealProperty(this->activation, Keys::Core::Activation);
+        context->setRealProperty(this->derivative, Keys::Core::Derivative);
+        context->setRealProperty(this->state, Keys::Core::State);
+        context->setRealProperty(this->oldState, Keys::Core::OldState);
+        context->setRealProperty(this->errorResponsibility, Keys::Core::ErrorResponsibility);
+        context->setRealProperty(this->projectedActivity, Keys::Core::ProjectedActivity);
+        context->setRealProperty(this->gatingActivity, Keys::Core::GatingActivity);
     }
     
     // =============================================================================
@@ -343,16 +338,16 @@ namespace TinyRNN
     
     inline void TrainingContext::ConnectionData::deserialize(SerializationContext::Ptr context)
     {
-        this->connectionUuid = context->getStringProperty(Serialization::Core::ConnectionUuid);
-        this->weight = context->getRealProperty(Serialization::Core::Weight);
-        this->gain = context->getRealProperty(Serialization::Core::Gain);
+        this->connectionUuid = context->getStringProperty(Keys::Core::ConnectionUuid);
+        this->weight = context->getRealProperty(Keys::Core::Weight);
+        this->gain = context->getRealProperty(Keys::Core::Gain);
     }
     
     inline void TrainingContext::ConnectionData::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->connectionUuid, Serialization::Core::ConnectionUuid);
-        context->setRealProperty(this->weight, Serialization::Core::Weight);
-        context->setRealProperty(this->gain, Serialization::Core::Gain);
+        context->setStringProperty(this->connectionUuid, Keys::Core::ConnectionUuid);
+        context->setRealProperty(this->weight, Keys::Core::Weight);
+        context->setRealProperty(this->gain, Keys::Core::Gain);
     }
 }
 

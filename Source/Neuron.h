@@ -635,13 +635,13 @@ namespace TinyRNN
     
     inline void Neuron::deserialize(SerializationContext::Ptr context)
     {
-        this->uuid = context->getStringProperty(Serialization::Core::Uuid);
+        this->uuid = context->getStringProperty(Keys::Core::Uuid);
         // selfconnection will be restored in network deserialization
     }
     
     inline void Neuron::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->uuid, Serialization::Core::Uuid);
+        context->setStringProperty(this->uuid, Keys::Core::Uuid);
     }
     
     // =============================================================================
@@ -753,18 +753,18 @@ namespace TinyRNN
     
     inline void Neuron::Connection::deserialize(SerializationContext::Ptr context)
     {
-        this->uuid = context->getStringProperty(Serialization::Core::Uuid);
-        this->inputNeuronUuid = context->getStringProperty(Serialization::Core::InputNeuronUuid);
-        this->gateNeuronUuid = context->getStringProperty(Serialization::Core::GateNeuronUuid);
-        this->outputNeuronUuid = context->getStringProperty(Serialization::Core::OutputNeuronUuid);
+        this->uuid = context->getStringProperty(Keys::Core::Uuid);
+        this->inputNeuronUuid = context->getStringProperty(Keys::Core::InputNeuronUuid);
+        this->gateNeuronUuid = context->getStringProperty(Keys::Core::GateNeuronUuid);
+        this->outputNeuronUuid = context->getStringProperty(Keys::Core::OutputNeuronUuid);
     }
     
     inline void Neuron::Connection::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->uuid, Serialization::Core::Uuid);
-        context->setStringProperty(this->inputNeuronUuid, Serialization::Core::InputNeuronUuid);
-        context->setStringProperty(this->gateNeuronUuid, Serialization::Core::GateNeuronUuid);
-        context->setStringProperty(this->outputNeuronUuid, Serialization::Core::OutputNeuronUuid);
+        context->setStringProperty(this->uuid, Keys::Core::Uuid);
+        context->setStringProperty(this->inputNeuronUuid, Keys::Core::InputNeuronUuid);
+        context->setStringProperty(this->gateNeuronUuid, Keys::Core::GateNeuronUuid);
+        context->setStringProperty(this->outputNeuronUuid, Keys::Core::OutputNeuronUuid);
     }
 }
 
