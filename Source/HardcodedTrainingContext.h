@@ -28,6 +28,7 @@
 #include "Common.h"
 #include "SerializedObject.h"
 #include <iostream>
+#include <sstream>
 
 namespace TinyRNN
 {

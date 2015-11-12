@@ -256,7 +256,6 @@ namespace TinyRNN
                 const bool inputConnectionHasGate = (inputConnection->getGateNeuron() != nullptr);
                 
                 // elegibility trace - Eq. 17
-                const double oldElegibility = target->eligibility[inputConnection->getUuid()];
                 const auto inputConnectionData = inputConnection->getTrainingData();
                 const auto inputNeuronData = inputNeuron->getTrainingData();
                 
@@ -332,10 +331,6 @@ namespace TinyRNN
                     const size_t influenceVar =
                     context->allocateOrReuseVariable(influence,
                     {neighbour->getUuid(), Keys::Core::Influence});
-                    
-                    const size_t neighbourOldStateVar =
-                    context->allocateOrReuseVariable(neighbourData->oldState,
-                    {neighbour->getUuid(), Keys::Core::OldState});
                     
                     const size_t eligibilityVar =
                     context->allocateOrReuseVariable(target->eligibility[inputConnection->getUuid()],
@@ -771,7 +766,7 @@ namespace TinyRNN
             
             for (auto &j : map)
             {
-                const std::string &inputConnectionUuid = i.first;
+                const std::string &inputConnectionUuid = j.first;
                 
                 const double extendedTrace =
                 context->evaluateVariable({target->getUuid(), neighbourNeuronUuid, inputConnectionUuid, Keys::Core::ExtendedTrace},
