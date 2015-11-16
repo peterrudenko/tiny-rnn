@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="PhuwAI" name="TinyRNN" projectType="consoleapp" version="0.1.0"
               bundleIdentifier="com.peterrudenko.tinyrnn" includeBinaryInAppConfig="0"
-              jucerVersion="3.1.1">
+              jucerVersion="4.0.1">
   <MAINGROUP id="BlmyBH" name="TinyRNN">
     <GROUP id="{229ADAC7-2B67-4150-EF50-69F48AE93020}" name="Source">
       <GROUP id="{37081272-07CE-E346-3FD7-D4EAB058F64C}" name="OpenCL">
@@ -29,7 +29,7 @@
               file="../../Source/SerializationKeys.h"/>
         <FILE id="VgZOKo" name="Serializer.h" compile="0" resource="0" file="../../Source/Serializer.h"/>
       </GROUP>
-      <GROUP id="{56659214-05EC-C8E9-6225-0E8F8A1F34D6}" name="Tools">
+      <GROUP id="{56659214-05EC-C8E9-6225-0E8F8A1F34D6}" name="Helpers">
         <FILE id="EUTNqw" name="ScopedMemoryBlock.h" compile="0" resource="0"
               file="../../Source/ScopedMemoryBlock.h"/>
         <FILE id="mRAFkW" name="ScopedSubscription.h" compile="0" resource="0"
@@ -44,11 +44,10 @@
       <GROUP id="{C9039B32-4A88-8A9C-6422-3EDF20F8920F}" name="ThirdParty">
         <FILE id="BysXHM" name="pugixml.cpp" compile="1" resource="0" file="../../Tests/ThirdParty/pugixml.cpp"/>
       </GROUP>
+      <FILE id="YMPy4C" name="Helpers.h" compile="0" resource="0" file="../../Tests/Helpers.h"/>
       <FILE id="IjueW4" name="Main.cpp" compile="1" resource="0" file="../../Tests/Main.cpp"/>
-      <FILE id="RPttLp" name="LayerTests.cpp" compile="1" resource="0" file="../../Tests/LayerTests.cpp"/>
       <FILE id="CUGxk9" name="NetworkTests.cpp" compile="1" resource="0"
             file="../../Tests/NetworkTests.cpp"/>
-      <FILE id="woV93A" name="NeuronTests.cpp" compile="1" resource="0" file="../../Tests/NeuronTests.cpp"/>
       <FILE id="CN0NPA" name="TrainingTests.cpp" compile="1" resource="0"
             file="../../Tests/TrainingTests.cpp"/>
       <FILE id="pcvDd6" name="SerializationTests.cpp" compile="1" resource="0"

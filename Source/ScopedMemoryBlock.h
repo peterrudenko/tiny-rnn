@@ -70,8 +70,7 @@ namespace TinyRNN
         T *data;
         size_t size;
         
-        ScopedMemoryBlock(const ScopedMemoryBlock&) = delete;
-        ScopedMemoryBlock &operator =(const ScopedMemoryBlock &) = delete;
+        TINYRNN_DISALLOW_COPY_AND_ASSIGN(ScopedMemoryBlock);
     };
 }
 

@@ -21,6 +21,7 @@
 */
 
 #include "ThirdParty/catch.hpp"
+#include "Helpers.h"
 #include "Network.h"
 #include <float.h>
 
@@ -30,14 +31,10 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
 {
     GIVEN("A single-layer perceptron")
     {
-        std::random_device randomDevice;
-        std::mt19937 mt19937(randomDevice());
-        std::uniform_int_distribution<unsigned int> distribution(1500, 2000);
+        const int numIterations = RANDOM(1500, 2000);
+        const auto networkName = RANDOMNAME();
         
-        const int numIterations = distribution(mt19937);
-        
-        const auto networkName = Uuid::generate();
-//        const auto contextName = Uuid::generate();
+//        const auto contextName = RANDOMNAME();
 //
 //        TrainingContext::Ptr context(new TrainingContext(contextName));
 //        REQUIRE(context->getName() == contextName);
@@ -163,58 +160,13 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
     }
 }
 
-// todo
-template<class T>
-class CrossEntropyTrainingSession final
-{
-public:
-    
-    CrossEntropyTrainingSession(typename T::Ptr targetNetwork, double initialRate = 0.5) :
-    network(targetNetwork),
-    rate(initialRate)
-    {
-    }
-    
-    
-    
-    double iterate(const Neuron::Values &inputs,
-                   const Neuron::Values &targets,
-                   const Neuron::Values &rate) const
-    {
-        const auto &outputs = this->network->feed(inputs);
-        this->network->train(rate, targets);
-        double error = this->cost(targets, outputs);
-        return error;
-    }
-    
-    double cost(const Neuron::Values &targets,
-                const Neuron::Values &outputs) const
-    {
-        double cost = 0.0;
-        
-        for (size_t i = 0; i < outputs.size(); ++i)
-        {
-            cost -= (targets[i] * log(outputs[i] + DBL_MIN)) + ((1 - targets[i]) * log(DBL_MIN - outputs[i]));
-        }
-        
-        return cost;
-    }
-    
-private:
-    
-    typename T::Ptr network;
-    
-    double rate;
-    
-};
-
 #if TINYRNN_OPENCL_ACCELERATION
 
 SCENARIO("Network can be recovered back from the trained hardcoded version", "[training]")
 {
     GIVEN("LSTM network and its hardcoded version")
     {
-        const auto networkName = Uuid::generate();
+        const auto networkName = RANDOMNAME();
         Network::Ptr network = Network::Prefabs::longShortTermMemory(networkName, 2, {3, 3}, 1);
         
         HardcodedNetwork::Ptr clNetwork = network->hardcode();
@@ -292,53 +244,18 @@ SCENARIO("Network can be recovered back from the trained hardcoded version", "[t
 
 #endif
 
-//SCENARIO("A perceptron can be trained with a custom function", "[training]")
+//SCENARIO("A perceptron can be trained to model a custom function", "[training]")
 //{
-//    GIVEN("A multi-layer perceptron")
+//    GIVEN("A deep belief network")
 //    {
-//        std::random_device randomDevice;
-//        std::mt19937 mt19937(randomDevice());
-//        std::uniform_int_distribution<unsigned int> numIterationsDistribution(10, 100);
-//        std::uniform_int_distribution<unsigned int> numHiddenLayersDistribution(1000, 5000);
-//
-//        const int numIterations = numIterationsDistribution(mt19937);
-//        const int numHiddenLayers = numHiddenLayersDistribution(mt19937);
+//        const int numIterations = RANDOM(1000, 2000);
+//        const int numHiddenLayers = RANDOM(10, 100);
+//        const auto networkName = RANDOMNAME();
 //        
-//        const auto contextName = Uuid::generate();
-//        const auto networkName = Uuid::generate();
-//        
-//        TrainingContext::Ptr context(new TrainingContext(contextName));
-//        REQUIRE(context->getName() == contextName);
-//        
-//        std::vector<Layer::Ptr> hiddenLayers;
-//        Layer::Ptr prevHiddenLayer = nullptr;
-//        Layer::Ptr inputLayer(new Layer(context, 2));
-//        
-//        for (int i = 0; i < numHiddenLayers; ++i)
-//        {
-//            Layer::Ptr hiddenLayer(new Layer(context, 10));
-//            
-//            if (i == 0)
-//            {
-//                inputLayer->connectAllToAll(hiddenLayer);
-//            }
-//            else if (prevHiddenLayer != nullptr)
-//            {
-//                prevHiddenLayer->connectAllToAll(hiddenLayer);
-//            }
-//            
-//            prevHiddenLayer = hiddenLayer;
-//            hiddenLayers.push_back(hiddenLayer);
-//        }
-//        
-//        Layer::Ptr outputLayer(new Layer(context, 1));
-//        prevHiddenLayer->connectAllToAll(outputLayer);
-//        
-//        Network::Ptr network(new Network(networkName, context, inputLayer, hiddenLayers, outputLayer));
+//        Network::Ptr network = Network::Prefabs::feedForward(networkName, 4, { 128, 64, 32, 16, 8, 4, 2 }, 1);
 //        REQUIRE(network->getName() == networkName);
-//        REQUIRE(network->getContext() == context);
 //        
-//        WHEN("the network is trained with some random number of iterations (from 1000 to 5000)")
+//        WHEN("the network is trained with some random number of iterations")
 //        {
 //            // todo
 //            
@@ -348,4 +265,29 @@ SCENARIO("Network can be recovered back from the trained hardcoded version", "[t
 //            }
 //        }
 //    }
+//    
+//#if TINYRNN_OPENCL_ACCELERATION
+//    
+//    GIVEN("A hardcoded deep belief network")
+//    {
+//        const int numIterations = RANDOM(1000, 2000);
+//        const int numHiddenLayers = RANDOM(10, 100);
+//        const auto networkName = RANDOMNAME();
+//        
+//        Network::Ptr network = Network::Prefabs::feedForward(networkName, 4, { 128, 64, 32, 16, 8, 4, 2 }, 1);
+//        HardcodedNetwork::Ptr clNetwork = network->hardcode();
+//        clNetwork->compile();
+//        
+//        WHEN("the network is trained with some random number of iterations")
+//        {
+//            // todo
+//            
+//            THEN("it gives a reasonable output")
+//            {
+//                // todo
+//            }
+//        }
+//    }
+//    
+//#endif
 //}

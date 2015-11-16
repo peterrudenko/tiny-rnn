@@ -24,6 +24,7 @@
 #define TINYRNN_UUID_H_INCLUDED
 
 #include <climits>
+#include <random>
 
 namespace TinyRNN
 {
@@ -31,11 +32,9 @@ namespace TinyRNN
     {
     public:
         
-#if TINYRNN_GENERATE_ISO_UUIDS
-        
 #define UUID_LENGTH 16
 
-        static std::string generate()
+        static std::string generateIsoUuid()
         {
             static std::random_device randomDevice;
             static std::mt19937 mt19937(randomDevice());
@@ -65,17 +64,21 @@ namespace TinyRNN
             return result;
         }
         
-#else
-        
-        static std::string generate()
+        static std::string generateSimpleId()
         {
             static unsigned long long kRecentId = 0;
             const std::string result = std::to_string(kRecentId++);
             return result;
         }
-        
+
+        static inline std::string generate()
+        {
+#if TINYRNN_GENERATE_ISO_UUIDS
+            return generateIsoUuid();
+#else
+            return generateSimpleId();
 #endif
-        
+        }
     };
 }
 
