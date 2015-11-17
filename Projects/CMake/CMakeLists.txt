@@ -27,7 +27,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 --coverage")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 
-file(GLOB_RECURSE SOURCES "${TINY_RNN_TEST_DIR}/*.cpp")
+file(GLOB SOURCES "${TINY_RNN_TEST_DIR}/*.cpp")
+list(APPEND SOURCES "${TINY_RNN_TEST_DIR}/ThirdParty/pugixml/src/pugixml.cpp")
 
 # configure the executable
 

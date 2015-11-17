@@ -20,7 +20,7 @@
     OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "ThirdParty/catch.hpp"
+#include "ThirdParty/Catch/include/catch.hpp"
 #include "Helpers.h"
 #include "Network.h"
 #include <float.h>
@@ -56,7 +56,7 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
         
         Network::Ptr network = Network::Prefabs::longShortTermMemory(networkName, 2, {3, 3}, 1);
         
-        WHEN("the network is trained with some random number of iterations (from 1500 to 2000)")
+        WHEN("The network is trained with some random number of iterations (from 1500 to 2000)")
         {
             {
                 const ScopedTimer timer("Training usual network");
@@ -78,7 +78,7 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
                 }
             }
             
-            THEN("it gives a reasonable output")
+            THEN("It gives a reasonable output")
             {
                 const auto result1 = network->feed({0.0, 1.0});
                 REQUIRE(result1.size() == 1);
@@ -104,7 +104,7 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
         
 #if TINYRNN_OPENCL_ACCELERATION
         
-        WHEN("the hardcoded network is trained with some random number of iterations (from 500 to 1000)")
+        WHEN("The hardcoded network is trained with some random number of iterations")
         {
             network->getContext()->clear();
             
@@ -131,7 +131,7 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
                 }
             }
             
-            THEN("it gives a reasonable output")
+            THEN("It gives a reasonable output")
             {
                 const auto result1 = clNetwork->feed({0.0, 1.0});
                 REQUIRE(result1.size() == 1);
@@ -172,7 +172,7 @@ SCENARIO("Network can be recovered back from the trained hardcoded version", "[t
         HardcodedNetwork::Ptr clNetwork = network->hardcode();
         clNetwork->compile();
         
-        WHEN("The hardcoded hetwork is trained and the usual network context is restored from the hardcoded one")
+        WHEN("The hardcoded network is trained and the usual network context is restored from the hardcoded one")
         {
             {
                 const ScopedTimer timer("Training hardcoded network");
@@ -244,6 +244,19 @@ SCENARIO("Network can be recovered back from the trained hardcoded version", "[t
 
 #endif
 
+//static double crossEntropyErrorCost(const Neuron::Values &targets, const Neuron::Values &outputs)
+//{
+//    double cost = 0.0;
+//    
+//    for (size_t i = 0; i < outputs.size(); ++i)
+//    {
+//        cost -= ((targets[i] * log(outputs[i] + DBL_MIN)) +
+//                 ((1 - targets[i]) * log(DBL_MIN - outputs[i])));
+//    }
+//    
+//    return cost;
+//}
+
 //SCENARIO("A perceptron can be trained to model a custom function", "[training]")
 //{
 //    GIVEN("A deep belief network")
@@ -257,10 +270,14 @@ SCENARIO("Network can be recovered back from the trained hardcoded version", "[t
 //        
 //        WHEN("the network is trained with some random number of iterations")
 //        {
-//            // todo
+//            for (int i = 0; i < numIterations; ++i)
+//            {
+//                // todo
+//            }
 //            
 //            THEN("it gives a reasonable output")
 //            {
+//                
 //                // todo
 //            }
 //        }

@@ -42,7 +42,7 @@
     </GROUP>
     <GROUP id="{4CA1E7BC-4892-AAD0-EB15-BE1840F65C53}" name="Tests">
       <GROUP id="{C9039B32-4A88-8A9C-6422-3EDF20F8920F}" name="ThirdParty">
-        <FILE id="BysXHM" name="pugixml.cpp" compile="1" resource="0" file="../../Tests/ThirdParty/pugixml.cpp"/>
+        <FILE id="raYyxw" name="pugixml.cpp" compile="1" resource="0" file="../../Tests/ThirdParty/pugixml/src/pugixml.cpp"/>
       </GROUP>
       <FILE id="YMPy4C" name="Helpers.h" compile="0" resource="0" file="../../Tests/Helpers.h"/>
       <FILE id="IjueW4" name="Main.cpp" compile="1" resource="0" file="../../Tests/Main.cpp"/>
@@ -64,15 +64,6 @@
       </CONFIGURATIONS>
       <MODULEPATHS/>
     </XCODE_MAC>
-    <LINUX_MAKE targetFolder="../LinuxMakefile" extraDefs="TINYRNN_OPENCL_ACCELERATION=1">
-      <CONFIGURATIONS>
-        <CONFIGURATION name="Debug" libraryPath="/usr/X11R6/lib/" isDebug="1" optimisation="1"
-                       targetName="TinyRNN"/>
-        <CONFIGURATION name="Release" libraryPath="/usr/X11R6/lib/" isDebug="0" optimisation="3"
-                       targetName="TinyRNN"/>
-      </CONFIGURATIONS>
-      <MODULEPATHS/>
-    </LINUX_MAKE>
   </EXPORTFORMATS>
   <MODULES/>
   <JUCEOPTIONS/>

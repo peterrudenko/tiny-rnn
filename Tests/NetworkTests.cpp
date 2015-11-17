@@ -20,7 +20,7 @@
     OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "ThirdParty/catch.hpp"
+#include "ThirdParty/Catch/include/catch.hpp"
 #include "Helpers.h"
 #include "Network.h"
 

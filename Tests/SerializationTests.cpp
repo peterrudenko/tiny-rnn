@@ -20,8 +20,8 @@
     OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "ThirdParty/catch.hpp"
-#include "ThirdParty/pugixml.hpp"
+#include "ThirdParty/Catch/include/catch.hpp"
+#include "ThirdParty/pugixml/src/pugixml.hpp"
 #include "Helpers.h"
 #include "Serializer.h"
 #include "Network.h"
