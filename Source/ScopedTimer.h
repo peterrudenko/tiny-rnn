@@ -50,8 +50,7 @@ namespace TinyRNN
         std::chrono::high_resolution_clock::time_point startTime;
         std::string name;
         
-        ScopedTimer(const ScopedTimer&) = delete;
-        ScopedTimer &operator =(const ScopedTimer &) = delete;
+        TINYRNN_DISALLOW_COPY_AND_ASSIGN(ScopedTimer);
     };
 }
 

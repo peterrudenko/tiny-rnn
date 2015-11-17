@@ -8,21 +8,18 @@
 
 		D42D818C2C497E7E1D3B10A2 = {isa = PBXBuildFile; fileRef = A565F4A239A4281A78B67CE6; };
 		67B8C7DCBB339E0B75934FF2 = {isa = PBXBuildFile; fileRef = 91D375D0D4DADC71298CD099; };
-		9A8BC3012E15F8F94B235D4C = {isa = PBXBuildFile; fileRef = 1AF0857569D4E50B4DDCD549; };
+		E0BA8E740E43E5632FFD47CC = {isa = PBXBuildFile; fileRef = 422CC6B7CB0B62D817723B88; };
 		D3D4B8A52064E85835949FCE = {isa = PBXBuildFile; fileRef = 5438EDADAC8806D907A553B6; };
-		E6F4EDF34A70EEC626F304EF = {isa = PBXBuildFile; fileRef = 301F80D82790F44C39A099D3; };
 		B188DE7B3B1A5775015290B1 = {isa = PBXBuildFile; fileRef = E257FD8197AB7B3F42331FF3; };
-		BE372407BEDD439B494B227F = {isa = PBXBuildFile; fileRef = 14D05889396E8E0897397C30; };
 		6B6508CB28975F56A4623FEC = {isa = PBXBuildFile; fileRef = 9C110B6697F6512695FDCE5D; };
 		5864069FFF7DA1DE0653796C = {isa = PBXBuildFile; fileRef = 9632B60FF767369214AA1A92; };
 		099D9AEFE3B7A6853326116F = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Neuron.h; path = ../../Source/Neuron.h; sourceTree = "SOURCE_ROOT"; };
+		0B7696AB97F33A13E27DA70C = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Helpers.h; path = ../../Tests/Helpers.h; sourceTree = "SOURCE_ROOT"; };
 		0F0DE9C3DC5EE56D8D0151FB = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedSubscription.h; path = ../../Source/ScopedSubscription.h; sourceTree = "SOURCE_ROOT"; };
-		14D05889396E8E0897397C30 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = NeuronTests.cpp; path = ../../Tests/NeuronTests.cpp; sourceTree = "SOURCE_ROOT"; };
 		18BD39736F5F8320A3E4EA6E = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializationKeys.h; path = ../../Source/SerializationKeys.h; sourceTree = "SOURCE_ROOT"; };
 		19738E9BF5A4A91A9ADC2A2E = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Uuid.h; path = ../../Source/Uuid.h; sourceTree = "SOURCE_ROOT"; };
-		1AF0857569D4E50B4DDCD549 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = pugixml.cpp; path = ../../Tests/ThirdParty/pugixml.cpp; sourceTree = "SOURCE_ROOT"; };
 		2E321830528E38A62D5E4518 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializationContext.h; path = ../../Source/SerializationContext.h; sourceTree = "SOURCE_ROOT"; };
-		301F80D82790F44C39A099D3 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LayerTests.cpp; path = ../../Tests/LayerTests.cpp; sourceTree = "SOURCE_ROOT"; };
+		422CC6B7CB0B62D817723B88 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = pugixml.cpp; path = ../../Tests/ThirdParty/pugixml/src/pugixml.cpp; sourceTree = "SOURCE_ROOT"; };
 		513169F6C3A5D7C964DEE0E5 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedMemoryBlock.h; path = ../../Source/ScopedMemoryBlock.h; sourceTree = "SOURCE_ROOT"; };
 		5438EDADAC8806D907A553B6 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Main.cpp; path = ../../Tests/Main.cpp; sourceTree = "SOURCE_ROOT"; };
 		620BAE57F65D39ACEED058B9 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializedObject.h; path = ../../Source/SerializedObject.h; sourceTree = "SOURCE_ROOT"; };
@@ -62,7 +59,7 @@
 					513169F6C3A5D7C964DEE0E5,
 					0F0DE9C3DC5EE56D8D0151FB,
 					FAC89CB49C41CD0C2CA82871,
-					19738E9BF5A4A91A9ADC2A2E, ); name = Tools; sourceTree = "<group>"; };
+					19738E9BF5A4A91A9ADC2A2E, ); name = Helpers; sourceTree = "<group>"; };
 		EA77962A551859D2C0A91ACE = {isa = PBXGroup; children = (
 					BAFACB7291BBBDEDAE3AF99D,
 					BB896A6B4FADF1C8E2A8A78E,
@@ -71,13 +68,12 @@
 					D4088A052B661FB6908F390F,
 					9385973BB68033C95938BAE7, ); name = Source; sourceTree = "<group>"; };
 		72AE43419573D2728EF829DC = {isa = PBXGroup; children = (
-					1AF0857569D4E50B4DDCD549, ); name = ThirdParty; sourceTree = "<group>"; };
+					422CC6B7CB0B62D817723B88, ); name = ThirdParty; sourceTree = "<group>"; };
 		2D43549350A17FDB82BFC73C = {isa = PBXGroup; children = (
 					72AE43419573D2728EF829DC,
+					0B7696AB97F33A13E27DA70C,
 					5438EDADAC8806D907A553B6,
-					301F80D82790F44C39A099D3,
 					E257FD8197AB7B3F42331FF3,
-					14D05889396E8E0897397C30,
 					9C110B6697F6512695FDCE5D,
 					9632B60FF767369214AA1A92, ); name = Tests; sourceTree = "<group>"; };
 		5F4DE4AF3C543E8ED757063D = {isa = PBXGroup; children = (
@@ -181,11 +177,9 @@
 		9152243487172197EA5DC9B6 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (
 					67B8C7DCBB339E0B75934FF2, ); runOnlyForDeploymentPostprocessing = 0; };
 		E56E0982C3F9E13A3B420B6A = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
-					9A8BC3012E15F8F94B235D4C,
+					E0BA8E740E43E5632FFD47CC,
 					D3D4B8A52064E85835949FCE,
-					E6F4EDF34A70EEC626F304EF,
 					B188DE7B3B1A5775015290B1,
-					BE372407BEDD439B494B227F,
 					6B6508CB28975F56A4623FEC,
 					5864069FFF7DA1DE0653796C, ); runOnlyForDeploymentPostprocessing = 0; };
 		178BFE3D563E63B985438BB0 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (

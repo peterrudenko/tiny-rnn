@@ -23,6 +23,7 @@
 #ifndef TINYRNN_LEARNINGCONTEXT_H_INCLUDED
 #define TINYRNN_LEARNINGCONTEXT_H_INCLUDED
 
+#include <random>
 #include "SerializedObject.h"
 #include "SerializationKeys.h"
 #include "HardcodedTrainingContext.h"

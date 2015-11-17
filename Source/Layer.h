@@ -53,6 +53,7 @@ namespace TinyRNN
         std::string getUuid() const noexcept;
         size_t getSize() const noexcept;
         
+        Neuron::Ptr getNeuron(size_t index) const;
         Neuron::Ptr getNeuronWithId(const std::string &uuid) const;
         Neuron::Connection::Map findAllOutgoingConnections() const;
         
@@ -365,6 +366,11 @@ namespace TinyRNN
     // =============================================================================
     // Collecting data
     //
+    
+    inline Neuron::Ptr Layer::getNeuron(size_t index) const
+    {
+        return this->neurons[index];
+    }
     
     // todo optimize?
     // currently O(n), but used only in network deserialization

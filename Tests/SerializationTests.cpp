@@ -20,8 +20,9 @@
     OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "ThirdParty/catch.hpp"
-#include "ThirdParty/pugixml.hpp"
+#include "ThirdParty/Catch/include/catch.hpp"
+#include "ThirdParty/pugixml/src/pugixml.hpp"
+#include "Helpers.h"
 #include "Serializer.h"
 #include "Network.h"
 #include "Uuid.h"
@@ -39,42 +40,26 @@ public:
     
     explicit XMLSerializationContext(pugi::xml_node rootNode) : node(rootNode) {}
     
-    virtual ~XMLSerializationContext() override {}
-    
     virtual void setRealProperty(double value, const std::string &key) override
-    {
-        this->node.append_attribute(key.c_str()).set_value(value);
-    }
+    { this->node.append_attribute(key.c_str()).set_value(value); }
     
     virtual double getRealProperty(const std::string &key) const override
-    {
-        return this->node.attribute(key.c_str()).as_double();
-    }
+    { return this->node.attribute(key.c_str()).as_double(); }
     
     virtual void setNumberProperty(long long value, const std::string &key) override
-    {
-        this->node.append_attribute(key.c_str()).set_value(value);
-    }
+    { this->node.append_attribute(key.c_str()).set_value(value); }
     
     virtual long long getNumberProperty(const std::string &key) const override
-    {
-        return this->node.attribute(key.c_str()).as_llong();
-    }
+    { return this->node.attribute(key.c_str()).as_llong(); }
     
     virtual void setStringProperty(const std::string &value, const std::string &key) override
-    {
-        this->node.append_attribute(key.c_str()).set_value(value.c_str());
-    }
+    { this->node.append_attribute(key.c_str()).set_value(value.c_str()); }
     
     virtual std::string getStringProperty(const std::string &key) const override
-    {
-        return std::string(this->node.attribute(key.c_str()).as_string());
-    }
+    { return std::string(this->node.attribute(key.c_str()).as_string()); }
     
     virtual size_t getNumChildrenContexts() const override
-    {
-        return std::distance(this->node.children().begin(), this->node.children().end());
-    }
+    { return std::distance(this->node.children().begin(), this->node.children().end()); }
     
     virtual SerializationContext::Ptr getChildContext(int index) const override
     {
@@ -111,14 +96,16 @@ public:
     
     virtual ~XMLSerializer() override {}
     
-    virtual std::string serialize(SerializedObject::Ptr target) const override
+    virtual std::string serialize(SerializedObject::Ptr target, const std::string rootNodeName) const override
     {
         const ScopedTimer timer("XMLSerializer::serialize");
         
         pugi::xml_document document;
-        XMLSerializationContext::Ptr context(new XMLSerializationContext(document.root()));
-        target->serialize(context);
-
+        XMLSerializationContext::Ptr root(new XMLSerializationContext(document.root()));
+        SerializationContext::Ptr mainContext(root->createChildContext(rootNodeName));
+        
+        target->serialize(mainContext);
+        
         XMLStringWriter writer;
         document.save(writer);
         return writer.result;
@@ -133,8 +120,9 @@ public:
         
         if (result)
         {
-            XMLSerializationContext::Ptr context(new XMLSerializationContext(document.root()));
-            target->deserialize(context);
+            XMLSerializationContext::Ptr root(new XMLSerializationContext(document.root()));
+            SerializationContext::Ptr mainContext(root->getChildContext(0));
+            target->deserialize(mainContext);
         }
     }
     
@@ -152,35 +140,31 @@ private:
     
 };
 
-SCENARIO("Networks can be serialized and deserialized", "[serialization]")
+SCENARIO("Networks can be serialized and deserialized correctly", "[serialization]")
 {
     GIVEN("Serialized topology of a randomly trained simple network")
     {
-        std::random_device randomDevice;
-        std::mt19937 mt(randomDevice());
-        std::uniform_int_distribution<int> intRnd(10, 20);
-        std::uniform_real_distribution<double> realRnd(0, 10000);
-        const int layerSize = intRnd(mt);
+        const int layerSize = RANDOM(10, 20);
+        const auto networkName = RANDOMNAME();
         
-        const auto networkName = Uuid::generate();
         const auto network = Network::Prefabs::longShortTermMemory(networkName, 3, {layerSize}, 3);
         REQUIRE(network->getName() == networkName);
         
-        const int numTrainingIterations = intRnd(mt) * 10;
+        const int numTrainingIterations = RANDOM(100, 200);
         for (int i = 0; i < numTrainingIterations; ++i)
         {
-            network->feed({realRnd(mt), realRnd(mt), realRnd(mt)});
-            network->train(0.5, {realRnd(mt), realRnd(mt), realRnd(mt)});
+            network->feed({ RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
+            network->train(0.5, { RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
         }
         
         XMLSerializer serializer;
-        const std::string &serializedTopology = serializer.serialize(network);
+        const std::string &serializedTopology = serializer.serialize(network, Keys::Core::Network);
         
         WHEN("a new network with the same context is deserialized from that data and serialized back")
         {
             Network::Ptr recreatedNetwork(new Network(network->getContext()));
             serializer.deserialize(recreatedNetwork, serializedTopology);
-            const std::string &reserializedTopology = serializer.serialize(recreatedNetwork);
+            const std::string &reserializedTopology = serializer.serialize(recreatedNetwork, Keys::Core::Network);
             
             THEN("the serialization results should be equal")
             {
@@ -189,12 +173,13 @@ SCENARIO("Networks can be serialized and deserialized", "[serialization]")
             
             THEN("both networks should produce the same output")
             {
-                const int numChecks = intRnd(mt);
+                const int numChecks = RANDOM(10, 20);
+                
                 for (int i = 0; i < numTrainingIterations; ++i)
                 {
-                    const double r1 = realRnd(mt);
-                    const double r2 = realRnd(mt);
-                    const double r3 = realRnd(mt);
+                    const double r1 = RANDOM(0.0, 10000.0);
+                    const double r2 = RANDOM(0.0, 10000.0);
+                    const double r3 = RANDOM(0.0, 10000.0);
                     Neuron::Values result1 = network->feed({r1, r2, r3});
                     Neuron::Values result2 = recreatedNetwork->feed({r1, r2, r3});
                     REQUIRE(result1 == result2);
@@ -205,31 +190,27 @@ SCENARIO("Networks can be serialized and deserialized", "[serialization]")
     
     GIVEN("Serialized training state of a randomly trained simple network")
     {
-        std::random_device randomDevice;
-        std::mt19937 mt(randomDevice());
-        std::uniform_int_distribution<int> intRnd(5, 15);
-        std::uniform_real_distribution<double> realRnd(0, 10000);
-        const int layerSize = intRnd(mt);
+        const int layerSize = RANDOM(5, 15);
+        const auto networkName = RANDOMNAME();
         
-        const auto networkName = Uuid::generate();
         const auto network = Network::Prefabs::feedForward(networkName, 3, {layerSize}, 3);
         REQUIRE(network->getName() == networkName);
         
-        const int numTrainingIterations = intRnd(mt) * 10;
+        const int numTrainingIterations = RANDOM(100, 200);
         for (int i = 0; i < numTrainingIterations; ++i)
         {
-            network->feed({realRnd(mt), realRnd(mt), realRnd(mt)});
-            network->train(0.5, {realRnd(mt), realRnd(mt), realRnd(mt)});
+            network->feed({ RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
+            network->train(0.5, { RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
         }
         
         XMLSerializer serializer;
-        const std::string &serializedTrainingState = serializer.serialize(network->getContext());
+        const std::string &serializedTrainingState = serializer.serialize(network->getContext(), Keys::Core::TrainingContext);
         
         WHEN("a new state is deserialized from that data and serialized back")
         {
             TrainingContext::Ptr recreatedContext(new TrainingContext(""));
             serializer.deserialize(recreatedContext, serializedTrainingState);
-            const std::string &reserializedState = serializer.serialize(recreatedContext);
+            const std::string &reserializedState = serializer.serialize(recreatedContext, Keys::Core::TrainingContext);
             
             THEN("the serialization results should be equal")
             {
@@ -241,32 +222,28 @@ SCENARIO("Networks can be serialized and deserialized", "[serialization]")
 
 #if TINYRNN_OPENCL_ACCELERATION
 
-SCENARIO("Hardcoded network can be serialized and deserialized", "[serialization]")
+SCENARIO("Hardcoded network can be serialized and deserialized correctly", "[serialization]")
 {
     GIVEN("Serialized kernel chunks of a randomly trained hardcoded network")
     {
-        std::random_device randomDevice;
-        std::mt19937 mt(randomDevice());
-        std::uniform_int_distribution<int> intRnd(5, 10);
-        std::uniform_real_distribution<double> realRnd(0, 10000);
-        const int layerSize = intRnd(mt);
+        const int layerSize = RANDOM(5, 10);
+        const auto networkName = RANDOMNAME();
         
-        const auto networkName = Uuid::generate();
         const auto network = Network::Prefabs::longShortTermMemory(networkName, 3, {layerSize}, 3);
         REQUIRE(network->getName() == networkName);
         
         HardcodedNetwork::Ptr clNetwork = network->hardcode();
         clNetwork->compile();
         
-        const int numTrainingIterations = intRnd(mt) * 10;
+        const int numTrainingIterations = RANDOM(100, 200);
         for (int i = 0; i < numTrainingIterations; ++i)
         {
-            clNetwork->feed({realRnd(mt), realRnd(mt), realRnd(mt)});
-            clNetwork->train(0.5, {realRnd(mt), realRnd(mt), realRnd(mt)});
+            clNetwork->feed({ RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
+            clNetwork->train(0.5, { RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
         }
         
         XMLSerializer serializer;
-        const std::string &serializedTopology = serializer.serialize(clNetwork);
+        const std::string &serializedTopology = serializer.serialize(clNetwork, Keys::Hardcoded::Network);
         //std::cout << serializedTopology;
         
         WHEN("a new network with the same context is deserialized from that data and serialized back")
@@ -274,7 +251,7 @@ SCENARIO("Hardcoded network can be serialized and deserialized", "[serialization
             HardcodedNetwork::Ptr clRecreatedNetwork(new HardcodedNetwork(clNetwork->getContext()));
             serializer.deserialize(clRecreatedNetwork, serializedTopology);
             clRecreatedNetwork->compile();
-            const std::string &reserializedTopology = serializer.serialize(clRecreatedNetwork);
+            const std::string &reserializedTopology = serializer.serialize(clRecreatedNetwork, Keys::Hardcoded::Network);
             
             THEN("the serialization results should be equal")
             {
@@ -283,12 +260,13 @@ SCENARIO("Hardcoded network can be serialized and deserialized", "[serialization
             
             THEN("both networks should produce the same output")
             {
-                const int numChecks = intRnd(mt);
+                const int numChecks = RANDOM(5, 10);
+                
                 for (int i = 0; i < numTrainingIterations; ++i)
                 {
-                    const double r1 = realRnd(mt);
-                    const double r2 = realRnd(mt);
-                    const double r3 = realRnd(mt);
+                    const double r1 = RANDOM(0.0, 10000.0);
+                    const double r2 = RANDOM(0.0, 10000.0);
+                    const double r3 = RANDOM(0.0, 10000.0);
                     Neuron::Values result1 = clNetwork->feed({r1, r2, r3});
                     Neuron::Values result2 = clRecreatedNetwork->feed({r1, r2, r3});
                     REQUIRE(result1 == result2);
@@ -299,35 +277,32 @@ SCENARIO("Hardcoded network can be serialized and deserialized", "[serialization
     
     GIVEN("Serialized memory state of a randomly trained hardcoded network")
     {
-        std::random_device randomDevice;
-        std::mt19937 mt(randomDevice());
-        std::uniform_int_distribution<int> intRnd(5, 15);
-        std::uniform_real_distribution<double> realRnd(0, 10000);
-        const int layerSize = intRnd(mt);
+        const int layerSize = RANDOM(5, 15);
+        const auto networkName = RANDOMNAME();
         
-        const auto networkName = Uuid::generate();
         const auto network = Network::Prefabs::longShortTermMemory(networkName, 3, {layerSize}, 3);
         REQUIRE(network->getName() == networkName);
         
         HardcodedNetwork::Ptr clNetwork = network->hardcode();
         clNetwork->compile();
         
-        const int numTrainingIterations = intRnd(mt) * 10;
+        const int numTrainingIterations = RANDOM(100, 200);
         for (int i = 0; i < numTrainingIterations; ++i)
         {
-            clNetwork->feed({realRnd(mt), realRnd(mt), realRnd(mt)});
-            clNetwork->train(0.5, {realRnd(mt), realRnd(mt), realRnd(mt)});
+            clNetwork->feed({ RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
+            clNetwork->train(0.5, { RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
         }
         
         XMLSerializer serializer;
-        const std::string &serializedMemory = serializer.serialize(clNetwork->getContext());
+        const std::string &serializedMemory = serializer.serialize(clNetwork->getContext(), Keys::Hardcoded::TrainingContext);
         //std::cout << serializedMemory;
         
         WHEN("a new state is deserialized from that data and serialized back")
         {
             HardcodedTrainingContext::Ptr recreatedContext(new HardcodedTrainingContext());
             serializer.deserialize(recreatedContext, serializedMemory);
-            const std::string &reserializedMemory = serializer.serialize(recreatedContext);
+            const std::string &reserializedMemory = serializer.serialize(recreatedContext, Keys::Hardcoded::TrainingContext);
+            //std::cout << reserializedMemory;
             
             THEN("the serialization results should be equal")
             {

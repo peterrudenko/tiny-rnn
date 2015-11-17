@@ -1,0 +1,6 @@
+[submodule "Tests/ThirdParty/Catch"]
+	path = Tests/ThirdParty/Catch
+	url = git://github.com/philsquared/Catch.git
+[submodule "Tests/ThirdParty/pugixml"]
+	path = Tests/ThirdParty/pugixml
+	url = git://github.com/zeux/pugixml.git
