@@ -35,7 +35,7 @@ namespace TinyRNN
         
         virtual ~Serializer() {}
         
-        virtual std::string serialize(SerializedObject::Ptr target) const = 0;
+        virtual std::string serialize(SerializedObject::Ptr target, const std::string rootNodeName) const = 0;
         
         virtual void deserialize(SerializedObject::Ptr target, const std::string &data) = 0;
         

@@ -96,14 +96,16 @@ public:
     
     virtual ~XMLSerializer() override {}
     
-    virtual std::string serialize(SerializedObject::Ptr target) const override
+    virtual std::string serialize(SerializedObject::Ptr target, const std::string rootNodeName) const override
     {
         const ScopedTimer timer("XMLSerializer::serialize");
         
         pugi::xml_document document;
-        XMLSerializationContext::Ptr context(new XMLSerializationContext(document.root()));
-        target->serialize(context);
-
+        XMLSerializationContext::Ptr root(new XMLSerializationContext(document.root()));
+        SerializationContext::Ptr mainContext(root->createChildContext(rootNodeName));
+        
+        target->serialize(mainContext);
+        
         XMLStringWriter writer;
         document.save(writer);
         return writer.result;
@@ -118,8 +120,9 @@ public:
         
         if (result)
         {
-            XMLSerializationContext::Ptr context(new XMLSerializationContext(document.root()));
-            target->deserialize(context);
+            XMLSerializationContext::Ptr root(new XMLSerializationContext(document.root()));
+            SerializationContext::Ptr mainContext(root->getChildContext(0));
+            target->deserialize(mainContext);
         }
     }
     
@@ -155,13 +158,13 @@ SCENARIO("Networks can be serialized and deserialized correctly", "[serializatio
         }
         
         XMLSerializer serializer;
-        const std::string &serializedTopology = serializer.serialize(network);
+        const std::string &serializedTopology = serializer.serialize(network, Keys::Core::Network);
         
         WHEN("a new network with the same context is deserialized from that data and serialized back")
         {
             Network::Ptr recreatedNetwork(new Network(network->getContext()));
             serializer.deserialize(recreatedNetwork, serializedTopology);
-            const std::string &reserializedTopology = serializer.serialize(recreatedNetwork);
+            const std::string &reserializedTopology = serializer.serialize(recreatedNetwork, Keys::Core::Network);
             
             THEN("the serialization results should be equal")
             {
@@ -201,13 +204,13 @@ SCENARIO("Networks can be serialized and deserialized correctly", "[serializatio
         }
         
         XMLSerializer serializer;
-        const std::string &serializedTrainingState = serializer.serialize(network->getContext());
+        const std::string &serializedTrainingState = serializer.serialize(network->getContext(), Keys::Core::TrainingContext);
         
         WHEN("a new state is deserialized from that data and serialized back")
         {
             TrainingContext::Ptr recreatedContext(new TrainingContext(""));
             serializer.deserialize(recreatedContext, serializedTrainingState);
-            const std::string &reserializedState = serializer.serialize(recreatedContext);
+            const std::string &reserializedState = serializer.serialize(recreatedContext, Keys::Core::TrainingContext);
             
             THEN("the serialization results should be equal")
             {
@@ -240,7 +243,7 @@ SCENARIO("Hardcoded network can be serialized and deserialized correctly", "[ser
         }
         
         XMLSerializer serializer;
-        const std::string &serializedTopology = serializer.serialize(clNetwork);
+        const std::string &serializedTopology = serializer.serialize(clNetwork, Keys::Hardcoded::Network);
         //std::cout << serializedTopology;
         
         WHEN("a new network with the same context is deserialized from that data and serialized back")
@@ -248,7 +251,7 @@ SCENARIO("Hardcoded network can be serialized and deserialized correctly", "[ser
             HardcodedNetwork::Ptr clRecreatedNetwork(new HardcodedNetwork(clNetwork->getContext()));
             serializer.deserialize(clRecreatedNetwork, serializedTopology);
             clRecreatedNetwork->compile();
-            const std::string &reserializedTopology = serializer.serialize(clRecreatedNetwork);
+            const std::string &reserializedTopology = serializer.serialize(clRecreatedNetwork, Keys::Hardcoded::Network);
             
             THEN("the serialization results should be equal")
             {
@@ -291,14 +294,15 @@ SCENARIO("Hardcoded network can be serialized and deserialized correctly", "[ser
         }
         
         XMLSerializer serializer;
-        const std::string &serializedMemory = serializer.serialize(clNetwork->getContext());
+        const std::string &serializedMemory = serializer.serialize(clNetwork->getContext(), Keys::Hardcoded::TrainingContext);
         //std::cout << serializedMemory;
         
         WHEN("a new state is deserialized from that data and serialized back")
         {
             HardcodedTrainingContext::Ptr recreatedContext(new HardcodedTrainingContext());
             serializer.deserialize(recreatedContext, serializedMemory);
-            const std::string &reserializedMemory = serializer.serialize(recreatedContext);
+            const std::string &reserializedMemory = serializer.serialize(recreatedContext, Keys::Hardcoded::TrainingContext);
+            //std::cout << reserializedMemory;
             
             THEN("the serialization results should be equal")
             {
