@@ -33,7 +33,7 @@ before_install:
 install:
   - mkdir -p ${OPENCL_ROOT};
   - pushd ${OPENCL_ROOT};
-  - wget -w 1 -r -np -nd -nv -A h,hpp https://www.khronos.org/registry/cl/api/1.2/cl.hpp;
+  - wget -w 1 -r -np -nd -nv -A h,hpp https://www.khronos.org/registry/cl/api/2.1/cl.hpp;
   - popd;
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
   - cmake -HProjects/CMake -BBuild -DCMAKE_BUILD_TYPE=$BUILD_TYPE
