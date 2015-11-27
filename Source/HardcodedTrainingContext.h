@@ -27,6 +27,7 @@
 
 #include "Common.h"
 #include "SerializedObject.h"
+#include "Uuid.h"
 #include <iostream>
 #include <sstream>
 
@@ -66,7 +67,7 @@ namespace TinyRNN
         using RawData = std::vector<double>;
         using Indices = std::vector<size_t>;
         using Mapping = std::map<std::string, size_t>;
-        using VariableKey = std::vector<std::string>;
+        using VariableKey = std::vector<Uuid::Type>;
         
     public:
         
@@ -240,7 +241,7 @@ namespace TinyRNN
         
         std::copy(variableKey.begin(),
                   variableKey.end() - 1,
-                  std::ostream_iterator<std::string>(key, "::"));
+                  std::ostream_iterator<Uuid::Type>(key, "::"));
         
         key << variableKey.back();
         

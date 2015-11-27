@@ -23,6 +23,8 @@
 #ifndef TINYRNN_SERIALIZATIONKEYS_H_INCLUDED
 #define TINYRNN_SERIALIZATIONKEYS_H_INCLUDED
 
+#include "Uuid.h"
+
 namespace TinyRNN
 {
     namespace Keys
@@ -74,6 +76,55 @@ namespace TinyRNN
             
             static const std::string ErrorAccumulator = "ErrorAccumulator";
             static const std::string Gradient = "Gradient";
+        }
+        
+        namespace Mapping
+        {
+            static const Uuid::Type Network = 1;
+            static const Uuid::Type Layer = 2;
+            static const Uuid::Type Layers = 3;
+            static const Uuid::Type InputLayer = 4;
+            static const Uuid::Type OutputLayer = 5;
+            static const Uuid::Type HiddenLayers = 6;
+            static const Uuid::Type Neuron = 7;
+            static const Uuid::Type Neurons = 8;
+            static const Uuid::Type Connection = 9;
+            static const Uuid::Type Connections = 10;
+            static const Uuid::Type InputNeuronUuid = 11;
+            static const Uuid::Type OutputNeuronUuid = 12;
+            static const Uuid::Type GateNeuronUuid = 13;
+            static const Uuid::Type Uuid = 14;
+            static const Uuid::Type Name = 15;
+            
+            static const Uuid::Type TrainingContext = 16;
+            static const Uuid::Type TrainingNeuronContext = 17;
+            static const Uuid::Type NeuronContexts = 18;
+            static const Uuid::Type TrainingConnectionContext = 19;
+            static const Uuid::Type ConnectionContexts = 20;
+            static const Uuid::Type NeuronUuid = 21;
+            static const Uuid::Type ConnectionUuid = 22;
+            
+            static const Uuid::Type Weight = 23;
+            static const Uuid::Type Gain = 24;
+            
+            static const Uuid::Type Bias = 25;
+            static const Uuid::Type Activation = 26;
+            static const Uuid::Type Derivative = 27;
+            static const Uuid::Type State = 28;
+            static const Uuid::Type OldState = 29;
+            
+            static const Uuid::Type ErrorResponsibility = 30;
+            static const Uuid::Type ProjectedActivity = 31;
+            static const Uuid::Type GatingActivity = 32;
+            
+            static const Uuid::Type Rate = 33;
+            static const Uuid::Type Influence = 34;
+            static const Uuid::Type Eligibility = 35;
+            static const Uuid::Type ExtendedTrace = 36;
+            static const Uuid::Type Target = 37;
+            
+            static const Uuid::Type ErrorAccumulator = 38;
+            static const Uuid::Type Gradient = 39;
         }
         
         namespace Hardcoded

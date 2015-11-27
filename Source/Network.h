@@ -56,7 +56,7 @@ namespace TinyRNN
                 Layer::Ptr outputLayer);
         
         std::string getName() const noexcept;
-        std::string getUuid() const noexcept;
+        Uuid::Type getUuid() const noexcept;
         
         TrainingContext::Ptr getContext() const noexcept;
         
@@ -103,7 +103,7 @@ namespace TinyRNN
     private:
         
         std::string name;
-        std::string uuid;
+        Uuid::Type uuid;
         
         Layer::Ptr inputLayer;
         Layer::Array hiddenLayers;
@@ -118,7 +118,7 @@ namespace TinyRNN
     private:
         
         Neuron::Connection::SortedMap findAllConnections() const;
-        Neuron::Ptr findNeuronWithId(const std::string &uuid);
+        Neuron::Ptr findNeuronWithId(const Uuid::Type &uuid);
         
     private:
         
@@ -159,7 +159,7 @@ namespace TinyRNN
         return this->name;
     }
     
-    inline std::string Network::getUuid() const noexcept
+    inline Uuid::Type Network::getUuid() const noexcept
     {
         return this->uuid;
     }
@@ -231,7 +231,7 @@ namespace TinyRNN
     
     inline void Network::deserialize(SerializationContext::Ptr context)
     {
-        this->uuid = context->getStringProperty(Keys::Core::Uuid);
+        this->uuid = context->getNumberProperty(Keys::Core::Uuid);
         this->name = context->getStringProperty(Keys::Core::Name);
         
         this->inputLayer.reset();
@@ -264,16 +264,16 @@ namespace TinyRNN
             Neuron::Connection::Ptr connection(new Neuron::Connection(this->context));
             connection->deserialize(connectionNode);
             
-            const std::string inputNeuronUuid(connection->getInputNeuronUuid());
-            const std::string outputNeuronUuid(connection->getOutputNeuronUuid());
-            const std::string gateNeuronUuid(connection->getGateNeuronUuid());
+            const Uuid::Type inputNeuronUuid(connection->getInputNeuronUuid());
+            const Uuid::Type outputNeuronUuid(connection->getOutputNeuronUuid());
+            const Uuid::Type gateNeuronUuid(connection->getGateNeuronUuid());
             
             Neuron::Ptr inputNeuron(this->findNeuronWithId(inputNeuronUuid));
             Neuron::Ptr outputNeuron(this->findNeuronWithId(outputNeuronUuid));
             
             connection->setInputOutput(inputNeuron, outputNeuron);
             
-            if (! gateNeuronUuid.empty())
+            if (gateNeuronUuid > 0)
             {
                 Neuron::Ptr gateNeuron(this->findNeuronWithId(gateNeuronUuid));
                 gateNeuron->gate(connection);
@@ -283,7 +283,7 @@ namespace TinyRNN
     
     inline void Network::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->uuid, Keys::Core::Uuid);
+        context->setNumberProperty(this->uuid, Keys::Core::Uuid);
         context->setStringProperty(this->name, Keys::Core::Name);
         
         SerializationContext::Ptr inputLayerNode(context->createChildContext(Keys::Core::InputLayer));
@@ -330,7 +330,7 @@ namespace TinyRNN
         return result;
     }
     
-    inline Neuron::Ptr Network::findNeuronWithId(const std::string &uuid)
+    inline Neuron::Ptr Network::findNeuronWithId(const Uuid::Type &uuid)
     {
         if (Neuron::Ptr neuron = this->inputLayer->getNeuronWithId(uuid))
         {

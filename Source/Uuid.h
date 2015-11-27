@@ -32,6 +32,8 @@ namespace TinyRNN
     {
     public:
         
+        using Type = unsigned long long;
+        
 #define UUID_LENGTH 16
 
         static std::string generateIsoUuid()
@@ -64,20 +66,16 @@ namespace TinyRNN
             return result;
         }
         
-        static std::string generateSimpleId()
+        static Uuid::Type generateSimpleId()
         {
             static unsigned long long kRecentId = 0;
-            const std::string result = std::to_string(kRecentId++);
-            return result;
+            //const std::string result = std::to_string(kRecentId++);
+            return ++kRecentId;
         }
 
-        static inline std::string generate()
+        static inline Uuid::Type generate()
         {
-#if TINYRNN_GENERATE_ISO_UUIDS
-            return generateIsoUuid();
-#else
             return generateSimpleId();
-#endif
         }
     };
 }

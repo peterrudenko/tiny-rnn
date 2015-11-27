@@ -41,7 +41,7 @@ namespace TinyRNN
     public:
         
         using Ptr = std::shared_ptr<Layer>;
-        using Map = std::unordered_map<std::string, Layer::Ptr>;
+        using Map = std::unordered_map<Uuid::Type, Layer::Ptr>;
         using Array = std::vector<Layer::Ptr>;
         
     public:
@@ -50,11 +50,11 @@ namespace TinyRNN
         Layer(TrainingContext::Ptr context, int numNeurons, double bias);
         
         std::string getName() const noexcept;
-        std::string getUuid() const noexcept;
+        Uuid::Type getUuid() const noexcept;
         size_t getSize() const noexcept;
         
         Neuron::Ptr getNeuron(size_t index) const;
-        Neuron::Ptr getNeuronWithId(const std::string &uuid) const;
+        Neuron::Ptr getNeuronWithId(const Uuid::Type &uuid) const;
         Neuron::Connection::Map findAllOutgoingConnections() const;
         
         bool isSelfConnected() const;
@@ -93,7 +93,7 @@ namespace TinyRNN
         
     private:
         
-        std::string uuid;
+        Uuid::Type uuid;
         std::string name;
         
         Neuron::Array neurons;
@@ -138,7 +138,7 @@ namespace TinyRNN
         return this->name;
     }
     
-    inline std::string Layer::getUuid() const noexcept
+    inline Uuid::Type Layer::getUuid() const noexcept
     {
         return this->uuid;
     }
@@ -375,7 +375,7 @@ namespace TinyRNN
     // todo optimize?
     // currently O(n), but used only in network deserialization
     // also use a hashmap?
-    inline Neuron::Ptr Layer::getNeuronWithId(const std::string &uuid) const
+    inline Neuron::Ptr Layer::getNeuronWithId(const Uuid::Type &uuid) const
     {
         for (const auto &neuron : this->neurons)
         {
@@ -407,7 +407,7 @@ namespace TinyRNN
     
     inline void Layer::deserialize(SerializationContext::Ptr context)
     {
-        this->uuid = context->getStringProperty(Keys::Core::Uuid);
+        this->uuid = context->getNumberProperty(Keys::Core::Uuid);
         this->name = context->getStringProperty(Keys::Core::Name);
         
         this->neurons.clear();
@@ -424,7 +424,7 @@ namespace TinyRNN
     
     inline void Layer::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->uuid, Keys::Core::Uuid);
+        context->setNumberProperty(this->uuid, Keys::Core::Uuid);
         context->setStringProperty(this->name, Keys::Core::Name);
         
         SerializationContext::Ptr allNeuronsNode(context->createChildContext(Keys::Core::Neurons));
