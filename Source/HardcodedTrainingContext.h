@@ -33,7 +33,7 @@
 
 namespace TinyRNN
 {
-    class KernelSentence final : public SerializedObject
+    class KernelSentence final
     {
     public:
         
@@ -45,11 +45,6 @@ namespace TinyRNN
         
         size_t getSize() const noexcept;
         std::string build() const;
-        
-    public:
-        
-        virtual void deserialize(SerializationContext::Ptr context) override;
-        virtual void serialize(SerializationContext::Ptr context) const override;
         
     private:
         
@@ -164,28 +159,6 @@ namespace TinyRNN
             i.expressionBuilder += "\n";
             i.expressions.push_back(i.expressionBuilder);
             i.expressionBuilder.clear();
-        }
-    }
-    
-    inline void KernelSentence::deserialize(SerializationContext::Ptr context)
-    {
-        this->expressionBuilder.clear();
-        this->expressions.clear();
-        
-        for (size_t i = 0; i < context->getNumChildrenContexts(); ++i)
-        {
-            SerializationContext::Ptr lineNode(context->getChildContext(i));
-            const std::string &line = lineNode->getStringProperty(Keys::Hardcoded::Content);
-            this->expressions.push_back(line);
-        }
-    }
-    
-    inline void KernelSentence::serialize(SerializationContext::Ptr context) const
-    {
-        for (const auto &expression : this->expressions)
-        {
-            SerializationContext::Ptr lineNode(context->createChildContext(Keys::Hardcoded::KernelLine));
-            lineNode->setStringProperty(expression, Keys::Hardcoded::Content);
         }
     }
     
