@@ -80,51 +80,51 @@ namespace TinyRNN
         
         namespace Mapping
         {
-            static const Uuid::Type Network = 1;
-            static const Uuid::Type Layer = 2;
-            static const Uuid::Type Layers = 3;
-            static const Uuid::Type InputLayer = 4;
-            static const Uuid::Type OutputLayer = 5;
-            static const Uuid::Type HiddenLayers = 6;
-            static const Uuid::Type Neuron = 7;
-            static const Uuid::Type Neurons = 8;
-            static const Uuid::Type Connection = 9;
-            static const Uuid::Type Connections = 10;
-            static const Uuid::Type InputNeuronUuid = 11;
-            static const Uuid::Type OutputNeuronUuid = 12;
-            static const Uuid::Type GateNeuronUuid = 13;
-            static const Uuid::Type Uuid = 14;
-            static const Uuid::Type Name = 15;
+            static const Id Network = 1;
+            static const Id Layer = 2;
+            static const Id Layers = 3;
+            static const Id InputLayer = 4;
+            static const Id OutputLayer = 5;
+            static const Id HiddenLayers = 6;
+            static const Id Neuron = 7;
+            static const Id Neurons = 8;
+            static const Id Connection = 9;
+            static const Id Connections = 10;
+            static const Id InputNeuronUuid = 11;
+            static const Id OutputNeuronUuid = 12;
+            static const Id GateNeuronUuid = 13;
+            static const Id Uuid = 14;
+            static const Id Name = 15;
             
-            static const Uuid::Type TrainingContext = 16;
-            static const Uuid::Type TrainingNeuronContext = 17;
-            static const Uuid::Type NeuronContexts = 18;
-            static const Uuid::Type TrainingConnectionContext = 19;
-            static const Uuid::Type ConnectionContexts = 20;
-            static const Uuid::Type NeuronUuid = 21;
-            static const Uuid::Type ConnectionUuid = 22;
+            static const Id TrainingContext = 16;
+            static const Id TrainingNeuronContext = 17;
+            static const Id NeuronContexts = 18;
+            static const Id TrainingConnectionContext = 19;
+            static const Id ConnectionContexts = 20;
+            static const Id NeuronUuid = 21;
+            static const Id ConnectionUuid = 22;
             
-            static const Uuid::Type Weight = 23;
-            static const Uuid::Type Gain = 24;
+            static const Id Weight = 23;
+            static const Id Gain = 24;
             
-            static const Uuid::Type Bias = 25;
-            static const Uuid::Type Activation = 26;
-            static const Uuid::Type Derivative = 27;
-            static const Uuid::Type State = 28;
-            static const Uuid::Type OldState = 29;
+            static const Id Bias = 25;
+            static const Id Activation = 26;
+            static const Id Derivative = 27;
+            static const Id State = 28;
+            static const Id OldState = 29;
             
-            static const Uuid::Type ErrorResponsibility = 30;
-            static const Uuid::Type ProjectedActivity = 31;
-            static const Uuid::Type GatingActivity = 32;
+            static const Id ErrorResponsibility = 30;
+            static const Id ProjectedActivity = 31;
+            static const Id GatingActivity = 32;
             
-            static const Uuid::Type Rate = 33;
-            static const Uuid::Type Influence = 34;
-            static const Uuid::Type Eligibility = 35;
-            static const Uuid::Type ExtendedTrace = 36;
-            static const Uuid::Type Target = 37;
+            static const Id Rate = 33;
+            static const Id Influence = 34;
+            static const Id Eligibility = 35;
+            static const Id ExtendedTrace = 36;
+            static const Id Target = 37;
             
-            static const Uuid::Type ErrorAccumulator = 38;
-            static const Uuid::Type Gradient = 39;
+            static const Id ErrorAccumulator = 38;
+            static const Id Gradient = 39;
         }
         
         namespace Hardcoded

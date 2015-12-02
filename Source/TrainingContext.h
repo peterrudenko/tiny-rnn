@@ -44,13 +44,13 @@ namespace TinyRNN
         public:
             
             using Ptr = std::shared_ptr<NeuronData>;
-            using Map = std::unordered_map<Uuid::Type, NeuronData::Ptr>;
-            using SortedMap = std::map<Uuid::Type, NeuronData::Ptr>;
+            using HashMap = std::unordered_map<Id, NeuronData::Ptr>;
+            using SortedMap = std::map<Id, NeuronData::Ptr>;
             
         public:
             
-            explicit NeuronData(const Uuid::Type &targetNeuronUuid);
-            Uuid::Type getNeuronUuid() const noexcept;
+            explicit NeuronData(const Id &targetNeuronUuid);
+            Id getNeuronUuid() const noexcept;
             
         public:
             
@@ -70,7 +70,7 @@ namespace TinyRNN
             double projectedActivity;
             double gatingActivity;
             
-            Uuid::Type neuronUuid;
+            Id neuronUuid;
             
             void feedWithRandomBias(double signal);
             void setRandomBias();
@@ -90,13 +90,13 @@ namespace TinyRNN
         public:
             
             using Ptr = std::shared_ptr<ConnectionData>;
-            using Map = std::unordered_map<Uuid::Type, ConnectionData::Ptr>;
-            using SortedMap = std::map<Uuid::Type, ConnectionData::Ptr>;
+            using HashMap = std::unordered_map<Id, ConnectionData::Ptr>;
+            using SortedMap = std::map<Id, ConnectionData::Ptr>;
             
         public:
             
-            explicit ConnectionData(const Uuid::Type &targetConnectionUuid);
-            Uuid::Type getConnectionUuid() const noexcept;
+            explicit ConnectionData(const Id &targetConnectionUuid);
+            Id getConnectionUuid() const noexcept;
             
         public:
             
@@ -108,7 +108,7 @@ namespace TinyRNN
             double weight;
             double gain;
             
-            Uuid::Type connectionUuid;
+            Id connectionUuid;
             
             friend class Neuron;
             friend class HardcodedNeuron;
@@ -124,8 +124,8 @@ namespace TinyRNN
         explicit TrainingContext(const std::string &name);
         
         std::string getName() const noexcept;
-        NeuronData::Ptr getNeuronContext(const Uuid::Type &uuid);
-        ConnectionData::Ptr getConnectionContext(const Uuid::Type &uuid);
+        NeuronData::Ptr getNeuronContext(const Id &uuid);
+        ConnectionData::Ptr getConnectionContext(const Id &uuid);
         
         void clear();
         
@@ -136,8 +136,8 @@ namespace TinyRNN
         
     private:
         
-        ConnectionData::Map connectionContexts;
-        NeuronData::Map neuronContexts;
+        ConnectionData::HashMap connectionContexts;
+        NeuronData::HashMap neuronContexts;
         
         std::string name;
         std::string uuid;
@@ -161,7 +161,7 @@ namespace TinyRNN
         return this->name;
     }
     
-    inline TrainingContext::NeuronData::Ptr TrainingContext::getNeuronContext(const Uuid::Type &uuid)
+    inline TrainingContext::NeuronData::Ptr TrainingContext::getNeuronContext(const Id &uuid)
     {
         NeuronData::Ptr neuronContext = this->neuronContexts[uuid];
         
@@ -175,7 +175,7 @@ namespace TinyRNN
         return neuronContext;
     }
     
-    inline TrainingContext::ConnectionData::Ptr TrainingContext::getConnectionContext(const Uuid::Type &uuid)
+    inline TrainingContext::ConnectionData::Ptr TrainingContext::getConnectionContext(const Id &uuid)
     {
         ConnectionData::Ptr connectionContext = this->connectionContexts[uuid];
         
@@ -253,7 +253,7 @@ namespace TinyRNN
     // NeuronData implementation
     //
     
-    inline TrainingContext::NeuronData::NeuronData(const Uuid::Type &targetNeuronUuid) :
+    inline TrainingContext::NeuronData::NeuronData(const Id &targetNeuronUuid) :
     activation(0.0),
     derivative(0.0),
     state(0.0),
@@ -266,7 +266,7 @@ namespace TinyRNN
         this->setRandomBias();
     }
     
-    inline Uuid::Type TrainingContext::NeuronData::getNeuronUuid() const noexcept
+    inline Id TrainingContext::NeuronData::getNeuronUuid() const noexcept
     {
         return this->neuronUuid;
     }
@@ -316,7 +316,7 @@ namespace TinyRNN
     // ConnectionData implementation
     //
     
-    inline TrainingContext::ConnectionData::ConnectionData(const Uuid::Type &targetConnectionUuid) :
+    inline TrainingContext::ConnectionData::ConnectionData(const Id &targetConnectionUuid) :
     weight(0.0),
     gain(1.0),
     connectionUuid(targetConnectionUuid)
@@ -324,7 +324,7 @@ namespace TinyRNN
         this->setRandomWeight();
     }
     
-    inline Uuid::Type TrainingContext::ConnectionData::getConnectionUuid() const noexcept
+    inline Id TrainingContext::ConnectionData::getConnectionUuid() const noexcept
     {
         return this->connectionUuid;
     }

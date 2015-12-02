@@ -37,7 +37,7 @@ namespace TinyRNN
     public:
         
         using Ptr = std::shared_ptr<HardcodedNeuron>;
-        using Array = std::vector<HardcodedNeuron::Ptr>;
+        using Vector = std::vector<HardcodedNeuron::Ptr>;
         
     public:
         
@@ -196,7 +196,7 @@ namespace TinyRNN
             for (auto &i : target->extended)
             {
                 // extended elegibility trace
-                const Uuid::Type neuronId = i.first;
+                const Id neuronId = i.first;
                 const double influence = influences[neuronId];
                 
                 Neuron::Ptr neighbour = target->neighbours[i.first];
@@ -320,7 +320,7 @@ namespace TinyRNN
                 for (auto &i : target->extended)
                 {
                     // extended elegibility trace
-                    const Uuid::Type neighbourNeuronUuid = i.first;
+                    const Id neighbourNeuronUuid = i.first;
                     const double influence = influences[neighbourNeuronUuid];
                     
                     Neuron::EligibilityMap &xtrace = i.second;
@@ -461,7 +461,7 @@ namespace TinyRNN
                     // error responsibilities from all the connections gated by this neuron
                     for (auto &i : target->extended)
                     {
-                        const Uuid::Type gatedNeuronId = i.first;
+                        const Id gatedNeuronId = i.first;
                         const Neuron::Ptr gatedNeuron = target->neighbours[gatedNeuronId];
                         const auto gatedNeuronData = gatedNeuron->getTrainingData();
                         
@@ -526,7 +526,7 @@ namespace TinyRNN
                     // adjust all the neuron's incoming connections
                     for (auto &i : target->incomingConnections)
                     {
-                        const Uuid::Type inputConnectionUuid = i.first;
+                        const Id inputConnectionUuid = i.first;
                         const Neuron::Connection::Ptr inputConnection = i.second;
                         
                         const size_t gradientTempVar =
@@ -543,7 +543,7 @@ namespace TinyRNN
                         for (auto &ext : target->extended)
                         {
                             // extended elegibility trace
-                            const Uuid::Type neighbourNeuronId = ext.first;
+                            const Id neighbourNeuronId = ext.first;
                             Neuron::EligibilityMap &xtrace = ext.second;
                             Neuron::Ptr neighbour = target->neighbours[neighbourNeuronId];
                             const auto neighbourData = neighbour->getTrainingData();
@@ -629,7 +629,7 @@ namespace TinyRNN
                     // error responsibilities from all the connections gated by this neuron
                     for (auto &i : target->extended)
                     {
-                        const Uuid::Type gatedNeuronId = i.first;
+                        const Id gatedNeuronId = i.first;
                         const Neuron::Ptr gatedNeuron = target->neighbours[gatedNeuronId];
                         const auto gatedNeuronData = gatedNeuron->getTrainingData();
                         
@@ -686,7 +686,7 @@ namespace TinyRNN
                     // adjust all the neuron's incoming connections
                     for (auto &i : target->incomingConnections)
                     {
-                        const Uuid::Type inputConnectionUuid = i.first;
+                        const Id inputConnectionUuid = i.first;
                         const Neuron::Connection::Ptr inputConnection = i.second;
                         
                         const size_t gradientTempVar =
@@ -698,7 +698,7 @@ namespace TinyRNN
                         for (auto &ext : target->extended)
                         {
                             // extended elegibility trace
-                            const Uuid::Type neighbourNeuronId = ext.first;
+                            const Id neighbourNeuronId = ext.first;
                             Neuron::EligibilityMap &xtrace = ext.second;
                             Neuron::Ptr neighbour = target->neighbours[neighbourNeuronId];
                             const auto neighbourData = neighbour->getTrainingData();
@@ -753,7 +753,7 @@ namespace TinyRNN
         
         for (auto &i : target->eligibility)
         {
-            const Uuid::Type &inputConnectionUuid = i.first;
+            const Id &inputConnectionUuid = i.first;
             target->eligibility[inputConnectionUuid] =
             context->evaluateVariable({target->getUuid(), inputConnectionUuid, Keys::Mapping::Eligibility},
                                       target->eligibility[inputConnectionUuid]);
@@ -761,12 +761,12 @@ namespace TinyRNN
         
         for (auto &i : target->extended)
         {
-            const Uuid::Type &neighbourNeuronUuid = i.first;
+            const Id &neighbourNeuronUuid = i.first;
             Neuron::EligibilityMap &map = i.second;
             
             for (auto &j : map)
             {
-                const Uuid::Type &inputConnectionUuid = j.first;
+                const Id &inputConnectionUuid = j.first;
                 
                 const double extendedTrace =
                 context->evaluateVariable({target->getUuid(), neighbourNeuronUuid, inputConnectionUuid, Keys::Mapping::ExtendedTrace},

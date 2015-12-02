@@ -67,7 +67,7 @@ namespace TinyRNN
         using RawData = std::vector<double>;
         using Indices = std::vector<size_t>;
         using Mapping = std::map<std::string, size_t>;
-        using VariableKey = std::vector<Uuid::Type>;
+        using VariableKey = std::vector<Id>;
         
     public:
         
@@ -241,7 +241,7 @@ namespace TinyRNN
         
         std::copy(variableKey.begin(),
                   variableKey.end() - 1,
-                  std::ostream_iterator<Uuid::Type>(key, "::"));
+                  std::ostream_iterator<Id>(key, "::"));
         
         key << variableKey.back();
         

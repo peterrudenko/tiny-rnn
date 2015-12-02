@@ -52,11 +52,11 @@ namespace TinyRNN
         Network(const std::string &networkName,
                 TrainingContext::Ptr targetContext,
                 Layer::Ptr inputLayer,
-                Layer::Array hiddenLayers,
+                Layer::Vector hiddenLayers,
                 Layer::Ptr outputLayer);
         
         std::string getName() const noexcept;
-        Uuid::Type getUuid() const noexcept;
+        Id getUuid() const noexcept;
         
         TrainingContext::Ptr getContext() const noexcept;
         
@@ -67,13 +67,13 @@ namespace TinyRNN
         void train(double rate, const Neuron::Values &target);
         
         // Connections
-        Neuron::Connection::Map connectAllToAll(Network::Ptr other);
-        Neuron::Connection::Map connectOneToOne(Network::Ptr other);
+        Neuron::Connection::HashMap connectAllToAll(Network::Ptr other);
+        Neuron::Connection::HashMap connectOneToOne(Network::Ptr other);
         
         // Gating
-        bool gateAllIncomingConnections(Network::Ptr toNetwork, const Neuron::Connection::Map &connections);
-        bool gateAllOutgoingConnections(Network::Ptr fromNetwork, const Neuron::Connection::Map &connections);
-        bool gateOneToOne(Network::Ptr fromNetwork, Network::Ptr toNetwork, const Neuron::Connection::Map &connections);
+        bool gateAllIncomingConnections(Network::Ptr toNetwork, const Neuron::Connection::HashMap &connections);
+        bool gateAllOutgoingConnections(Network::Ptr fromNetwork, const Neuron::Connection::HashMap &connections);
+        bool gateOneToOne(Network::Ptr fromNetwork, Network::Ptr toNetwork, const Neuron::Connection::HashMap &connections);
         
     public:
         
@@ -103,10 +103,10 @@ namespace TinyRNN
     private:
         
         std::string name;
-        Uuid::Type uuid;
+        Id uuid;
         
         Layer::Ptr inputLayer;
-        Layer::Array hiddenLayers;
+        Layer::Vector hiddenLayers;
         Layer::Ptr outputLayer;
         
         TrainingContext::Ptr context;
@@ -118,7 +118,7 @@ namespace TinyRNN
     private:
         
         Neuron::Connection::SortedMap findAllConnections() const;
-        Neuron::Ptr findNeuronWithId(const Uuid::Type &uuid);
+        Neuron::Ptr findNeuronWithId(const Id &uuid);
         
     private:
         
@@ -139,7 +139,7 @@ namespace TinyRNN
     inline Network::Network(const std::string &networkName,
                      TrainingContext::Ptr targetContext,
                      Layer::Ptr targetInputLayer,
-                     Layer::Array targetHiddenLayers,
+                     Layer::Vector targetHiddenLayers,
                      Layer::Ptr targetOutputLayer) :
     name(networkName),
     uuid(Uuid::generate()),
@@ -159,7 +159,7 @@ namespace TinyRNN
         return this->name;
     }
     
-    inline Uuid::Type Network::getUuid() const noexcept
+    inline Id Network::getUuid() const noexcept
     {
         return this->uuid;
     }
@@ -200,27 +200,27 @@ namespace TinyRNN
     // Connections
     //
     
-    inline Neuron::Connection::Map Network::connectAllToAll(Network::Ptr other)
+    inline Neuron::Connection::HashMap Network::connectAllToAll(Network::Ptr other)
     {
         return this->outputLayer->connectAllToAll(other->inputLayer);
     }
     
-    inline Neuron::Connection::Map Network::connectOneToOne(Network::Ptr other)
+    inline Neuron::Connection::HashMap Network::connectOneToOne(Network::Ptr other)
     {
         return this->outputLayer->connectOneToOne(other->inputLayer);
     }
     
-    inline bool Network::gateAllIncomingConnections(Network::Ptr toNetwork, const Neuron::Connection::Map &connections)
+    inline bool Network::gateAllIncomingConnections(Network::Ptr toNetwork, const Neuron::Connection::HashMap &connections)
     {
         return this->outputLayer->gateAllIncomingConnections(toNetwork->inputLayer, connections);
     }
     
-    inline bool Network::gateAllOutgoingConnections(Network::Ptr fromNetwork, const Neuron::Connection::Map &connections)
+    inline bool Network::gateAllOutgoingConnections(Network::Ptr fromNetwork, const Neuron::Connection::HashMap &connections)
     {
         return this->outputLayer->gateAllOutgoingConnections(fromNetwork->outputLayer, connections);
     }
     
-    inline bool Network::gateOneToOne(Network::Ptr fromNetwork, Network::Ptr toNetwork, const Neuron::Connection::Map &connections)
+    inline bool Network::gateOneToOne(Network::Ptr fromNetwork, Network::Ptr toNetwork, const Neuron::Connection::HashMap &connections)
     {
         return this->outputLayer->gateOneToOne(fromNetwork->outputLayer, toNetwork->inputLayer, connections);
     }
@@ -264,9 +264,9 @@ namespace TinyRNN
             Neuron::Connection::Ptr connection(new Neuron::Connection(this->context));
             connection->deserialize(connectionNode);
             
-            const Uuid::Type inputNeuronUuid(connection->getInputNeuronUuid());
-            const Uuid::Type outputNeuronUuid(connection->getOutputNeuronUuid());
-            const Uuid::Type gateNeuronUuid(connection->getGateNeuronUuid());
+            const Id inputNeuronUuid = connectionNode->getNumberProperty(Keys::Core::InputNeuronUuid);
+            const Id gateNeuronUuid = connectionNode->getNumberProperty(Keys::Core::GateNeuronUuid);
+            const Id outputNeuronUuid = connectionNode->getNumberProperty(Keys::Core::OutputNeuronUuid);
             
             Neuron::Ptr inputNeuron(this->findNeuronWithId(inputNeuronUuid));
             Neuron::Ptr outputNeuron(this->findNeuronWithId(outputNeuronUuid));
@@ -317,20 +317,20 @@ namespace TinyRNN
         
         for (const auto &hiddenLayer : this->hiddenLayers)
         {
-            const Neuron::Connection::Map layerOutgoingConnections = hiddenLayer->findAllOutgoingConnections();
+            const Neuron::Connection::HashMap layerOutgoingConnections = hiddenLayer->findAllOutgoingConnections();
             result.insert(layerOutgoingConnections.begin(), layerOutgoingConnections.end());
         }
         
-        const Neuron::Connection::Map inputLayerOutgoingConnections = this->inputLayer->findAllOutgoingConnections();
+        const Neuron::Connection::HashMap inputLayerOutgoingConnections = this->inputLayer->findAllOutgoingConnections();
         result.insert(inputLayerOutgoingConnections.begin(), inputLayerOutgoingConnections.end());
         
-        const Neuron::Connection::Map outputLayersOutgoingConnections = this->outputLayer->findAllOutgoingConnections();
+        const Neuron::Connection::HashMap outputLayersOutgoingConnections = this->outputLayer->findAllOutgoingConnections();
         result.insert(outputLayersOutgoingConnections.begin(), outputLayersOutgoingConnections.end());
         
         return result;
     }
     
-    inline Neuron::Ptr Network::findNeuronWithId(const Uuid::Type &uuid)
+    inline Neuron::Ptr Network::findNeuronWithId(const Id &uuid)
     {
         if (Neuron::Ptr neuron = this->inputLayer->getNeuronWithId(uuid))
         {
@@ -447,7 +447,7 @@ namespace TinyRNN
         Layer::Ptr outputLayer(new Layer(context, outputLayerSize));
         
         const int numHiddenLayers = hiddenLayersSizes.size();
-        Layer::Array hiddenLayers;
+        Layer::Vector hiddenLayers;
         Layer::Ptr previous;
         
         for (int i = 0; i < numHiddenLayers; ++i)
@@ -469,7 +469,7 @@ namespace TinyRNN
             inputLayer->connectAllToAll(forgetGate);
             inputLayer->connectAllToAll(outputGate);
             
-            Neuron::Connection::Map cell;
+            Neuron::Connection::HashMap cell;
             
             if (previous != nullptr)
             {

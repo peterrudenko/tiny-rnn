@@ -39,7 +39,7 @@ namespace TinyRNN
     public:
         
         using Ptr = std::shared_ptr<HardcodedNetwork>;
-        using HardcodedLayers = std::vector<HardcodedNeuron::Array>;
+        using HardcodedLayers = std::vector<HardcodedNeuron::Vector>;
         
     public:
         
@@ -84,7 +84,7 @@ namespace TinyRNN
         public:
             
             using Ptr = std::shared_ptr<Kernel>;
-            using Array = std::vector<Kernel::Ptr>;
+            using Vector = std::vector<Kernel::Ptr>;
             
             Kernel() : isBuilt(false), numExpressions(0) {}
             
@@ -108,11 +108,11 @@ namespace TinyRNN
 #define TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL 10000
 #endif
         
-        Kernel::Array feedKernels;
-        Kernel::Array trainKernels;
+        Kernel::Vector feedKernels;
+        Kernel::Vector trainKernels;
         
-        Kernel::Array compileFeedKernels(const HardcodedLayers &targetLayers) const;
-        Kernel::Array compileTrainKernels(const HardcodedLayers &targetLayers) const;
+        Kernel::Vector compileFeedKernels(const HardcodedLayers &targetLayers) const;
+        Kernel::Vector compileTrainKernels(const HardcodedLayers &targetLayers) const;
         
         bool initialize(const HardcodedLayers &targetLayers);
         bool build();
@@ -302,9 +302,9 @@ namespace TinyRNN
     
     #define trnn_max(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
     
-    inline HardcodedNetwork::Kernel::Array HardcodedNetwork::compileFeedKernels(const HardcodedLayers &targetLayers) const
+    inline HardcodedNetwork::Kernel::Vector HardcodedNetwork::compileFeedKernels(const HardcodedLayers &targetLayers) const
     {
-        Kernel::Array result;
+        Kernel::Vector result;
         Kernel::Ptr currentKernel;
         size_t currentKernelExpressionsCounter = 0;
         const size_t maxExpressions = trnn_max(TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL, 100);
@@ -355,9 +355,9 @@ namespace TinyRNN
         return result;
     }
     
-    inline HardcodedNetwork::Kernel::Array HardcodedNetwork::compileTrainKernels(const HardcodedLayers &targetLayers) const
+    inline HardcodedNetwork::Kernel::Vector HardcodedNetwork::compileTrainKernels(const HardcodedLayers &targetLayers) const
     {
-        Kernel::Array result;
+        Kernel::Vector result;
         Kernel::Ptr currentKernel;
         size_t currentKernelExpressionsCounter = 0;
         const size_t maxExpressions = trnn_max(TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL, 100);
