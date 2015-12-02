@@ -113,10 +113,6 @@ namespace TinyRNN
         
     private:
         
-        void compile();
-        
-    private:
-        
         Neuron::Connection::SortedMap findAllConnections() const;
         Neuron::Ptr findNeuronWithId(const Id &uuid);
         

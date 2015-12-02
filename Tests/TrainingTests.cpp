@@ -170,7 +170,7 @@ static double crossEntropyErrorCost(const Neuron::Values &targets, const Neuron:
     return cost;
 }
 
-static double middleSquareErrorCost(const Neuron::Values &targets, const Neuron::Values &outputs)
+static double meanSquaredErrorCost(const Neuron::Values &targets, const Neuron::Values &outputs)
 {
     double cost = 0.0;
     
@@ -212,7 +212,7 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
                 {
                     const double x = RANDOM(-10.0, 10.0);
                     const auto result = network->feed({x});
-                    const double error = middleSquareErrorCost({f(x, fxSeed)}, result);
+                    const double error = meanSquaredErrorCost({f(x, fxSeed)}, result);
                     REQUIRE(error < 0.1);
                 }
             }
@@ -246,7 +246,7 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
                 {
                     const double x = RANDOM(-10.0, 10.0);
                     const auto result = clNetwork->feed({x});
-                    const double error = middleSquareErrorCost({f(x, fxSeed)}, result);
+                    const double error = meanSquaredErrorCost({f(x, fxSeed)}, result);
                     REQUIRE(error < 0.1);
                 }
             }
