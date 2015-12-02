@@ -23,6 +23,8 @@
 #ifndef TINYRNN_SERIALIZATIONKEYS_H_INCLUDED
 #define TINYRNN_SERIALIZATIONKEYS_H_INCLUDED
 
+#include "Uuid.h"
+
 namespace TinyRNN
 {
     namespace Keys
@@ -74,6 +76,55 @@ namespace TinyRNN
             
             static const std::string ErrorAccumulator = "ErrorAccumulator";
             static const std::string Gradient = "Gradient";
+        }
+        
+        namespace Mapping
+        {
+            static const Id Network = 1;
+            static const Id Layer = 2;
+            static const Id Layers = 3;
+            static const Id InputLayer = 4;
+            static const Id OutputLayer = 5;
+            static const Id HiddenLayers = 6;
+            static const Id Neuron = 7;
+            static const Id Neurons = 8;
+            static const Id Connection = 9;
+            static const Id Connections = 10;
+            static const Id InputNeuronUuid = 11;
+            static const Id OutputNeuronUuid = 12;
+            static const Id GateNeuronUuid = 13;
+            static const Id Uuid = 14;
+            static const Id Name = 15;
+            
+            static const Id TrainingContext = 16;
+            static const Id TrainingNeuronContext = 17;
+            static const Id NeuronContexts = 18;
+            static const Id TrainingConnectionContext = 19;
+            static const Id ConnectionContexts = 20;
+            static const Id NeuronUuid = 21;
+            static const Id ConnectionUuid = 22;
+            
+            static const Id Weight = 23;
+            static const Id Gain = 24;
+            
+            static const Id Bias = 25;
+            static const Id Activation = 26;
+            static const Id Derivative = 27;
+            static const Id State = 28;
+            static const Id OldState = 29;
+            
+            static const Id ErrorResponsibility = 30;
+            static const Id ProjectedActivity = 31;
+            static const Id GatingActivity = 32;
+            
+            static const Id Rate = 33;
+            static const Id Influence = 34;
+            static const Id Eligibility = 35;
+            static const Id ExtendedTrace = 36;
+            static const Id Target = 37;
+            
+            static const Id ErrorAccumulator = 38;
+            static const Id Gradient = 39;
         }
         
         namespace Hardcoded

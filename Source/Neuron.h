@@ -39,20 +39,20 @@ namespace TinyRNN
         
         using Ptr = std::shared_ptr<Neuron>;
         using WeakPtr = std::weak_ptr<Neuron>;
-        using Map = std::unordered_map<std::string, Neuron::Ptr>;
-        using Array = std::vector<Neuron::Ptr>;
+        using HashMap = std::unordered_map<Id, Neuron::Ptr>;
+        using Vector = std::vector<Neuron::Ptr>;
         using Values = std::vector<double>;
         
     public:
         
-        class Connection : public SerializedObject,
-                           public std::enable_shared_from_this<Connection>
+        class Connection final : public SerializedObject,
+                                 public std::enable_shared_from_this<Connection>
         {
         public:
             
             using Ptr = std::shared_ptr<Connection>;
-            using Map = std::unordered_map<std::string, Connection::Ptr>;
-            using SortedMap = std::map<std::string, Connection::Ptr>;
+            using HashMap = std::unordered_map<Id, Connection::Ptr>;
+            using SortedMap = std::map<Id, Connection::Ptr>;
             
         public:
             
@@ -62,12 +62,8 @@ namespace TinyRNN
                        Neuron::WeakPtr input,
                        Neuron::WeakPtr output);
             
-            std::string getUuid() const noexcept;
+            Id getUuid() const noexcept;
             TrainingContext::ConnectionData::Ptr getTrainingData() const;
-            
-            std::string getInputNeuronUuid() const noexcept;
-            std::string getOutputNeuronUuid() const noexcept;
-            std::string getGateNeuronUuid() const noexcept;
             
             Neuron::Ptr getInputNeuron() const;
             Neuron::Ptr getGateNeuron() const;
@@ -84,11 +80,7 @@ namespace TinyRNN
             
         private:
             
-            std::string uuid;
-            
-            std::string inputNeuronUuid;
-            std::string gateNeuronUuid;
-            std::string outputNeuronUuid;
+            Id uuid;
             
             Neuron::WeakPtr inputNeuron;
             Neuron::WeakPtr gateNeuron;
@@ -106,10 +98,10 @@ namespace TinyRNN
         explicit Neuron(TrainingContext::Ptr context);
         Neuron(TrainingContext::Ptr context, double defaultBias);
         
-        std::string getUuid() const noexcept;
+        Id getUuid() const noexcept;
         TrainingContext::NeuronData::Ptr getTrainingData() const;
         
-        Connection::Map getOutgoingConnections() const;
+        Connection::HashMap getOutgoingConnections() const;
         
         
         bool isSelfConnected() const noexcept;
@@ -143,14 +135,14 @@ namespace TinyRNN
         
     private:
         
-        std::string uuid;
+        Id uuid;
         
         static double activation(double x);
         static double derivative(double x);
         
-        Connection::Map incomingConnections;
-        Connection::Map outgoingConnections;
-        Connection::Map gatedConnections;
+        Connection::HashMap incomingConnections;
+        Connection::HashMap outgoingConnections;
+        Connection::HashMap gatedConnections;
         Connection::Ptr selfConnection;
         
         TrainingContext::Ptr context;
@@ -164,16 +156,16 @@ namespace TinyRNN
     private:
         
         // The cache maps, never serialized
-        using EligibilityMap = std::unordered_map<std::string, double>;
-        using ExtendedEligibilityMap = std::unordered_map<std::string, EligibilityMap>;
-        using Influences = std::unordered_map<std::string, Connection::Ptr>;
-        using InfluencesMap = std::unordered_map<std::string, Influences>;
+        using EligibilityMap = std::unordered_map<Id, double>;
+        using ExtendedEligibilityMap = std::unordered_map<Id, EligibilityMap>;
+        using Influences = std::unordered_map<Id, Connection::Ptr>;
+        using InfluencesMap = std::unordered_map<Id, Influences>;
         
         mutable InfluencesMap influences;
         mutable EligibilityMap eligibility;
         mutable ExtendedEligibilityMap extended;
         
-        mutable Neuron::Map neighbours;
+        mutable Neuron::HashMap neighbours;
         
     private:
         
@@ -198,7 +190,7 @@ namespace TinyRNN
     {
     }
     
-    inline std::string Neuron::getUuid() const noexcept
+    inline Id Neuron::getUuid() const noexcept
     {
         return this->uuid;
     }
@@ -212,9 +204,9 @@ namespace TinyRNN
     // Connections
     //
     
-    inline Neuron::Connection::Map Neuron::getOutgoingConnections() const
+    inline Neuron::Connection::HashMap Neuron::getOutgoingConnections() const
     {
-        Connection::Map outgoing;
+        Connection::HashMap outgoing;
         outgoing.insert(this->outgoingConnections.begin(), this->outgoingConnections.end());
         
         if (this->isSelfConnected())
@@ -241,7 +233,7 @@ namespace TinyRNN
         }
         
         Connection::Ptr newConnection(new Connection(this->context, this->shared_from_this(), other));
-        const std::string newConnectionId = newConnection->getUuid();
+        const Id newConnectionId = newConnection->getUuid();
         
         // reference all the connections and traces
         this->outgoingConnections[newConnectionId] = newConnection;
@@ -260,7 +252,7 @@ namespace TinyRNN
     
     inline void Neuron::gate(Connection::Ptr connection)
     {
-        const std::string connectionId = connection->getUuid();
+        const Id connectionId = connection->getUuid();
         auto myState = this->getTrainingData();
         
         // add connection to gated list
@@ -386,7 +378,7 @@ namespace TinyRNN
             for (auto &i : this->extended)
             {
                 // extended elegibility trace
-                const std::string neuronId = i.first;
+                const Id neuronId = i.first;
                 const double influence = influences[neuronId];
                 EligibilityMap &xtrace = i.second;
                 Neuron::Ptr neighbour = this->neighbours[neuronId];
@@ -462,7 +454,7 @@ namespace TinyRNN
             // error responsibilities from all the connections gated by this neuron
             for (auto &i : this->extended)
             {
-                const std::string gatedNeuronId = i.first;
+                const Id gatedNeuronId = i.first;
                 const Neuron::Ptr gatedNeuron = this->neighbours[gatedNeuronId];
                 const auto gatedNeuronData = gatedNeuron->getTrainingData();
                 
@@ -507,14 +499,14 @@ namespace TinyRNN
         // adjust all the neuron's incoming connections
         for (auto &i : this->incomingConnections)
         {
-            const std::string inputConnectionUuid = i.first;
+            const Id inputConnectionUuid = i.first;
             const Connection::Ptr inputConnection = i.second;
             
             // Eq. 24
             double gradient = myData->projectedActivity * this->eligibility[inputConnectionUuid];
             for (auto &ext : this->extended)
             {
-                const std::string neuronUuid = ext.first;
+                const Id neuronUuid = ext.first;
                 const auto neuronData = this->context->getNeuronContext(neuronUuid);
                 gradient += neuronData->errorResponsibility * this->extended[neuronUuid][inputConnectionUuid];
             }
@@ -635,13 +627,13 @@ namespace TinyRNN
     
     inline void Neuron::deserialize(SerializationContext::Ptr context)
     {
-        this->uuid = context->getStringProperty(Keys::Core::Uuid);
+        this->uuid = context->getNumberProperty(Keys::Core::Uuid);
         // selfconnection will be restored in network deserialization
     }
     
     inline void Neuron::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->uuid, Keys::Core::Uuid);
+        context->setNumberProperty(this->uuid, Keys::Core::Uuid);
     }
     
     // =============================================================================
@@ -658,8 +650,6 @@ namespace TinyRNN
                                    std::weak_ptr<Neuron> input,
                                    std::weak_ptr<Neuron> output) :
     uuid(Uuid::generate()),
-    inputNeuronUuid(input.lock()->getUuid()),
-    outputNeuronUuid(output.lock()->getUuid()),
     inputNeuron(input),
     outputNeuron(output),
     context(targetContext)
@@ -672,24 +662,9 @@ namespace TinyRNN
         return this->context->getConnectionContext(this->getUuid());
     }
     
-    inline std::string Neuron::Connection::getUuid() const noexcept
+    inline Id Neuron::Connection::getUuid() const noexcept
     {
         return this->uuid;
-    }
-    
-    inline std::string Neuron::Connection::getInputNeuronUuid() const noexcept
-    {
-        return this->inputNeuronUuid;
-    }
-    
-    inline std::string Neuron::Connection::getOutputNeuronUuid() const noexcept
-    {
-        return this->outputNeuronUuid;
-    }
-    
-    inline std::string Neuron::Connection::getGateNeuronUuid() const noexcept
-    {
-        return this->gateNeuronUuid;
     }
     
     inline Neuron::Ptr Neuron::Connection::getInputNeuron() const
@@ -709,13 +684,12 @@ namespace TinyRNN
     
     inline bool Neuron::Connection::hasGate() const noexcept
     {
-        return ! this->gateNeuronUuid.empty();
+        return (this->getGateNeuron() != nullptr);
     }
     
     inline void Neuron::Connection::setGate(Neuron::WeakPtr gateNeuron)
     {
         this->gateNeuron = gateNeuron;
-        this->gateNeuronUuid = gateNeuron.lock()->getUuid();
     }
     
     inline void Neuron::Connection::setInputOutput(Neuron::WeakPtr weakInput, Neuron::WeakPtr weakOutput)
@@ -725,8 +699,6 @@ namespace TinyRNN
         
         this->inputNeuron = strongInput;
         this->outputNeuron = strongOutput;
-        this->inputNeuronUuid = strongInput->getUuid();
-        this->outputNeuronUuid = strongOutput->getUuid();
 
         if (strongInput == strongOutput)
         {
@@ -753,18 +725,19 @@ namespace TinyRNN
     
     inline void Neuron::Connection::deserialize(SerializationContext::Ptr context)
     {
-        this->uuid = context->getStringProperty(Keys::Core::Uuid);
-        this->inputNeuronUuid = context->getStringProperty(Keys::Core::InputNeuronUuid);
-        this->gateNeuronUuid = context->getStringProperty(Keys::Core::GateNeuronUuid);
-        this->outputNeuronUuid = context->getStringProperty(Keys::Core::OutputNeuronUuid);
+        this->uuid = context->getNumberProperty(Keys::Core::Uuid);
+        // optimization hack: deserialized in the network
+        //this->inputNeuronUuid = context->getNumberProperty(Keys::Core::InputNeuronUuid);
+        //this->gateNeuronUuid = context->getNumberProperty(Keys::Core::GateNeuronUuid);
+        //this->outputNeuronUuid = context->getNumberProperty(Keys::Core::OutputNeuronUuid);
     }
     
     inline void Neuron::Connection::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->uuid, Keys::Core::Uuid);
-        context->setStringProperty(this->inputNeuronUuid, Keys::Core::InputNeuronUuid);
-        context->setStringProperty(this->gateNeuronUuid, Keys::Core::GateNeuronUuid);
-        context->setStringProperty(this->outputNeuronUuid, Keys::Core::OutputNeuronUuid);
+        context->setNumberProperty(this->uuid, Keys::Core::Uuid);
+        context->setNumberProperty(this->getInputNeuron()->getUuid(), Keys::Core::InputNeuronUuid);
+        context->setNumberProperty(this->getGateNeuron() ? this->getGateNeuron()->getUuid() : 0, Keys::Core::GateNeuronUuid);
+        context->setNumberProperty(this->getOutputNeuron()->getUuid(), Keys::Core::OutputNeuronUuid);
     }
 }
 

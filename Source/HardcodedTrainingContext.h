@@ -20,19 +20,20 @@
     OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef HARDCODEDTRAININGCONTEXT_H_INCLUDED
-#define HARDCODEDTRAININGCONTEXT_H_INCLUDED
+#ifndef TINYRNN_HARDCODEDTRAININGCONTEXT_H_INCLUDED
+#define TINYRNN_HARDCODEDTRAININGCONTEXT_H_INCLUDED
 
 #if TINYRNN_OPENCL_ACCELERATION
 
 #include "Common.h"
 #include "SerializedObject.h"
+#include "Uuid.h"
 #include <iostream>
 #include <sstream>
 
 namespace TinyRNN
 {
-    class KernelSentence final : public SerializedObject
+    class KernelSentence final
     {
     public:
         
@@ -44,11 +45,6 @@ namespace TinyRNN
         
         size_t getSize() const noexcept;
         std::string build() const;
-        
-    public:
-        
-        virtual void deserialize(SerializationContext::Ptr context) override;
-        virtual void serialize(SerializationContext::Ptr context) const override;
         
     private:
         
@@ -66,7 +62,7 @@ namespace TinyRNN
         using RawData = std::vector<double>;
         using Indices = std::vector<size_t>;
         using Mapping = std::map<std::string, size_t>;
-        using VariableKey = std::vector<std::string>;
+        using VariableKey = std::vector<Id>;
         
     public:
         
@@ -166,28 +162,6 @@ namespace TinyRNN
         }
     }
     
-    inline void KernelSentence::deserialize(SerializationContext::Ptr context)
-    {
-        this->expressionBuilder.clear();
-        this->expressions.clear();
-        
-        for (size_t i = 0; i < context->getNumChildrenContexts(); ++i)
-        {
-            SerializationContext::Ptr lineNode(context->getChildContext(i));
-            const std::string &line = lineNode->getStringProperty(Keys::Hardcoded::Content);
-            this->expressions.push_back(line);
-        }
-    }
-    
-    inline void KernelSentence::serialize(SerializationContext::Ptr context) const
-    {
-        for (const auto &expression : this->expressions)
-        {
-            SerializationContext::Ptr lineNode(context->createChildContext(Keys::Hardcoded::KernelLine));
-            lineNode->setStringProperty(expression, Keys::Hardcoded::Content);
-        }
-    }
-    
     // =============================================================================
     // HardcodedTrainingContext implementation
     //
@@ -240,7 +214,7 @@ namespace TinyRNN
         
         std::copy(variableKey.begin(),
                   variableKey.end() - 1,
-                  std::ostream_iterator<std::string>(key, "::"));
+                  std::ostream_iterator<Id>(key, "::"));
         
         key << variableKey.back();
         
@@ -381,4 +355,4 @@ namespace TinyRNN
 
 #endif // TINYRNN_OPENCL_ACCELERATION
 
-#endif  // HARDCODEDTRAININGCONTEXT_H_INCLUDED
+#endif  // TINYRNN_HARDCODEDTRAININGCONTEXT_H_INCLUDED

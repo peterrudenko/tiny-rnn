@@ -41,8 +41,8 @@ namespace TinyRNN
     public:
         
         using Ptr = std::shared_ptr<Layer>;
-        using Map = std::unordered_map<std::string, Layer::Ptr>;
-        using Array = std::vector<Layer::Ptr>;
+        using HashMap = std::unordered_map<Id, Layer::Ptr>;
+        using Vector = std::vector<Layer::Ptr>;
         
     public:
         
@@ -50,22 +50,22 @@ namespace TinyRNN
         Layer(TrainingContext::Ptr context, int numNeurons, double bias);
         
         std::string getName() const noexcept;
-        std::string getUuid() const noexcept;
+        Id getUuid() const noexcept;
         size_t getSize() const noexcept;
         
         Neuron::Ptr getNeuron(size_t index) const;
-        Neuron::Ptr getNeuronWithId(const std::string &uuid) const;
-        Neuron::Connection::Map findAllOutgoingConnections() const;
+        Neuron::Ptr getNeuronWithId(const Id &uuid) const;
+        Neuron::Connection::HashMap findAllOutgoingConnections() const;
         
         bool isSelfConnected() const;
-        Neuron::Connection::Map getSelfConnections() const;
+        Neuron::Connection::HashMap getSelfConnections() const;
         
-        Neuron::Connection::Map connectAllToAll(Layer::Ptr other);
-        Neuron::Connection::Map connectOneToOne(Layer::Ptr other);
+        Neuron::Connection::HashMap connectAllToAll(Layer::Ptr other);
+        Neuron::Connection::HashMap connectOneToOne(Layer::Ptr other);
         
-        bool gateAllIncomingConnections(Layer::Ptr toLayer, const Neuron::Connection::Map &connections);
-        bool gateAllOutgoingConnections(Layer::Ptr fromLayer, const Neuron::Connection::Map &connections);
-        bool gateOneToOne(Layer::Ptr fromLayer, Layer::Ptr toLayer, const Neuron::Connection::Map &connections);
+        bool gateAllIncomingConnections(Layer::Ptr toLayer, const Neuron::Connection::HashMap &connections);
+        bool gateAllOutgoingConnections(Layer::Ptr fromLayer, const Neuron::Connection::HashMap &connections);
+        bool gateOneToOne(Layer::Ptr fromLayer, Layer::Ptr toLayer, const Neuron::Connection::HashMap &connections);
         
         // Used for the input layer
         bool feed(const Neuron::Values &values);
@@ -85,7 +85,7 @@ namespace TinyRNN
         virtual void serialize(SerializationContext::Ptr context) const override;
         
 #if TINYRNN_OPENCL_ACCELERATION
-        HardcodedNeuron::Array hardcode(HardcodedTrainingContext::Ptr context,
+        HardcodedNeuron::Vector hardcode(HardcodedTrainingContext::Ptr context,
                                         bool asInput, bool asOutput) const;
         
         void restore(HardcodedTrainingContext::Ptr context);
@@ -93,10 +93,10 @@ namespace TinyRNN
         
     private:
         
-        std::string uuid;
+        Id uuid;
         std::string name;
         
-        Neuron::Array neurons;
+        Neuron::Vector neurons;
         
         TrainingContext::Ptr context;
         
@@ -138,7 +138,7 @@ namespace TinyRNN
         return this->name;
     }
     
-    inline std::string Layer::getUuid() const noexcept
+    inline Id Layer::getUuid() const noexcept
     {
         return this->uuid;
     }
@@ -165,9 +165,9 @@ namespace TinyRNN
         return true;
     }
     
-    inline Neuron::Connection::Map Layer::getSelfConnections() const
+    inline Neuron::Connection::HashMap Layer::getSelfConnections() const
     {
-        Neuron::Connection::Map selfConnections;
+        Neuron::Connection::HashMap selfConnections;
         
         for (const auto &neuron : this->neurons)
         {
@@ -180,9 +180,9 @@ namespace TinyRNN
         return selfConnections;
     }
     
-    inline Neuron::Connection::Map Layer::connectAllToAll(Layer::Ptr other)
+    inline Neuron::Connection::HashMap Layer::connectAllToAll(Layer::Ptr other)
     {
-        Neuron::Connection::Map connections;
+        Neuron::Connection::HashMap connections;
         
         for (Neuron::Ptr &neuronFrom : this->neurons)
         {
@@ -201,9 +201,9 @@ namespace TinyRNN
         return connections;
     }
     
-    inline Neuron::Connection::Map Layer::connectOneToOne(Layer::Ptr other)
+    inline Neuron::Connection::HashMap Layer::connectOneToOne(Layer::Ptr other)
     {
-        Neuron::Connection::Map connections;
+        Neuron::Connection::HashMap connections;
         
         if (this->getSize() != other->getSize())
         {
@@ -222,7 +222,7 @@ namespace TinyRNN
         return connections;
     }
     
-    inline bool Layer::gateAllIncomingConnections(Layer::Ptr toLayer, const Neuron::Connection::Map &connections)
+    inline bool Layer::gateAllIncomingConnections(Layer::Ptr toLayer, const Neuron::Connection::HashMap &connections)
     {
         if (toLayer->getSize() != this->getSize())
         {
@@ -249,7 +249,7 @@ namespace TinyRNN
         return true;
     }
     
-    inline bool Layer::gateAllOutgoingConnections(Layer::Ptr fromLayer, const Neuron::Connection::Map &connections)
+    inline bool Layer::gateAllOutgoingConnections(Layer::Ptr fromLayer, const Neuron::Connection::HashMap &connections)
     {
         if (fromLayer->getSize() != this->getSize())
         {
@@ -276,7 +276,7 @@ namespace TinyRNN
         return true;
     }
     
-    inline bool Layer::gateOneToOne(Layer::Ptr fromLayer, Layer::Ptr toLayer, const Neuron::Connection::Map &connections)
+    inline bool Layer::gateOneToOne(Layer::Ptr fromLayer, Layer::Ptr toLayer, const Neuron::Connection::HashMap &connections)
     {
         if (connections.size() != this->getSize() ||
             fromLayer->getSize() != this->getSize() ||
@@ -375,7 +375,7 @@ namespace TinyRNN
     // todo optimize?
     // currently O(n), but used only in network deserialization
     // also use a hashmap?
-    inline Neuron::Ptr Layer::getNeuronWithId(const std::string &uuid) const
+    inline Neuron::Ptr Layer::getNeuronWithId(const Id &uuid) const
     {
         for (const auto &neuron : this->neurons)
         {
@@ -388,13 +388,13 @@ namespace TinyRNN
         return nullptr;
     }
     
-    inline Neuron::Connection::Map Layer::findAllOutgoingConnections() const
+    inline Neuron::Connection::HashMap Layer::findAllOutgoingConnections() const
     {
-        Neuron::Connection::Map result;
+        Neuron::Connection::HashMap result;
         
         for (const auto &neuron : this->neurons)
         {
-            const Neuron::Connection::Map neuronOutgoingConnections = neuron->getOutgoingConnections();
+            const Neuron::Connection::HashMap neuronOutgoingConnections = neuron->getOutgoingConnections();
             result.insert(neuronOutgoingConnections.begin(), neuronOutgoingConnections.end());
         }
         
@@ -407,7 +407,7 @@ namespace TinyRNN
     
     inline void Layer::deserialize(SerializationContext::Ptr context)
     {
-        this->uuid = context->getStringProperty(Keys::Core::Uuid);
+        this->uuid = context->getNumberProperty(Keys::Core::Uuid);
         this->name = context->getStringProperty(Keys::Core::Name);
         
         this->neurons.clear();
@@ -424,7 +424,7 @@ namespace TinyRNN
     
     inline void Layer::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->uuid, Keys::Core::Uuid);
+        context->setNumberProperty(this->uuid, Keys::Core::Uuid);
         context->setStringProperty(this->name, Keys::Core::Name);
         
         SerializationContext::Ptr allNeuronsNode(context->createChildContext(Keys::Core::Neurons));
@@ -441,9 +441,9 @@ namespace TinyRNN
     // Batch hardcoding stuff
     //
     
-    inline HardcodedNeuron::Array Layer::hardcode(HardcodedTrainingContext::Ptr context, bool asInput, bool asOutput) const
+    inline HardcodedNeuron::Vector Layer::hardcode(HardcodedTrainingContext::Ptr context, bool asInput, bool asOutput) const
     {
-        HardcodedNeuron::Array result;
+        HardcodedNeuron::Vector result;
         
         for (auto &neuron : this->neurons)
         {

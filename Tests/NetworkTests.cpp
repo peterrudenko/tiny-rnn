@@ -147,7 +147,7 @@ SCENARIO("Layer can gate a connection between two other layers", "[layer]")
         Layer::Ptr layer2(new Layer(context, numNeurons));
         Layer::Ptr layer3(new Layer(context, numNeurons));
         
-        Neuron::Connection::Map connections = layer1->connectOneToOne(layer2);
+        Neuron::Connection::HashMap connections = layer1->connectOneToOne(layer2);
         for (const auto &i : connections)
         {
             REQUIRE(i.second->getGateNeuron() == nullptr);
@@ -207,7 +207,7 @@ SCENARIO("Layer can gate a connection between two other layers", "[layer]")
         Layer::Ptr layer1(new Layer(context, numNeurons));
         Layer::Ptr layer2(new Layer(context, numNeurons + 10));
         Layer::Ptr layer3(new Layer(context, numNeurons + 20));
-        Neuron::Connection::Map connections = layer1->connectAllToAll(layer2);
+        Neuron::Connection::HashMap connections = layer1->connectAllToAll(layer2);
         
         WHEN("We try to gate those connections")
         {

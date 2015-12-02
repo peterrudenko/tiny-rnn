@@ -44,13 +44,13 @@ namespace TinyRNN
         public:
             
             using Ptr = std::shared_ptr<NeuronData>;
-            using Map = std::unordered_map<std::string, NeuronData::Ptr>;
-            using SortedMap = std::map<std::string, NeuronData::Ptr>;
+            using HashMap = std::unordered_map<Id, NeuronData::Ptr>;
+            using SortedMap = std::map<Id, NeuronData::Ptr>;
             
         public:
             
-            explicit NeuronData(const std::string &targetNeuronUuid);
-            std::string getNeuronUuid() const noexcept;
+            explicit NeuronData(const Id &targetNeuronUuid);
+            Id getNeuronUuid() const noexcept;
             
         public:
             
@@ -70,7 +70,7 @@ namespace TinyRNN
             double projectedActivity;
             double gatingActivity;
             
-            std::string neuronUuid;
+            Id neuronUuid;
             
             void feedWithRandomBias(double signal);
             void setRandomBias();
@@ -90,13 +90,13 @@ namespace TinyRNN
         public:
             
             using Ptr = std::shared_ptr<ConnectionData>;
-            using Map = std::unordered_map<std::string, ConnectionData::Ptr>;
-            using SortedMap = std::map<std::string, ConnectionData::Ptr>;
+            using HashMap = std::unordered_map<Id, ConnectionData::Ptr>;
+            using SortedMap = std::map<Id, ConnectionData::Ptr>;
             
         public:
             
-            explicit ConnectionData(const std::string &targetConnectionUuid);
-            std::string getConnectionUuid() const noexcept;
+            explicit ConnectionData(const Id &targetConnectionUuid);
+            Id getConnectionUuid() const noexcept;
             
         public:
             
@@ -108,7 +108,7 @@ namespace TinyRNN
             double weight;
             double gain;
             
-            std::string connectionUuid;
+            Id connectionUuid;
             
             friend class Neuron;
             friend class HardcodedNeuron;
@@ -124,8 +124,8 @@ namespace TinyRNN
         explicit TrainingContext(const std::string &name);
         
         std::string getName() const noexcept;
-        NeuronData::Ptr getNeuronContext(const std::string &uuid);
-        ConnectionData::Ptr getConnectionContext(const std::string &uuid);
+        NeuronData::Ptr getNeuronContext(const Id &uuid);
+        ConnectionData::Ptr getConnectionContext(const Id &uuid);
         
         void clear();
         
@@ -136,8 +136,8 @@ namespace TinyRNN
         
     private:
         
-        ConnectionData::Map connectionContexts;
-        NeuronData::Map neuronContexts;
+        ConnectionData::HashMap connectionContexts;
+        NeuronData::HashMap neuronContexts;
         
         std::string name;
         std::string uuid;
@@ -161,7 +161,7 @@ namespace TinyRNN
         return this->name;
     }
     
-    inline TrainingContext::NeuronData::Ptr TrainingContext::getNeuronContext(const std::string &uuid)
+    inline TrainingContext::NeuronData::Ptr TrainingContext::getNeuronContext(const Id &uuid)
     {
         NeuronData::Ptr neuronContext = this->neuronContexts[uuid];
         
@@ -175,7 +175,7 @@ namespace TinyRNN
         return neuronContext;
     }
     
-    inline TrainingContext::ConnectionData::Ptr TrainingContext::getConnectionContext(const std::string &uuid)
+    inline TrainingContext::ConnectionData::Ptr TrainingContext::getConnectionContext(const Id &uuid)
     {
         ConnectionData::Ptr connectionContext = this->connectionContexts[uuid];
         
@@ -210,7 +210,7 @@ namespace TinyRNN
         for (size_t i = 0; i < neuronStatesNode->getNumChildrenContexts(); ++i)
         {
             SerializationContext::Ptr neuronStateNode(neuronStatesNode->getChildContext(i));
-            NeuronData::Ptr neuronContext(new NeuronData(""));
+            NeuronData::Ptr neuronContext(new NeuronData(0));
             neuronContext->deserialize(neuronStateNode);
             this->neuronContexts[neuronContext->getNeuronUuid()] = neuronContext;
         }
@@ -221,7 +221,7 @@ namespace TinyRNN
         for (size_t i = 0; i < connectionStatesNode->getNumChildrenContexts(); ++i)
         {
             SerializationContext::Ptr connectionStateNode(connectionStatesNode->getChildContext(i));
-            ConnectionData::Ptr connectionContext(new ConnectionData(""));
+            ConnectionData::Ptr connectionContext(new ConnectionData(0));
             connectionContext->deserialize(connectionStateNode);
             this->connectionContexts[connectionContext->getConnectionUuid()] = connectionContext;
         }
@@ -253,7 +253,7 @@ namespace TinyRNN
     // NeuronData implementation
     //
     
-    inline TrainingContext::NeuronData::NeuronData(const std::string &targetNeuronUuid) :
+    inline TrainingContext::NeuronData::NeuronData(const Id &targetNeuronUuid) :
     activation(0.0),
     derivative(0.0),
     state(0.0),
@@ -266,7 +266,7 @@ namespace TinyRNN
         this->setRandomBias();
     }
     
-    inline std::string TrainingContext::NeuronData::getNeuronUuid() const noexcept
+    inline Id TrainingContext::NeuronData::getNeuronUuid() const noexcept
     {
         return this->neuronUuid;
     }
@@ -288,7 +288,7 @@ namespace TinyRNN
     
     inline void TrainingContext::NeuronData::deserialize(SerializationContext::Ptr context)
     {
-        this->neuronUuid = context->getStringProperty(Keys::Core::NeuronUuid);
+        this->neuronUuid = context->getNumberProperty(Keys::Core::NeuronUuid);
         this->bias = context->getRealProperty(Keys::Core::Bias);
         this->activation = context->getRealProperty(Keys::Core::Activation);
         this->derivative = context->getRealProperty(Keys::Core::Derivative);
@@ -301,7 +301,7 @@ namespace TinyRNN
     
     inline void TrainingContext::NeuronData::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->neuronUuid, Keys::Core::NeuronUuid);
+        context->setNumberProperty(this->neuronUuid, Keys::Core::NeuronUuid);
         context->setRealProperty(this->bias, Keys::Core::Bias);
         context->setRealProperty(this->activation, Keys::Core::Activation);
         context->setRealProperty(this->derivative, Keys::Core::Derivative);
@@ -316,7 +316,7 @@ namespace TinyRNN
     // ConnectionData implementation
     //
     
-    inline TrainingContext::ConnectionData::ConnectionData(const std::string &targetConnectionUuid) :
+    inline TrainingContext::ConnectionData::ConnectionData(const Id &targetConnectionUuid) :
     weight(0.0),
     gain(1.0),
     connectionUuid(targetConnectionUuid)
@@ -324,7 +324,7 @@ namespace TinyRNN
         this->setRandomWeight();
     }
     
-    inline std::string TrainingContext::ConnectionData::getConnectionUuid() const noexcept
+    inline Id TrainingContext::ConnectionData::getConnectionUuid() const noexcept
     {
         return this->connectionUuid;
     }
@@ -339,14 +339,14 @@ namespace TinyRNN
     
     inline void TrainingContext::ConnectionData::deserialize(SerializationContext::Ptr context)
     {
-        this->connectionUuid = context->getStringProperty(Keys::Core::ConnectionUuid);
+        this->connectionUuid = context->getNumberProperty(Keys::Core::ConnectionUuid);
         this->weight = context->getRealProperty(Keys::Core::Weight);
         this->gain = context->getRealProperty(Keys::Core::Gain);
     }
     
     inline void TrainingContext::ConnectionData::serialize(SerializationContext::Ptr context) const
     {
-        context->setStringProperty(this->connectionUuid, Keys::Core::ConnectionUuid);
+        context->setNumberProperty(this->connectionUuid, Keys::Core::ConnectionUuid);
         context->setRealProperty(this->weight, Keys::Core::Weight);
         context->setRealProperty(this->gain, Keys::Core::Gain);
     }

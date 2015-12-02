@@ -28,21 +28,22 @@
 
 namespace TinyRNN
 {
+    using Id = unsigned long long;
+    
     class Uuid
     {
     public:
         
-#define UUID_LENGTH 16
-
         static std::string generateIsoUuid()
         {
+            static const int uuidLength = 32;
             static std::random_device randomDevice;
             static std::mt19937 mt19937(randomDevice());
             std::uniform_int_distribution<const unsigned char> distribution(0, UCHAR_MAX);
             
-            unsigned char uuid[UUID_LENGTH];
+            unsigned char uuid[uuidLength];
             
-            for (size_t i = 0; i < UUID_LENGTH; ++i)
+            for (size_t i = 0; i < uuidLength; ++i)
             {
                 const unsigned char a = distribution(mt19937);
                 uuid[i] = a;
@@ -55,7 +56,7 @@ namespace TinyRNN
             std::string result;
             static const char hexadecimalDigits[] = "0123456789abcdef";
             
-            for (int i = 0; i < UUID_LENGTH; ++i)
+            for (int i = 0; i < uuidLength; ++i)
             {
                 result.push_back(hexadecimalDigits[uuid[i] >> 4]);
                 result.push_back(hexadecimalDigits[uuid[i] & 0xf]);
@@ -64,20 +65,16 @@ namespace TinyRNN
             return result;
         }
         
-        static std::string generateSimpleId()
+        static Id generateSimpleId()
         {
             static unsigned long long kRecentId = 0;
-            const std::string result = std::to_string(kRecentId++);
-            return result;
+            //const std::string result = std::to_string(kRecentId++);
+            return ++kRecentId;
         }
-
-        static inline std::string generate()
+        
+        static inline Id generate()
         {
-#if TINYRNN_GENERATE_ISO_UUIDS
-            return generateIsoUuid();
-#else
             return generateSimpleId();
-#endif
         }
     };
 }
