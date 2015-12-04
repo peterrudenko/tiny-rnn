@@ -33,8 +33,8 @@
 
 namespace TinyRNN
 {
-    using Id = unsigned long long;
-    using Value = double;
+    using Id = unsigned long;
+    using Value = float;
 }
 
 #if TINYRNN_OPENCL_ACCELERATION
