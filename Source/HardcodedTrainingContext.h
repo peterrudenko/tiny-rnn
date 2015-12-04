@@ -59,7 +59,7 @@ namespace TinyRNN
     public:
         
         using Ptr = std::shared_ptr<HardcodedTrainingContext>;
-        using RawData = std::vector<double>;
+        using RawData = std::vector<Value>;
         using Indices = std::vector<size_t>;
         using Mapping = std::map<std::string, size_t>;
         using VariableKey = std::vector<Id>;
@@ -68,8 +68,8 @@ namespace TinyRNN
         
         HardcodedTrainingContext();
         
-        double evaluateVariable(const VariableKey &variableKey, double defaultValue);
-        size_t allocateOrReuseVariable(double value, const VariableKey &variableKey);
+        Value evaluateVariable(const VariableKey &variableKey, Value defaultValue);
+        size_t allocateOrReuseVariable(Value value, const VariableKey &variableKey);
         
         void registerInputVariable(size_t variableIndex);
         void registerOutputVariable(size_t variableIndex);
@@ -169,7 +169,7 @@ namespace TinyRNN
     inline HardcodedTrainingContext::HardcodedTrainingContext() : rateVariable(0)
     {}
     
-    inline size_t HardcodedTrainingContext::allocateOrReuseVariable(double value, const VariableKey &variableKey)
+    inline size_t HardcodedTrainingContext::allocateOrReuseVariable(Value value, const VariableKey &variableKey)
     {
         const std::string &key = this->getKeyForVariable(variableKey);
         const bool variableExists = (this->mapping.find(key) != this->mapping.end());
@@ -192,7 +192,7 @@ namespace TinyRNN
         return 0;
     }
     
-    inline double HardcodedTrainingContext::evaluateVariable(const VariableKey &variableKey, double defaultValue)
+    inline Value HardcodedTrainingContext::evaluateVariable(const VariableKey &variableKey, Value defaultValue)
     {
         const std::string &key = this->getKeyForVariable(variableKey);
         const bool variableExists = (this->mapping.find(key) != this->mapping.end());
@@ -319,7 +319,7 @@ namespace TinyRNN
         
         this->memory.resize(memorySize);
         const std::vector<unsigned char> &memoryDecoded = context->decodeBase64(memoryEncoded);
-        memcpy(this->memory.data(), memoryDecoded.data(), sizeof(double) * memorySize);
+        memcpy(this->memory.data(), memoryDecoded.data(), sizeof(Value) * memorySize);
         
         const size_t outputsSize = context->getNumberProperty(Keys::Hardcoded::OutputsSize);
         this->outputs.resize(outputsSize);
@@ -337,7 +337,7 @@ namespace TinyRNN
     
     inline void HardcodedTrainingContext::serialize(SerializationContext::Ptr context) const
     {
-        const std::string memoryEncoded = context->encodeBase64((const unsigned char *)this->memory.data(), sizeof(double) * this->memory.size());
+        const std::string memoryEncoded = context->encodeBase64((const unsigned char *)this->memory.data(), sizeof(Value) * this->memory.size());
         context->setStringProperty(memoryEncoded, Keys::Hardcoded::RawMemory);
         context->setNumberProperty(this->memory.size(), Keys::Hardcoded::MemorySize);
         context->setNumberProperty(this->outputs.size(), Keys::Hardcoded::OutputsSize);

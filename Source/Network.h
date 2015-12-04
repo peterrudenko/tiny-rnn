@@ -64,7 +64,7 @@ namespace TinyRNN
         Neuron::Values feed(const Neuron::Values &input);
         
         // Back-propagation magic
-        void train(double rate, const Neuron::Values &target);
+        void train(Value rate, const Neuron::Values &target);
         
         // Connections
         Neuron::Connection::HashMap connectAllToAll(Network::Ptr other);
@@ -182,7 +182,7 @@ namespace TinyRNN
         return result;
     }
     
-    inline void Network::train(double rate, const Neuron::Values &target)
+    inline void Network::train(Value rate, const Neuron::Values &target)
     {
         this->outputLayer->train(rate, target);
         
@@ -267,7 +267,7 @@ namespace TinyRNN
             Neuron::Ptr inputNeuron(this->findNeuronWithId(inputNeuronUuid));
             Neuron::Ptr outputNeuron(this->findNeuronWithId(outputNeuronUuid));
             
-            connection->setInputOutput(inputNeuron, outputNeuron);
+            connection->connect(inputNeuron, outputNeuron);
             
             if (gateNeuronUuid > 0)
             {

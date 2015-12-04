@@ -37,8 +37,8 @@ namespace TinyRNN
         
         virtual ~SerializationContext() {}
         
-        virtual void setRealProperty(double value, const std::string &key) = 0;
-        virtual double getRealProperty(const std::string &key) const = 0;
+        virtual void setRealProperty(Value value, const std::string &key) = 0;
+        virtual Value getRealProperty(const std::string &key) const = 0;
         
         virtual void setNumberProperty(long long value, const std::string &key) = 0;
         virtual long long getNumberProperty(const std::string &key) const = 0;

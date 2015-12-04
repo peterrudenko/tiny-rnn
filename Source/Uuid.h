@@ -23,13 +23,12 @@
 #ifndef TINYRNN_UUID_H_INCLUDED
 #define TINYRNN_UUID_H_INCLUDED
 
+#include "Common.h"
 #include <climits>
 #include <random>
 
 namespace TinyRNN
 {
-    using Id = unsigned long long;
-    
     class Uuid
     {
     public:

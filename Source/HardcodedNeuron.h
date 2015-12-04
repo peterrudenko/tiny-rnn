@@ -197,7 +197,7 @@ namespace TinyRNN
             {
                 // extended elegibility trace
                 const Id neuronId = i.first;
-                const double influence = influences[neuronId];
+                const Value influence = influences[neuronId];
                 
                 Neuron::Ptr neighbour = target->neighbours[i.first];
                 const size_t influenceVar =
@@ -321,7 +321,7 @@ namespace TinyRNN
                 {
                     // extended elegibility trace
                     const Id neighbourNeuronUuid = i.first;
-                    const double influence = influences[neighbourNeuronUuid];
+                    const Value influence = influences[neighbourNeuronUuid];
                     
                     Neuron::EligibilityMap &xtrace = i.second;
                     Neuron::Ptr neighbour = target->neighbours[neighbourNeuronUuid];
@@ -741,10 +741,10 @@ namespace TinyRNN
     {
         auto targetData = target->getTrainingData();
 
-        const double bias = context->evaluateVariable({target->getUuid(), Keys::Mapping::Bias}, targetData->bias);
-        const double state = context->evaluateVariable({target->getUuid(), Keys::Mapping::State}, targetData->state);
-        const double oldState = context->evaluateVariable({target->getUuid(), Keys::Mapping::OldState}, targetData->oldState);
-        const double activation = context->evaluateVariable({target->getUuid(), Keys::Mapping::Activation}, targetData->activation);
+        const Value bias = context->evaluateVariable({target->getUuid(), Keys::Mapping::Bias}, targetData->bias);
+        const Value state = context->evaluateVariable({target->getUuid(), Keys::Mapping::State}, targetData->state);
+        const Value oldState = context->evaluateVariable({target->getUuid(), Keys::Mapping::OldState}, targetData->oldState);
+        const Value activation = context->evaluateVariable({target->getUuid(), Keys::Mapping::Activation}, targetData->activation);
         
         targetData->bias = bias;
         targetData->state = state;
@@ -768,7 +768,7 @@ namespace TinyRNN
             {
                 const Id &inputConnectionUuid = j.first;
                 
-                const double extendedTrace =
+                const Value extendedTrace =
                 context->evaluateVariable({target->getUuid(), neighbourNeuronUuid, inputConnectionUuid, Keys::Mapping::ExtendedTrace},
                                           target->extended[neighbourNeuronUuid][inputConnectionUuid]);
                 

@@ -55,7 +55,7 @@ namespace TinyRNN
         HardcodedTrainingContext::Ptr getContext() const noexcept;
         
         HardcodedTrainingContext::RawData feed(const HardcodedTrainingContext::RawData &values);
-        void train(double rate, const HardcodedTrainingContext::RawData &target);
+        void train(Value rate, const HardcodedTrainingContext::RawData &target);
         
     public:
         
@@ -226,7 +226,7 @@ namespace TinyRNN
         
         this->clMemoryBuffer = cl::Buffer(this->clContext,
                                           CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-                                          sizeof(double) * this->trainingContext->getMemory().size(),
+                                          sizeof(Value) * this->trainingContext->getMemory().size(),
                                           (void *)this->trainingContext->getMemory().data());
         
         return true;
@@ -258,12 +258,12 @@ namespace TinyRNN
         
         this->clInputsBuffer = cl::Buffer(this->clContext,
                                           CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                          sizeof(double) * inputs.size(),
+                                          sizeof(Value) * inputs.size(),
                                           (void *)inputs.data());
         
         this->clOutputsBuffer = cl::Buffer(this->clContext,
                                            CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
-                                           sizeof(double) * this->trainingContext->getOutputs().size(),
+                                           sizeof(Value) * this->trainingContext->getOutputs().size(),
                                            (void *)this->trainingContext->getOutputs().data());
         
         for (auto &kernel : this->feedKernels)
@@ -278,16 +278,16 @@ namespace TinyRNN
         return this->trainingContext->getOutputs();
     }
     
-    inline void HardcodedNetwork::train(double rate, const HardcodedTrainingContext::RawData &targets)
+    inline void HardcodedNetwork::train(Value rate, const HardcodedTrainingContext::RawData &targets)
     {
         this->clTargetsBuffer = cl::Buffer(this->clContext,
                                            CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                           sizeof(double) * targets.size(),
+                                           sizeof(Value) * targets.size(),
                                            (void *)targets.data());
         
         this->clRateBuffer = cl::Buffer(this->clContext,
                                         CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                        sizeof(double),
+                                        sizeof(Value),
                                         (void *)&rate);
         
         for (auto &kernel : this->trainKernels)
@@ -308,6 +308,7 @@ namespace TinyRNN
         Kernel::Ptr currentKernel;
         size_t currentKernelExpressionsCounter = 0;
         const size_t maxExpressions = trnn_max(TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL, 100);
+        const std::string valueString = (sizeof(Value) == sizeof(double)) ? "double" : "float";
         
         for (const auto &layer : targetLayers)
         {
@@ -334,7 +335,11 @@ namespace TinyRNN
                     currentKernel = Kernel::Ptr(new Kernel());
                     currentKernel->entryPoint = ("feed_" + std::to_string(result.size()));
                     currentKernel->fullSource =
-                    "void kernel " + currentKernel->entryPoint + "(global const double *input, global double *output, global double *x) {\n";
+                    "void kernel " + currentKernel->entryPoint +
+                    "(global const " + valueString +
+                    " *input, global " + valueString +
+                    " *output, global " + valueString + " *x) {\n";
+                    
                     currentKernel->fullSource += this->trainingContext->buildInputsExpressions();
                 }
                 
@@ -361,6 +366,7 @@ namespace TinyRNN
         Kernel::Ptr currentKernel;
         size_t currentKernelExpressionsCounter = 0;
         const size_t maxExpressions = trnn_max(TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL, 100);
+        const std::string valueString = (sizeof(Value) == sizeof(double)) ? "double" : "float";
         
         for (size_t l = targetLayers.size(); l --> 0 ;)
         {
@@ -388,7 +394,11 @@ namespace TinyRNN
                     currentKernel = Kernel::Ptr(new Kernel());
                     currentKernel->entryPoint = ("train_" + std::to_string(result.size()));
                     currentKernel->fullSource =
-                    "void kernel " + currentKernel->entryPoint + "(global const double *rate, global const double *target, global double *x) {\n";
+                    "void kernel " + currentKernel->entryPoint +
+                    "(global const " + valueString +
+                    " *rate, global const " + valueString +
+                    " *target, global " + valueString + " *x) {\n";
+                    
                     currentKernel->fullSource += this->trainingContext->buildRateExpression();
                     currentKernel->fullSource += this->trainingContext->buildTargetsExpressions();
 

@@ -41,7 +41,7 @@ namespace TinyRNN
         using WeakPtr = std::weak_ptr<Neuron>;
         using HashMap = std::unordered_map<Id, Neuron::Ptr>;
         using Vector = std::vector<Neuron::Ptr>;
-        using Values = std::vector<double>;
+        using Values = std::vector<Value>;
         
     public:
         
@@ -71,7 +71,7 @@ namespace TinyRNN
             
             bool hasGate() const noexcept;
             void setGate(Neuron::WeakPtr gateNeuron);
-            void setInputOutput(Neuron::WeakPtr inputNeuron, Neuron::WeakPtr outputNeuron);
+            void connect(Neuron::WeakPtr inputNeuron, Neuron::WeakPtr outputNeuron);
             
         public:
             
@@ -96,7 +96,7 @@ namespace TinyRNN
     public:
         
         explicit Neuron(TrainingContext::Ptr context);
-        Neuron(TrainingContext::Ptr context, double defaultBias);
+        Neuron(TrainingContext::Ptr context, Value defaultBias);
         
         Id getUuid() const noexcept;
         TrainingContext::NeuronData::Ptr getTrainingData() const;
@@ -117,16 +117,16 @@ namespace TinyRNN
         void gate(Connection::Ptr connection);
         
         // Used for the neurons in input layer
-        void feed(double value);
+        void feed(Value value);
         
         // Used for all layers other that input
-        double process();
+        Value process();
         
         // Used for the neurons in output layer
-        void train(double rate, double target);
+        void train(Value rate, Value target);
         
         // Used for all layers other that input
-        void backPropagate(double rate);
+        void backPropagate(Value rate);
         
     public:
         
@@ -137,8 +137,8 @@ namespace TinyRNN
         
         Id uuid;
         
-        static double activation(double x);
-        static double derivative(double x);
+        static Value activation(Value x);
+        static Value derivative(Value x);
         
         Connection::HashMap incomingConnections;
         Connection::HashMap outgoingConnections;
@@ -148,7 +148,7 @@ namespace TinyRNN
         TrainingContext::Ptr context;
         
         bool isOutput() const;
-        void learn(double rate = 0.1);
+        void learn(Value rate = 0.1);
         
         friend class Layer;
         friend class HardcodedNeuron;
@@ -156,7 +156,8 @@ namespace TinyRNN
     private:
         
         // The cache maps, never serialized
-        using EligibilityMap = std::unordered_map<Id, double>;
+        // Consume A LOT of memory
+        using EligibilityMap = std::unordered_map<Id, Value>;
         using ExtendedEligibilityMap = std::unordered_map<Id, EligibilityMap>;
         using Influences = std::unordered_map<Id, Connection::Ptr>;
         using InfluencesMap = std::unordered_map<Id, Influences>;
@@ -184,7 +185,7 @@ namespace TinyRNN
     }
     
     inline Neuron::Neuron(TrainingContext::Ptr targetContext,
-                          double defaultBias) :
+                          Value defaultBias) :
     uuid(Uuid::generate()),
     context(targetContext)
     {
@@ -237,9 +238,9 @@ namespace TinyRNN
         
         // reference all the connections and traces
         this->outgoingConnections[newConnectionId] = newConnection;
-        this->neighbours[other->getUuid()] = other;
-        
         other->incomingConnections[newConnectionId] = newConnection;
+        
+        this->neighbours[other->getUuid()] = other;
         other->eligibility[newConnectionId] = 0.0;
         
         for (auto &extendedTrace : other->extended)
@@ -286,7 +287,7 @@ namespace TinyRNN
     // Core
     //
     
-    inline void Neuron::feed(double signalValue)
+    inline void Neuron::feed(Value signalValue)
     {
         const bool noInputConnections = this->incomingConnections.empty();
         const bool hasOutputConnections = !this->outgoingConnections.empty();
@@ -298,7 +299,7 @@ namespace TinyRNN
         }
     }
     
-    inline double Neuron::process()
+    inline Value Neuron::process()
     {
         auto myData = this->getTrainingData();
         myData->oldState = myData->state;
@@ -335,7 +336,7 @@ namespace TinyRNN
             // extended elegibility trace
             Neuron::Ptr neighbour = this->neighbours[id.first];
             
-            double influence = 0.0;
+            Value influence = 0.0;
             
             // if gated neuron's selfconnection is gated by this unit, the influence keeps track of the neuron's old state
             if (Connection::Ptr neighbourSelfconnection = neighbour->getSelfConnection())
@@ -364,7 +365,7 @@ namespace TinyRNN
             const Connection::Ptr inputConnection = i.second;
             
             // elegibility trace - Eq. 17
-            const double oldElegibility = this->eligibility[inputConnection->getUuid()];
+            const Value oldElegibility = this->eligibility[inputConnection->getUuid()];
             const auto inputConnectionData = inputConnection->getTrainingData();
             const auto inputNeuronData = inputConnection->getInputNeuron()->getTrainingData();
             this->eligibility[inputConnection->getUuid()] = inputConnectionData->gain * inputNeuronData->activation;
@@ -379,14 +380,14 @@ namespace TinyRNN
             {
                 // extended elegibility trace
                 const Id neuronId = i.first;
-                const double influence = influences[neuronId];
+                const Value influence = influences[neuronId];
                 EligibilityMap &xtrace = i.second;
                 Neuron::Ptr neighbour = this->neighbours[neuronId];
                 
                 const auto neighbourData = neighbour->getTrainingData();
                 
                 // eq. 18
-                const double oldXTrace = xtrace[inputConnection->getUuid()];
+                const Value oldXTrace = xtrace[inputConnection->getUuid()];
                 xtrace[inputConnection->getUuid()] = myData->derivative * this->eligibility[inputConnection->getUuid()] * influence;
                 
                 if (Connection::Ptr neighbourSelfConnection = neighbour->getSelfConnection())
@@ -416,7 +417,7 @@ namespace TinyRNN
         return isOutput;
     }
     
-    inline void Neuron::train(double rate, double target)
+    inline void Neuron::train(Value rate, Value target)
     {
         // output neurons get their error from the enviroment
         if (this->isOutput())
@@ -427,9 +428,9 @@ namespace TinyRNN
         }
     }
     
-    inline void Neuron::backPropagate(double rate)
+    inline void Neuron::backPropagate(Value rate)
     {
-        double errorAccumulator = 0.0;
+        Value errorAccumulator = 0.0;
         
         // the rest of the neuron compute their error responsibilities by backpropagation
         if (! this->isOutput())
@@ -458,7 +459,7 @@ namespace TinyRNN
                 const Neuron::Ptr gatedNeuron = this->neighbours[gatedNeuronId];
                 const auto gatedNeuronData = gatedNeuron->getTrainingData();
                 
-                double influence = 0.0;
+                Value influence = 0.0;
                 
                 // if gated neuron's selfconnection is gated by this neuron
                 if (Connection::Ptr gatedNeuronSelfConnection = gatedNeuron->getSelfConnection())
@@ -492,7 +493,7 @@ namespace TinyRNN
         }
     }
     
-    inline void Neuron::learn(double rate)
+    inline void Neuron::learn(Value rate)
     {
         auto myData = this->getTrainingData();
         
@@ -503,7 +504,7 @@ namespace TinyRNN
             const Connection::Ptr inputConnection = i.second;
             
             // Eq. 24
-            double gradient = myData->projectedActivity * this->eligibility[inputConnectionUuid];
+            Value gradient = myData->projectedActivity * this->eligibility[inputConnectionUuid];
             for (auto &ext : this->extended)
             {
                 const Id neuronUuid = ext.first;
@@ -519,14 +520,14 @@ namespace TinyRNN
         myData->bias += rate * myData->errorResponsibility;
     }
     
-    inline double Neuron::activation(double x)
+    inline Value Neuron::activation(Value x)
     {
         return 1.0 / (1.0 + exp(-x));
     }
     
-    inline double Neuron::derivative(double x)
+    inline Value Neuron::derivative(Value x)
     {
-        const double fx = Neuron::activation(x);
+        const Value fx = Neuron::activation(x);
         return fx * (1.0 - fx);
     }
     
@@ -692,7 +693,7 @@ namespace TinyRNN
         this->gateNeuron = gateNeuron;
     }
     
-    inline void Neuron::Connection::setInputOutput(Neuron::WeakPtr weakInput, Neuron::WeakPtr weakOutput)
+    inline void Neuron::Connection::connect(Neuron::WeakPtr weakInput, Neuron::WeakPtr weakOutput)
     {
         Neuron::Ptr strongInput = weakInput.lock();
         Neuron::Ptr strongOutput = weakOutput.lock();
@@ -705,12 +706,13 @@ namespace TinyRNN
             strongInput->selfConnection = this->shared_from_this();
             return;
         }
-        
-        // reference all the connections and traces
+
+        // reference all the connections
         strongInput->outgoingConnections[this->getUuid()] = this->shared_from_this();
-        strongInput->neighbours[strongOutput->getUuid()] = strongOutput;
-        
         strongOutput->incomingConnections[this->getUuid()] = this->shared_from_this();
+
+        // reference all the traces
+        strongInput->neighbours[strongOutput->getUuid()] = strongOutput;
         strongOutput->eligibility[this->getUuid()] = 0.0;
         
         for (auto &extendedTrace : strongOutput->extended)

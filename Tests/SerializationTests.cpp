@@ -40,10 +40,10 @@ public:
     
     explicit XMLSerializationContext(pugi::xml_node rootNode) : node(rootNode) {}
     
-    virtual void setRealProperty(double value, const std::string &key) override
+    virtual void setRealProperty(Value value, const std::string &key) override
     { this->node.append_attribute(key.c_str()).set_value(value); }
     
-    virtual double getRealProperty(const std::string &key) const override
+    virtual Value getRealProperty(const std::string &key) const override
     { return this->node.attribute(key.c_str()).as_double(); }
     
     virtual void setNumberProperty(long long value, const std::string &key) override
@@ -177,9 +177,9 @@ SCENARIO("Networks can be serialized and deserialized correctly", "[serializatio
                 
                 for (int i = 0; i < numTrainingIterations; ++i)
                 {
-                    const double r1 = RANDOM(0.0, 10000.0);
-                    const double r2 = RANDOM(0.0, 10000.0);
-                    const double r3 = RANDOM(0.0, 10000.0);
+                    const Value r1 = RANDOM(0.0, 10000.0);
+                    const Value r2 = RANDOM(0.0, 10000.0);
+                    const Value r3 = RANDOM(0.0, 10000.0);
                     Neuron::Values result1 = network->feed({r1, r2, r3});
                     Neuron::Values result2 = recreatedNetwork->feed({r1, r2, r3});
                     REQUIRE(result1 == result2);
@@ -264,9 +264,9 @@ SCENARIO("Hardcoded network can be serialized and deserialized correctly", "[ser
                 
                 for (int i = 0; i < numTrainingIterations; ++i)
                 {
-                    const double r1 = RANDOM(0.0, 10000.0);
-                    const double r2 = RANDOM(0.0, 10000.0);
-                    const double r3 = RANDOM(0.0, 10000.0);
+                    const Value r1 = RANDOM(0.0, 10000.0);
+                    const Value r2 = RANDOM(0.0, 10000.0);
+                    const Value r3 = RANDOM(0.0, 10000.0);
                     Neuron::Values result1 = clNetwork->feed({r1, r2, r3});
                     Neuron::Values result2 = clRecreatedNetwork->feed({r1, r2, r3});
                     REQUIRE(result1 == result2);
