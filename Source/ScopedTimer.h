@@ -33,22 +33,21 @@ namespace TinyRNN
     public:
         
         explicit ScopedTimer(const std::string &targetName) :
-            startTime(std::chrono::high_resolution_clock::now()),
-            name(targetName)
+            startTime(std::chrono::high_resolution_clock::now())
         {
+            std::cout << targetName << std::endl;
         }
         
         ~ScopedTimer()
         {
             const auto endTime = std::chrono::high_resolution_clock::now();
             const auto milliSeconds = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - this->startTime).count();
-            std::cout << this->name << " (" << std::to_string(milliSeconds) << " ms)" << std::endl;
+            std::cout << "Done (" << std::to_string(milliSeconds) << " ms)" << std::endl;
         }
         
     private:
         
         std::chrono::high_resolution_clock::time_point startTime;
-        std::string name;
         
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(ScopedTimer);
     };
