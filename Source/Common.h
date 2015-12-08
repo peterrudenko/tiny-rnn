@@ -31,6 +31,12 @@
 #include <unordered_map>
 #include <math.h>
 
+namespace TinyRNN
+{
+    using Id = unsigned long;
+    using Value = float;
+}
+
 #if TINYRNN_OPENCL_ACCELERATION
 #include "OpenCL/cl.hpp"
 #endif

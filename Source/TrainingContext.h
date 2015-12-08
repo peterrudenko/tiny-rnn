@@ -59,20 +59,20 @@ namespace TinyRNN
             
         private:
             
-            double bias;
-            double activation;
-            double derivative;
+            Value bias;
+            Value activation;
+            Value derivative;
             
-            double state;
-            double oldState;
+            Value state;
+            Value oldState;
             
-            double errorResponsibility;
-            double projectedActivity;
-            double gatingActivity;
+            Value errorResponsibility;
+            Value projectedActivity;
+            Value gatingActivity;
             
             Id neuronUuid;
             
-            void feedWithRandomBias(double signal);
+            void feedWithRandomBias(Value signal);
             void setRandomBias();
             
             friend class Neuron;
@@ -105,8 +105,8 @@ namespace TinyRNN
             
         private:
             
-            double weight;
-            double gain;
+            Value weight;
+            Value gain;
             
             Id connectionUuid;
             
@@ -271,7 +271,7 @@ namespace TinyRNN
         return this->neuronUuid;
     }
     
-    inline void TrainingContext::NeuronData::feedWithRandomBias(double signal)
+    inline void TrainingContext::NeuronData::feedWithRandomBias(Value signal)
     {
         this->activation = signal;
         this->derivative = 0.0;
@@ -282,7 +282,7 @@ namespace TinyRNN
     {
         std::random_device randomDevice;
         std::mt19937 mt19937(randomDevice());
-        std::uniform_real_distribution<double> distribution(-0.1, 0.1);
+        std::uniform_real_distribution<Value> distribution(-0.1, 0.1);
         this->bias = distribution(mt19937);
     }
     
@@ -333,7 +333,7 @@ namespace TinyRNN
     {
         std::random_device randomDevice;
         std::mt19937 mt19937(randomDevice());
-        std::uniform_real_distribution<double> distribution(-0.1, 0.1);
+        std::uniform_real_distribution<Value> distribution(-0.1, 0.1);
         this->weight = distribution(mt19937);
     }
     

@@ -28,9 +28,15 @@ struct Helpers
         return distribution(Helpers::twister());
     }
     
-    static double random(double from, double to)
+    static TinyRNN::Value random(double from, double to)
     {
         std::uniform_real_distribution<double> distribution(from, to);
+        return distribution(Helpers::twister());
+    }
+    
+    static TinyRNN::Value random(float from, float to)
+    {
+        std::uniform_real_distribution<float> distribution(from, to);
         return distribution(Helpers::twister());
     }
     

@@ -57,7 +57,7 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
         {
             {
                 const ScopedTimer timer("Training usual network");
-                double rate = 0.5;
+                Value rate = 0.5;
                 
                 for (int i = 0; i < numIterations; ++i)
                 {
@@ -110,7 +110,7 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
             
             {
                 const ScopedTimer timer("Training hardcoded network");
-                double rate = 0.5;
+                Value rate = 0.5;
                 
                 for (int i = 0; i < numIterations; ++i)
                 {
@@ -157,9 +157,9 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
     }
 }
 
-static double crossEntropyErrorCost(const Neuron::Values &targets, const Neuron::Values &outputs)
+static Value crossEntropyErrorCost(const Neuron::Values &targets, const Neuron::Values &outputs)
 {
-    double cost = 0.0;
+    Value cost = 0.0;
     
     for (size_t i = 0; i < outputs.size(); ++i)
     {
@@ -170,9 +170,9 @@ static double crossEntropyErrorCost(const Neuron::Values &targets, const Neuron:
     return cost;
 }
 
-static double meanSquaredErrorCost(const Neuron::Values &targets, const Neuron::Values &outputs)
+static Value meanSquaredErrorCost(const Neuron::Values &targets, const Neuron::Values &outputs)
 {
-    double cost = 0.0;
+    Value cost = 0.0;
     
     for (size_t i = 0; i < outputs.size(); ++i)
     {
@@ -182,7 +182,7 @@ static double meanSquaredErrorCost(const Neuron::Values &targets, const Neuron::
     return cost / outputs.size();
 }
 
-static double f(double x, double seed)
+static Value f(Value x, Value seed)
 {
     return seed * 2.0 + cos(x) * seed * 3.0 + tanh(x) * sin(x) * sin(x) * seed * -0.5;
 }
@@ -199,7 +199,7 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
         {
             for (int i = 0; i < numIterations; ++i)
             {
-                const double x = RANDOM(-10.0, 10.0);
+                const Value x = RANDOM(-10.0, 10.0);
                 network->feed({x});
                 network->train(0.5, {f(x, fxSeed)});
             }
@@ -210,9 +210,9 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
                 
                 for (int i = 0; i < numChecks; ++i)
                 {
-                    const double x = RANDOM(-10.0, 10.0);
+                    const Value x = RANDOM(-10.0, 10.0);
                     const auto result = network->feed({x});
-                    const double error = meanSquaredErrorCost({f(x, fxSeed)}, result);
+                    const Value error = meanSquaredErrorCost({f(x, fxSeed)}, result);
                     REQUIRE(error < 0.1);
                 }
             }
@@ -233,7 +233,7 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
         {
             for (int i = 0; i < numIterations; ++i)
             {
-                const double x = RANDOM(-10.0, 10.0);
+                const Value x = RANDOM(-10.0, 10.0);
                 clNetwork->feed({x});
                 clNetwork->train(0.5, {f(x, fxSeed)});
             }
@@ -244,9 +244,9 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
                 
                 for (int i = 0; i < numChecks; ++i)
                 {
-                    const double x = RANDOM(-10.0, 10.0);
+                    const Value x = RANDOM(-10.0, 10.0);
                     const auto result = clNetwork->feed({x});
-                    const double error = meanSquaredErrorCost({f(x, fxSeed)}, result);
+                    const Value error = meanSquaredErrorCost({f(x, fxSeed)}, result);
                     REQUIRE(error < 0.1);
                 }
             }
@@ -272,7 +272,7 @@ SCENARIO("Network can be recovered back from the trained hardcoded version", "[t
         {
             {
                 const ScopedTimer timer("Training hardcoded network");
-                double rate = 0.5;
+                Value rate = 0.5;
                 const int numIterations = RANDOM(500, 1000);
                 
                 for (int i = 0; i < numIterations; ++i)

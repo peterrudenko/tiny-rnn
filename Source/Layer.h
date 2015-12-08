@@ -47,7 +47,7 @@ namespace TinyRNN
     public:
         
         Layer(TrainingContext::Ptr context, int numNeurons);
-        Layer(TrainingContext::Ptr context, int numNeurons, double bias);
+        Layer(TrainingContext::Ptr context, int numNeurons, Value bias);
         
         std::string getName() const noexcept;
         Id getUuid() const noexcept;
@@ -74,10 +74,10 @@ namespace TinyRNN
         Neuron::Values process();
         
         // Used for the output layer
-        bool train(double rate, const Neuron::Values &target);
+        bool train(Value rate, const Neuron::Values &target);
         
         // Back-propagation magic
-        void backPropagate(double rate);
+        void backPropagate(Value rate);
         
     public:
         
@@ -121,7 +121,7 @@ namespace TinyRNN
         }
     }
     
-    inline Layer::Layer(TrainingContext::Ptr targetContext, int numNeurons, double bias) :
+    inline Layer::Layer(TrainingContext::Ptr targetContext, int numNeurons, Value bias) :
     uuid(Uuid::generate()),
     context(targetContext)
     {
@@ -332,14 +332,14 @@ namespace TinyRNN
         
         for (auto &neuron : this->neurons)
         {
-            const double activation = neuron->process();
+            const Value activation = neuron->process();
             result.push_back(activation);
         }
         
         return result;
     }
     
-    inline bool Layer::train(double rate, const Neuron::Values &target)
+    inline bool Layer::train(Value rate, const Neuron::Values &target)
     {
         if (target.size() != this->neurons.size())
         {
@@ -355,7 +355,7 @@ namespace TinyRNN
         return true;
     }
     
-    inline void Layer::backPropagate(double rate)
+    inline void Layer::backPropagate(Value rate)
     {
         for (size_t i = this->neurons.size(); i --> 0 ;)
         {
