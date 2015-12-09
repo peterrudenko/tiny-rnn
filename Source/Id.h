@@ -20,8 +20,8 @@
     OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef TINYRNN_UUID_H_INCLUDED
-#define TINYRNN_UUID_H_INCLUDED
+#ifndef TINYRNN_ID_H_INCLUDED
+#define TINYRNN_ID_H_INCLUDED
 
 #include "Common.h"
 #include <climits>
@@ -29,10 +29,8 @@
 
 namespace TinyRNN
 {
-    class Uuid
+    namespace Uuid
     {
-    public:
-        
         static std::string generateIsoUuid()
         {
             static const int uuidLength = 32;
@@ -64,18 +62,12 @@ namespace TinyRNN
             return result;
         }
         
-        static Id generateSimpleId()
+        static inline Id generateId()
         {
-            static unsigned long long kRecentId = 0;
-            //const std::string result = std::to_string(kRecentId++);
+            static Id kRecentId = 0;
             return ++kRecentId;
-        }
-        
-        static inline Id generate()
-        {
-            return generateSimpleId();
         }
     };
 }
 
-#endif // TINYRNN_UUID_H_INCLUDED
+#endif // TINYRNN_ID_H_INCLUDED

@@ -57,6 +57,10 @@ namespace TinyRNN
         static inline std::vector<unsigned char> decodeBase64(const std::string &encodedString);
     };
     
+    //===------------------------------------------------------------------===//
+    // Helpers
+    //===------------------------------------------------------------------===//
+
     static const std::string base64Chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz"

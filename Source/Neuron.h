@@ -26,7 +26,7 @@
 #include "SerializedObject.h"
 #include "TrainingContext.h"
 #include "SerializationKeys.h"
-#include "Uuid.h"
+#include "Id.h"
 
 namespace TinyRNN
 {
@@ -173,20 +173,19 @@ namespace TinyRNN
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(Neuron);
     };
     
-    
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Neuron implementation
-    //
+    //===------------------------------------------------------------------===//
     
     inline Neuron::Neuron(TrainingContext::Ptr targetContext) :
-    uuid(Uuid::generate()),
+    uuid(Uuid::generateId()),
     context(targetContext)
     {
     }
     
     inline Neuron::Neuron(TrainingContext::Ptr targetContext,
-                          Value defaultBias) :
-    uuid(Uuid::generate()),
+                             Value defaultBias) :
+    uuid(Uuid::generateId()),
     context(targetContext)
     {
     }
@@ -201,9 +200,9 @@ namespace TinyRNN
         return this->context->getNeuronContext(this->getUuid());
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Connections
-    //
+    //===------------------------------------------------------------------===//
     
     inline Neuron::Connection::HashMap Neuron::getOutgoingConnections() const
     {
@@ -236,10 +235,11 @@ namespace TinyRNN
         Connection::Ptr newConnection(new Connection(this->context, this->shared_from_this(), other));
         const Id newConnectionId = newConnection->getUuid();
         
-        // reference all the connections and traces
+        // reference all the connections
         this->outgoingConnections[newConnectionId] = newConnection;
         other->incomingConnections[newConnectionId] = newConnection;
         
+        // reference traces
         this->neighbours[other->getUuid()] = other;
         other->eligibility[newConnectionId] = 0.0;
         
@@ -261,6 +261,7 @@ namespace TinyRNN
         
         Neuron::Ptr targetNeuron = connection->getOutputNeuron();
         
+        // update traces
         const bool targetNeuronNotFoundInExtendedTrace = (this->extended.find(targetNeuron->getUuid()) == this->extended.end());
         if (targetNeuronNotFoundInExtendedTrace)
         {
@@ -283,9 +284,9 @@ namespace TinyRNN
         connection->setGate(this->shared_from_this());
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Core
-    //
+    //===------------------------------------------------------------------===//
     
     inline void Neuron::feed(Value signalValue)
     {
@@ -531,10 +532,9 @@ namespace TinyRNN
         return fx * (1.0 - fx);
     }
     
-    
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Const stuff
-    //
+    //===------------------------------------------------------------------===//
     
     inline bool Neuron::isSelfConnected() const noexcept
     {
@@ -622,9 +622,9 @@ namespace TinyRNN
         return nullptr;
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Serialization
-    //
+    //===------------------------------------------------------------------===//
     
     inline void Neuron::deserialize(SerializationContext::Ptr context)
     {
@@ -637,12 +637,12 @@ namespace TinyRNN
         context->setNumberProperty(this->uuid, Keys::Core::Uuid);
     }
     
-    // =============================================================================
-    // Connection
-    //
+    //===------------------------------------------------------------------===//
+    // Neuron::Connection
+    //===------------------------------------------------------------------===//
     
     inline Neuron::Connection::Connection(TrainingContext::Ptr targetContext) :
-    uuid(Uuid::generate()),
+    uuid(Uuid::generateId()),
     context(targetContext)
     {
     }
@@ -650,12 +650,11 @@ namespace TinyRNN
     inline Neuron::Connection::Connection(TrainingContext::Ptr targetContext,
                                    std::weak_ptr<Neuron> input,
                                    std::weak_ptr<Neuron> output) :
-    uuid(Uuid::generate()),
+    uuid(Uuid::generateId()),
     inputNeuron(input),
     outputNeuron(output),
     context(targetContext)
     {
-        //
     }
     
     inline TrainingContext::ConnectionData::Ptr Neuron::Connection::getTrainingData() const
@@ -721,9 +720,9 @@ namespace TinyRNN
         }
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Serialization
-    //
+    //===------------------------------------------------------------------===//
     
     inline void Neuron::Connection::deserialize(SerializationContext::Ptr context)
     {

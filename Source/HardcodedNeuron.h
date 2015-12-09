@@ -64,13 +64,16 @@ namespace TinyRNN
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(HardcodedNeuron);
     };
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // HardcodedNeuron implementation
-    //
+    //===------------------------------------------------------------------===//
     
     inline HardcodedNeuron::HardcodedNeuron() {}
 
-    inline HardcodedNeuron::Ptr HardcodedNeuron::buildFrom(HardcodedTrainingContext::Ptr context, Neuron::Ptr target, bool asInput, bool asOutput)
+    inline HardcodedNeuron::Ptr HardcodedNeuron::buildFrom(HardcodedTrainingContext::Ptr context,
+                                                           Neuron::Ptr target,
+                                                           bool asInput,
+                                                           bool asOutput)
     {
         HardcodedNeuron::Ptr hardcoded(new HardcodedNeuron());
         

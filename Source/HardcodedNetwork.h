@@ -44,13 +44,12 @@ namespace TinyRNN
     public:
         
         explicit HardcodedNetwork(HardcodedTrainingContext::Ptr targetContext);
-        HardcodedNetwork(HardcodedLayers targetLayers,
-                         HardcodedTrainingContext::Ptr targetContext);
+        
+        HardcodedNetwork(HardcodedTrainingContext::Ptr targetContext,
+                         HardcodedLayers targetLayers,
+                         unsigned long maxNumberOfExpressionsPerKernel);
         
         bool compile();
-        
-        // todo:
-        //bool compileAsStandalone();
         
         HardcodedTrainingContext::Ptr getContext() const noexcept;
         
@@ -104,36 +103,40 @@ namespace TinyRNN
             TINYRNN_DISALLOW_COPY_AND_ASSIGN(Kernel);
         };
         
-#if not defined TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL
-#define TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL 10000
-#endif
-        
         Kernel::Vector feedKernels;
         Kernel::Vector trainKernels;
         
-        Kernel::Vector compileFeedKernels(const HardcodedLayers &targetLayers) const;
-        Kernel::Vector compileTrainKernels(const HardcodedLayers &targetLayers) const;
+        Kernel::Vector compileFeedKernels(const HardcodedLayers &targetLayers,
+                                          unsigned long maxNumberOfExpressionsPerKernel) const;
         
-        bool initialize(const HardcodedLayers &targetLayers);
-        bool build();
+        Kernel::Vector compileTrainKernels(const HardcodedLayers &targetLayers,
+                                           unsigned long maxNumberOfExpressionsPerKernel) const;
+        
+        bool initialize(const HardcodedLayers &targetLayers,
+                        unsigned long maxNumberOfExpressionsPerKernel);
         
         bool isBuilt() const;
         
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(HardcodedNetwork);
     };
     
+    //===------------------------------------------------------------------===//
+    // HardcodedNetwork implementation
+    //===------------------------------------------------------------------===//
+    
     inline HardcodedNetwork::HardcodedNetwork(HardcodedTrainingContext::Ptr targetContext) :
     trainingContext(targetContext)
     {
         HardcodedLayers empty;
-        this->initialize(empty);
+        this->initialize(empty, 0);
     }
 
-    inline HardcodedNetwork::HardcodedNetwork(HardcodedLayers targetLayers,
-                                              HardcodedTrainingContext::Ptr targetContext) :
+    inline HardcodedNetwork::HardcodedNetwork(HardcodedTrainingContext::Ptr targetContext,
+                                              HardcodedLayers targetLayers,
+                                              unsigned long maxNumberOfExpressionsPerKernel) :
     trainingContext(targetContext)
     {
-        this->initialize(targetLayers);
+        this->initialize(targetLayers, maxNumberOfExpressionsPerKernel);
     }
     
     inline HardcodedTrainingContext::Ptr HardcodedNetwork::getContext() const noexcept
@@ -141,12 +144,12 @@ namespace TinyRNN
         return this->trainingContext;
     }
     
-    inline bool HardcodedNetwork::compile()
-    {
-        return this->build();
-    }
+    //===------------------------------------------------------------------===//
+    // Compiling
+    //===------------------------------------------------------------------===//
     
-    inline bool HardcodedNetwork::initialize(const HardcodedLayers &targetLayers)
+    inline bool HardcodedNetwork::initialize(const HardcodedLayers &targetLayers,
+                                             unsigned long maxNumberOfExpressionsPerKernel)
     {
         const ScopedTimer timer("HardcodedNetwork::initialize");
         
@@ -176,13 +179,13 @@ namespace TinyRNN
         
         this->clContext = cl::Context(this->clDevice);
         
-        this->feedKernels = this->compileFeedKernels(targetLayers);
-        this->trainKernels = this->compileTrainKernels(targetLayers);
+        this->feedKernels = this->compileFeedKernels(targetLayers, maxNumberOfExpressionsPerKernel);
+        this->trainKernels = this->compileTrainKernels(targetLayers, maxNumberOfExpressionsPerKernel);
         
         return true;
     }
     
-    inline bool HardcodedNetwork::build()
+    inline bool HardcodedNetwork::compile()
     {
         const ScopedTimer timer("HardcodedNetwork::build");
         
@@ -250,64 +253,20 @@ namespace TinyRNN
         return built;
     }
     
-    inline HardcodedTrainingContext::RawData HardcodedNetwork::feed(const HardcodedTrainingContext::RawData &inputs)
-    {
-        std::fill(this->trainingContext->getOutputs().begin(),
-                  this->trainingContext->getOutputs().end(),
-                  0.0);
-        
-        this->clInputsBuffer = cl::Buffer(this->clContext,
-                                          CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                          sizeof(Value) * inputs.size(),
-                                          (void *)inputs.data());
-        
-        this->clOutputsBuffer = cl::Buffer(this->clContext,
-                                           CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
-                                           sizeof(Value) * this->trainingContext->getOutputs().size(),
-                                           (void *)this->trainingContext->getOutputs().data());
-        
-        for (auto &kernel : this->feedKernels)
-        {
-            kernel->clKernel.setArg(0, this->clInputsBuffer);
-            kernel->clKernel.setArg(1, this->clOutputsBuffer);
-            kernel->clKernel.setArg(2, this->clMemoryBuffer);
-            this->clQueue.enqueueNDRangeKernel(kernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
-            this->clQueue.finish();
-        }
-        
-        return this->trainingContext->getOutputs();
-    }
+    //===------------------------------------------------------------------===//
+    // Compiling all the expressions
+    //===------------------------------------------------------------------===//
     
-    inline void HardcodedNetwork::train(Value rate, const HardcodedTrainingContext::RawData &targets)
-    {
-        this->clTargetsBuffer = cl::Buffer(this->clContext,
-                                           CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                           sizeof(Value) * targets.size(),
-                                           (void *)targets.data());
-        
-        this->clRateBuffer = cl::Buffer(this->clContext,
-                                        CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                        sizeof(Value),
-                                        (void *)&rate);
-        
-        for (auto &kernel : this->trainKernels)
-        {
-            kernel->clKernel.setArg(0, this->clRateBuffer);
-            kernel->clKernel.setArg(1, this->clTargetsBuffer);
-            kernel->clKernel.setArg(2, this->clMemoryBuffer);
-            this->clQueue.enqueueNDRangeKernel(kernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
-            this->clQueue.finish();
-        }
-    }
+#define trnn_max(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
     
-    #define trnn_max(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
-    
-    inline HardcodedNetwork::Kernel::Vector HardcodedNetwork::compileFeedKernels(const HardcodedLayers &targetLayers) const
+    inline HardcodedNetwork::Kernel::Vector
+    HardcodedNetwork::compileFeedKernels(const HardcodedLayers &targetLayers,
+                                         unsigned long maxNumberOfExpressionsPerKernel) const
     {
         Kernel::Vector result;
         Kernel::Ptr currentKernel;
         size_t currentKernelExpressionsCounter = 0;
-        const size_t maxExpressions = trnn_max(TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL, 100);
+        const size_t maxExpressions = trnn_max(maxNumberOfExpressionsPerKernel, 100);
         const std::string valueString = (sizeof(Value) == sizeof(double)) ? "double" : "float";
         
         for (const auto &layer : targetLayers)
@@ -360,12 +319,14 @@ namespace TinyRNN
         return result;
     }
     
-    inline HardcodedNetwork::Kernel::Vector HardcodedNetwork::compileTrainKernels(const HardcodedLayers &targetLayers) const
+    inline HardcodedNetwork::Kernel::Vector
+    HardcodedNetwork::compileTrainKernels(const HardcodedLayers &targetLayers,
+                                          unsigned long maxNumberOfExpressionsPerKernel) const
     {
         Kernel::Vector result;
         Kernel::Ptr currentKernel;
         size_t currentKernelExpressionsCounter = 0;
-        const size_t maxExpressions = trnn_max(TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL, 100);
+        const size_t maxExpressions = trnn_max(maxNumberOfExpressionsPerKernel, 100);
         const std::string valueString = (sizeof(Value) == sizeof(double)) ? "double" : "float";
         
         for (size_t l = targetLayers.size(); l --> 0 ;)
@@ -401,7 +362,7 @@ namespace TinyRNN
                     
                     currentKernel->fullSource += this->trainingContext->buildRateExpression();
                     currentKernel->fullSource += this->trainingContext->buildTargetsExpressions();
-
+                    
                 }
                 
                 currentKernelExpressionsCounter += numExpressionsToCome;
@@ -420,10 +381,63 @@ namespace TinyRNN
         return result;
     }
     
+    //===------------------------------------------------------------------===//
+    // Core
+    //===------------------------------------------------------------------===//
     
-    // =============================================================================
+    inline HardcodedTrainingContext::RawData HardcodedNetwork::feed(const HardcodedTrainingContext::RawData &inputs)
+    {
+        std::fill(this->trainingContext->getOutputs().begin(),
+                  this->trainingContext->getOutputs().end(),
+                  0.0);
+        
+        this->clInputsBuffer = cl::Buffer(this->clContext,
+                                          CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                          sizeof(Value) * inputs.size(),
+                                          (void *)inputs.data());
+        
+        this->clOutputsBuffer = cl::Buffer(this->clContext,
+                                           CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
+                                           sizeof(Value) * this->trainingContext->getOutputs().size(),
+                                           (void *)this->trainingContext->getOutputs().data());
+        
+        for (auto &kernel : this->feedKernels)
+        {
+            kernel->clKernel.setArg(0, this->clInputsBuffer);
+            kernel->clKernel.setArg(1, this->clOutputsBuffer);
+            kernel->clKernel.setArg(2, this->clMemoryBuffer);
+            this->clQueue.enqueueNDRangeKernel(kernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
+            this->clQueue.finish();
+        }
+        
+        return this->trainingContext->getOutputs();
+    }
+    
+    inline void HardcodedNetwork::train(Value rate, const HardcodedTrainingContext::RawData &targets)
+    {
+        this->clTargetsBuffer = cl::Buffer(this->clContext,
+                                           CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                           sizeof(Value) * targets.size(),
+                                           (void *)targets.data());
+        
+        this->clRateBuffer = cl::Buffer(this->clContext,
+                                        CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                        sizeof(Value),
+                                        (void *)&rate);
+        
+        for (auto &kernel : this->trainKernels)
+        {
+            kernel->clKernel.setArg(0, this->clRateBuffer);
+            kernel->clKernel.setArg(1, this->clTargetsBuffer);
+            kernel->clKernel.setArg(2, this->clMemoryBuffer);
+            this->clQueue.enqueueNDRangeKernel(kernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
+            this->clQueue.finish();
+        }
+    }
+    
+    //===------------------------------------------------------------------===//
     // Serialization
-    //
+    //===------------------------------------------------------------------===//
     
     inline void HardcodedNetwork::deserialize(SerializationContext::Ptr context)
     {

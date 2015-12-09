@@ -28,7 +28,7 @@
 #include "SerializationKeys.h"
 #include "Layer.h"
 #include "TrainingContext.h"
-#include "Uuid.h"
+#include "Id.h"
 #include "ScopedTimer.h"
 
 #if TINYRNN_OPENCL_ACCELERATION
@@ -121,13 +121,12 @@ namespace TinyRNN
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(Network);
     };
     
-    
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Network implementation
-    //
+    //===------------------------------------------------------------------===//
     
     inline Network::Network(TrainingContext::Ptr targetContext) :
-    uuid(Uuid::generate()),
+    uuid(Uuid::generateId()),
     context(targetContext)
     {
     }
@@ -138,17 +137,13 @@ namespace TinyRNN
                      Layer::Vector targetHiddenLayers,
                      Layer::Ptr targetOutputLayer) :
     name(networkName),
-    uuid(Uuid::generate()),
+    uuid(Uuid::generateId()),
     inputLayer(targetInputLayer),
     hiddenLayers(targetHiddenLayers),
     outputLayer(targetOutputLayer),
     context(targetContext)
     {
     }
-    
-    // =============================================================================
-    // Accessors
-    //
     
     inline std::string Network::getName() const noexcept
     {
@@ -165,9 +160,9 @@ namespace TinyRNN
         return this->context;
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Core
-    //
+    //===------------------------------------------------------------------===//
     
     inline Neuron::Values Network::feed(const Neuron::Values &input)
     {
@@ -192,9 +187,9 @@ namespace TinyRNN
         }
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Connections
-    //
+    //===------------------------------------------------------------------===//
     
     inline Neuron::Connection::HashMap Network::connectAllToAll(Network::Ptr other)
     {
@@ -221,9 +216,9 @@ namespace TinyRNN
         return this->outputLayer->gateOneToOne(fromNetwork->outputLayer, toNetwork->inputLayer, connections);
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Serialization
-    //
+    //===------------------------------------------------------------------===//
     
     inline void Network::deserialize(SerializationContext::Ptr context)
     {
@@ -351,9 +346,13 @@ namespace TinyRNN
     
 #if TINYRNN_OPENCL_ACCELERATION
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Hardcoding into OpenCL kernels
-    //
+    //===------------------------------------------------------------------===//
+    
+#if not defined TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL
+#define TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL 10000
+#endif
     
     inline HardcodedNetwork::Ptr Network::hardcode() const
     {
@@ -372,7 +371,10 @@ namespace TinyRNN
             hardcodedLayers.push_back(this->outputLayer->hardcode(context, false, true));
         }
             
-        HardcodedNetwork::Ptr hardcodedNetwork(new HardcodedNetwork(hardcodedLayers, context));
+        HardcodedNetwork::Ptr hardcodedNetwork(new HardcodedNetwork(context, hardcodedLayers,
+                                                                    TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL));
+        
+        std::cout << "Hardcoded context memory size: " << context->getMemory().size() << std::endl;
         return hardcodedNetwork;
     }
     
@@ -392,9 +394,9 @@ namespace TinyRNN
     
 #endif
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Network prefabs
-    //
+    //===------------------------------------------------------------------===//
     
     inline Network::Ptr Network::Prefabs::feedForward(const std::string &name,
                                                       int inputLayerSize,

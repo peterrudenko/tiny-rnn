@@ -23,7 +23,7 @@
 #ifndef TINYRNN_SERIALIZATIONKEYS_H_INCLUDED
 #define TINYRNN_SERIALIZATIONKEYS_H_INCLUDED
 
-#include "Uuid.h"
+#include "Common.h"
 
 namespace TinyRNN
 {
