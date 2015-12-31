@@ -21,7 +21,6 @@
 		0B7696AB97F33A13E27DA70C /* Helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Helpers.h; path = ../../Tests/Helpers.h; sourceTree = SOURCE_ROOT; };
 		0F0DE9C3DC5EE56D8D0151FB /* ScopedSubscription.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedSubscription.h; path = ../../Source/ScopedSubscription.h; sourceTree = SOURCE_ROOT; };
 		18BD39736F5F8320A3E4EA6E /* SerializationKeys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializationKeys.h; path = ../../Source/SerializationKeys.h; sourceTree = SOURCE_ROOT; };
-		19738E9BF5A4A91A9ADC2A2E /* Uuid.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Uuid.h; path = ../../Source/Uuid.h; sourceTree = SOURCE_ROOT; };
 		2E321830528E38A62D5E4518 /* SerializationContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializationContext.h; path = ../../Source/SerializationContext.h; sourceTree = SOURCE_ROOT; };
 		422CC6B7CB0B62D817723B88 /* pugixml.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = pugixml.cpp; path = ../../Tests/ThirdParty/pugixml/src/pugixml.cpp; sourceTree = SOURCE_ROOT; };
 		513169F6C3A5D7C964DEE0E5 /* ScopedMemoryBlock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedMemoryBlock.h; path = ../../Source/ScopedMemoryBlock.h; sourceTree = SOURCE_ROOT; };
@@ -43,6 +42,7 @@
 		E63C4FDEF5FFB76D19B1E25B /* AppConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AppConfig.h; path = ../Introjucer/JuceLibraryCode/AppConfig.h; sourceTree = SOURCE_ROOT; };
 		E93FC5B1E30A66158C19403D /* Serializer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Serializer.h; path = ../../Source/Serializer.h; sourceTree = SOURCE_ROOT; };
 		EEAFEFEA4CB99859C0512B81 /* JuceHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = JuceHeader.h; path = ../Introjucer/JuceLibraryCode/JuceHeader.h; sourceTree = SOURCE_ROOT; };
+		F933072AC8181C1DAC189E40 /* Id.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Id.h; path = ../../Source/Id.h; sourceTree = SOURCE_ROOT; };
 		FAC89CB49C41CD0C2CA82871 /* ScopedTimer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedTimer.h; path = ../../Source/ScopedTimer.h; sourceTree = SOURCE_ROOT; };
 		FC41298C3739DE48EB366E50 /* TinyRNN */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = TinyRNN; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -108,7 +108,7 @@
 				513169F6C3A5D7C964DEE0E5 /* ScopedMemoryBlock.h */,
 				0F0DE9C3DC5EE56D8D0151FB /* ScopedSubscription.h */,
 				FAC89CB49C41CD0C2CA82871 /* ScopedTimer.h */,
-				19738E9BF5A4A91A9ADC2A2E /* Uuid.h */,
+				F933072AC8181C1DAC189E40 /* Id.h */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -276,7 +276,6 @@
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				PRODUCT_NAME = TinyRNN;
 				WARNING_CFLAGS = "-Wreorder";
 				ZERO_LINK = NO;
@@ -309,6 +308,7 @@
 				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = /usr/bin;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MACOSX_DEPLOYMENT_TARGET_ppc = 10.4;
 				SDKROOT_ppc = macosx10.5;
 			};
@@ -339,6 +339,7 @@
 				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = /usr/bin;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MACOSX_DEPLOYMENT_TARGET_ppc = 10.4;
 				SDKROOT_ppc = macosx10.5;
 			};
@@ -358,7 +359,6 @@
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = TinyRNN;
 				WARNING_CFLAGS = "-Wreorder";

@@ -23,8 +23,6 @@
 #ifndef TINYRNN_HARDCODEDNEURON_H_INCLUDED
 #define TINYRNN_HARDCODEDNEURON_H_INCLUDED
 
-#if TINYRNN_OPENCL_ACCELERATION
-
 #include "Common.h"
 #include "Neuron.h"
 #include "HardcodedTrainingContext.h"
@@ -46,7 +44,8 @@ namespace TinyRNN
         static HardcodedNeuron::Ptr buildFrom(HardcodedTrainingContext::Ptr context,
                                               Neuron::Ptr target,
                                               bool asInput,
-                                              bool asOutput);
+                                              bool asOutput,
+                                              bool asConst);
         
         static void restoreNeuronState(Neuron::Ptr targetNeuron,
                                        HardcodedTrainingContext::Ptr context);
@@ -64,13 +63,17 @@ namespace TinyRNN
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(HardcodedNeuron);
     };
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // HardcodedNeuron implementation
-    //
+    //===------------------------------------------------------------------===//
     
     inline HardcodedNeuron::HardcodedNeuron() {}
-
-    inline HardcodedNeuron::Ptr HardcodedNeuron::buildFrom(HardcodedTrainingContext::Ptr context, Neuron::Ptr target, bool asInput, bool asOutput)
+    
+    inline HardcodedNeuron::Ptr HardcodedNeuron::buildFrom(HardcodedTrainingContext::Ptr context,
+                                                           Neuron::Ptr target,
+                                                           bool asInput,
+                                                           bool asOutput,
+                                                           bool asConst)
     {
         HardcodedNeuron::Ptr hardcoded(new HardcodedNeuron());
         
@@ -83,11 +86,11 @@ namespace TinyRNN
         
         const size_t activationVar =
         context->allocateOrReuseVariable(targetData->activation,
-        {target->getUuid(), Keys::Mapping::Activation});
+                                         {target->getUuid(), Keys::Mapping::Activation});
         
         const size_t derivativeVar =
         context->allocateOrReuseVariable(targetData->derivative,
-        {target->getUuid(), Keys::Mapping::Derivative});
+                                         {target->getUuid(), Keys::Mapping::Derivative});
         
         if (asInput)
         {
@@ -97,15 +100,15 @@ namespace TinyRNN
         {
             const size_t biasVar =
             context->allocateOrReuseVariable(targetData->bias,
-            {target->getUuid(), Keys::Mapping::Bias});
+                                             {target->getUuid(), Keys::Mapping::Bias});
             
             const size_t stateVar =
             context->allocateOrReuseVariable(targetData->state,
-            {target->getUuid(), Keys::Mapping::State});
+                                             {target->getUuid(), Keys::Mapping::State});
             
             const size_t oldStateVar =
             context->allocateOrReuseVariable(targetData->oldState,
-            {target->getUuid(), Keys::Mapping::OldState});
+                                             {target->getUuid(), Keys::Mapping::OldState});
             
             size_t selfConnectionGainVar = 0;
             size_t selfConnectionWeightVar = 0;
@@ -116,14 +119,14 @@ namespace TinyRNN
                 
                 selfConnectionWeightVar =
                 context->allocateOrReuseVariable(selfConnectionData->weight,
-                {target->selfConnection->getUuid(), Keys::Mapping::Weight});
+                                                 {target->selfConnection->getUuid(), Keys::Mapping::Weight});
                 
                 const bool selfConnectionHasGate = (target->selfConnection->getGateNeuron() != nullptr);
                 if (selfConnectionHasGate)
                 {
                     selfConnectionGainVar =
                     context->allocateOrReuseVariable(selfConnectionData->gain,
-                    {target->selfConnection->getUuid(), Keys::Mapping::Gain});
+                                                     {target->selfConnection->getUuid(), Keys::Mapping::Gain});
                     
                 }
             }
@@ -136,13 +139,13 @@ namespace TinyRNN
                 const auto selfConnectionData = target->selfConnection->getTrainingData();
                 const size_t selfWeightVar =
                 context->allocateOrReuseVariable(selfConnectionData->weight,
-                {target->selfConnection->getUuid(), Keys::Mapping::Weight});
+                                                 {target->selfConnection->getUuid(), Keys::Mapping::Weight});
                 
                 if (target->selfConnection->getGateNeuron() != nullptr)
                 {
                     const size_t selfGainVar =
                     context->allocateOrReuseVariable(selfConnectionData->gain,
-                    {target->selfConnection->getUuid(), Keys::Mapping::Gain});
+                                                     {target->selfConnection->getUuid(), Keys::Mapping::Gain});
                     
                     hardcoded->feedProgram << stateVar << " = " << selfGainVar << " * " << selfWeightVar << " * " << stateVar << " + " << biasVar << std::endl;
                 }
@@ -165,17 +168,17 @@ namespace TinyRNN
                 
                 const size_t inputActivationVar =
                 context->allocateOrReuseVariable(inputNeuronData->activation,
-                {inputNeuron->getUuid(), Keys::Mapping::Activation});
+                                                 {inputNeuron->getUuid(), Keys::Mapping::Activation});
                 
                 const size_t inputWeightVar =
                 context->allocateOrReuseVariable(inputConnectionData->weight,
-                {inputConnection->getUuid(), Keys::Mapping::Weight});
+                                                 {inputConnection->getUuid(), Keys::Mapping::Weight});
                 
                 if (inputConnection->getGateNeuron() != nullptr)
                 {
                     const size_t inputGainVar =
                     context->allocateOrReuseVariable(inputConnectionData->gain,
-                    {inputConnection->getUuid(), Keys::Mapping::Gain});
+                                                     {inputConnection->getUuid(), Keys::Mapping::Gain});
                     
                     hardcoded->feedProgram << stateVar << " += " << inputActivationVar << " * " << inputWeightVar << " * " << inputGainVar << std::endl;
                 }
@@ -191,171 +194,174 @@ namespace TinyRNN
             // f'(s)
             hardcoded->feedProgram << derivativeVar << " = " << activationVar << " * (1.0 - " << activationVar << ")" << std::endl;
             
-            // Calculate extended elegibility traces in advance
-            Neuron::EligibilityMap influences;
-            for (auto &i : target->extended)
+            if (! asConst)
             {
-                // extended elegibility trace
-                const Id neuronId = i.first;
-                const Value influence = influences[neuronId];
-                
-                Neuron::Ptr neighbour = target->neighbours[i.first];
-                const size_t influenceVar =
-                context->allocateOrReuseVariable(influence,
-                {neighbour->getUuid(), Keys::Mapping::Influence});
-                
-                auto neighbourData = neighbour->getTrainingData();
-                const size_t neighbourOldStateVar =
-                context->allocateOrReuseVariable(neighbourData->oldState,
-                {neighbour->getUuid(), Keys::Mapping::OldState});
-                
-                bool influenceWasInitialized = false;
-                
-                // if gated neuron's selfconnection is gated by this unit, the influence keeps track of the neuron's old state
-                if (Neuron::Connection::Ptr neighbourSelfconnection = neighbour->getSelfConnection())
-                {
-                    if (neighbourSelfconnection->getGateNeuron() == target)
-                    {
-                        hardcoded->traceProgram << influenceVar << " = " << neighbourOldStateVar << std::endl;
-                        influenceWasInitialized = true;
-                    }
-                }
-                
-                // index runs over all the incoming connections to the gated neuron that are gated by this unit
-                for (auto &incoming : target->influences[neighbour->getUuid()])
-                { // captures the effect that has an input connection to this unit, on a neuron that is gated by this unit
-                    const Neuron::Connection::Ptr inputConnection = incoming.second;
-                    const Neuron::Ptr inputNeuron = inputConnection->getInputNeuron();
-                    const auto inputConnectionData = inputConnection->getTrainingData();
-                    const auto inputNeuronData = inputNeuron->getTrainingData();
-                    
-                    const size_t incomingWeightVar =
-                    context->allocateOrReuseVariable(inputConnectionData->weight,
-                    {inputConnection->getUuid(), Keys::Mapping::Weight});
-                    
-                    const size_t incomingActivationVar =
-                    context->allocateOrReuseVariable(inputNeuronData->activation,
-                    {inputNeuron->getUuid(), Keys::Mapping::Activation});
-                    
-                    if (influenceWasInitialized)
-                    {
-                        hardcoded->traceProgram << influenceVar << " += " << incomingWeightVar << " * " << incomingActivationVar << std::endl;
-                    }
-                    else
-                    {
-                        hardcoded->traceProgram << influenceVar << " = " << incomingWeightVar << " * " << incomingActivationVar << std::endl;
-                        influenceWasInitialized = true;
-                    }
-                }
-            }
-            
-            for (auto &i : target->incomingConnections)
-            {
-                const Neuron::Connection::Ptr inputConnection = i.second;
-                const Neuron::Ptr inputNeuron = inputConnection->getInputNeuron();
-                const bool inputConnectionHasGate = (inputConnection->getGateNeuron() != nullptr);
-                
-                // elegibility trace - Eq. 17
-                const auto inputConnectionData = inputConnection->getTrainingData();
-                const auto inputNeuronData = inputNeuron->getTrainingData();
-                
-                size_t inputGainVar = 0;
-                if (inputConnectionHasGate)
-                {
-                    inputGainVar =
-                    context->allocateOrReuseVariable(inputConnectionData->gain,
-                    {inputConnection->getUuid(), Keys::Mapping::Gain});
-                }
-                
-                const size_t inputActivationVar =
-                context->allocateOrReuseVariable(inputNeuronData->activation,
-                {inputNeuron->getUuid(), Keys::Mapping::Activation});
-                
-                const size_t eligibilityVar =
-                context->allocateOrReuseVariable(target->eligibility[inputConnection->getUuid()],
-                {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
-                
-                if (target->isSelfConnected())
-                {
-                    const auto selfConnectionData = target->selfConnection->getTrainingData();
-                    const bool selfConnectionHasGate = (target->selfConnection->getGateNeuron() != nullptr);
-                    
-                    if (selfConnectionHasGate)
-                    {
-                        if (inputConnectionHasGate)
-                        {
-                            hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionGainVar << " * " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputGainVar << " * " << inputActivationVar << std::endl;
-                        }
-                        else
-                        {
-                            hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionGainVar << " * " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputActivationVar << std::endl;
-                        }
-                    }
-                    else
-                    {
-                        if (inputConnectionHasGate)
-                        {
-                            hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputGainVar << " * " << inputActivationVar << std::endl;
-                            
-                        }
-                        else
-                        {
-                            hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputActivationVar << std::endl;
-                        }
-                    }
-                }
-                else
-                {
-                    if (inputConnectionHasGate)
-                    {
-                        hardcoded->traceProgram << eligibilityVar << " = " << inputGainVar << " * " << inputActivationVar << std::endl;
-                    }
-                    else
-                    {
-                        hardcoded->traceProgram << eligibilityVar << " = " << inputActivationVar << std::endl;
-                    }
-                }
-                
+                // Calculate extended elegibility traces in advance
+                Neuron::EligibilityMap influences;
                 
                 for (auto &i : target->extended)
                 {
                     // extended elegibility trace
-                    const Id neighbourNeuronUuid = i.first;
-                    const Value influence = influences[neighbourNeuronUuid];
+                    const Id neuronId = i.first;
+                    const Value influence = influences[neuronId];
                     
-                    Neuron::EligibilityMap &xtrace = i.second;
-                    Neuron::Ptr neighbour = target->neighbours[neighbourNeuronUuid];
-                    
-                    const auto neighbourData = neighbour->getTrainingData();
-                    
+                    Neuron::Ptr neighbour = target->neighbours[i.first];
                     const size_t influenceVar =
                     context->allocateOrReuseVariable(influence,
-                    {neighbour->getUuid(), Keys::Mapping::Influence});
+                                                     {neighbour->getUuid(), Keys::Mapping::Influence});
                     
-                    const size_t eligibilityVar =
-                    context->allocateOrReuseVariable(target->eligibility[inputConnection->getUuid()],
-                    {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
+                    auto neighbourData = neighbour->getTrainingData();
+                    const size_t neighbourOldStateVar =
+                    context->allocateOrReuseVariable(neighbourData->oldState,
+                                                     {neighbour->getUuid(), Keys::Mapping::OldState});
                     
-                    const size_t extendedTraceVar =
-                    context->allocateOrReuseVariable(xtrace[inputConnection->getUuid()],
-                    {target->getUuid(), neighbourNeuronUuid, inputConnection->getUuid(), Keys::Mapping::ExtendedTrace});
+                    bool influenceWasInitialized = false;
                     
-                    if (Neuron::Connection::Ptr neighbourSelfConnection = neighbour->getSelfConnection())
+                    // if gated neuron's selfconnection is gated by this unit, the influence keeps track of the neuron's old state
+                    if (Neuron::Connection::Ptr neighbourSelfconnection = neighbour->getSelfConnection())
                     {
-                        const auto neighbourSelfConnectionData = neighbourSelfConnection->getTrainingData();
-                        
-                        if (neighbourSelfConnection->getGateNeuron() != nullptr)
+                        if (neighbourSelfconnection->getGateNeuron() == target)
                         {
-                            hardcoded->traceProgram << extendedTraceVar << " = " << selfConnectionGainVar << " * " << selfConnectionWeightVar << " * " << extendedTraceVar << " + " << derivativeVar << " * " << eligibilityVar << " * " << influenceVar << std::endl;
+                            hardcoded->traceProgram << influenceVar << " = " << neighbourOldStateVar << std::endl;
+                            influenceWasInitialized = true;
+                        }
+                    }
+                    
+                    // index runs over all the incoming connections to the gated neuron that are gated by this unit
+                    for (auto &incoming : target->influences[neighbour->getUuid()])
+                    { // captures the effect that has an input connection to this unit, on a neuron that is gated by this unit
+                        const Neuron::Connection::Ptr inputConnection = incoming.second;
+                        const Neuron::Ptr inputNeuron = inputConnection->getInputNeuron();
+                        const auto inputConnectionData = inputConnection->getTrainingData();
+                        const auto inputNeuronData = inputNeuron->getTrainingData();
+                        
+                        const size_t incomingWeightVar =
+                        context->allocateOrReuseVariable(inputConnectionData->weight,
+                                                         {inputConnection->getUuid(), Keys::Mapping::Weight});
+                        
+                        const size_t incomingActivationVar =
+                        context->allocateOrReuseVariable(inputNeuronData->activation,
+                                                         {inputNeuron->getUuid(), Keys::Mapping::Activation});
+                        
+                        if (influenceWasInitialized)
+                        {
+                            hardcoded->traceProgram << influenceVar << " += " << incomingWeightVar << " * " << incomingActivationVar << std::endl;
                         }
                         else
                         {
-                            hardcoded->traceProgram << extendedTraceVar << " = " << selfConnectionWeightVar << " * " << extendedTraceVar << " + " << derivativeVar << " * " << eligibilityVar << " * " << influenceVar << std::endl;
+                            hardcoded->traceProgram << influenceVar << " = " << incomingWeightVar << " * " << incomingActivationVar << std::endl;
+                            influenceWasInitialized = true;
+                        }
+                    }
+                }
+                
+                for (auto &i : target->incomingConnections)
+                {
+                    const Neuron::Connection::Ptr inputConnection = i.second;
+                    const Neuron::Ptr inputNeuron = inputConnection->getInputNeuron();
+                    const bool inputConnectionHasGate = (inputConnection->getGateNeuron() != nullptr);
+                    
+                    // elegibility trace - Eq. 17
+                    const auto inputConnectionData = inputConnection->getTrainingData();
+                    const auto inputNeuronData = inputNeuron->getTrainingData();
+                    
+                    size_t inputGainVar = 0;
+                    if (inputConnectionHasGate)
+                    {
+                        inputGainVar =
+                        context->allocateOrReuseVariable(inputConnectionData->gain,
+                                                         {inputConnection->getUuid(), Keys::Mapping::Gain});
+                    }
+                    
+                    const size_t inputActivationVar =
+                    context->allocateOrReuseVariable(inputNeuronData->activation,
+                                                     {inputNeuron->getUuid(), Keys::Mapping::Activation});
+                    
+                    const size_t eligibilityVar =
+                    context->allocateOrReuseVariable(target->eligibility[inputConnection->getUuid()],
+                                                     {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
+                    
+                    if (target->isSelfConnected())
+                    {
+                        const auto selfConnectionData = target->selfConnection->getTrainingData();
+                        const bool selfConnectionHasGate = (target->selfConnection->getGateNeuron() != nullptr);
+                        
+                        if (selfConnectionHasGate)
+                        {
+                            if (inputConnectionHasGate)
+                            {
+                                hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionGainVar << " * " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputGainVar << " * " << inputActivationVar << std::endl;
+                            }
+                            else
+                            {
+                                hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionGainVar << " * " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputActivationVar << std::endl;
+                            }
+                        }
+                        else
+                        {
+                            if (inputConnectionHasGate)
+                            {
+                                hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputGainVar << " * " << inputActivationVar << std::endl;
+                                
+                            }
+                            else
+                            {
+                                hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputActivationVar << std::endl;
+                            }
                         }
                     }
                     else
                     {
-                        hardcoded->traceProgram << extendedTraceVar << " = " << derivativeVar << " * " << eligibilityVar << " * " << influenceVar << std::endl;
+                        if (inputConnectionHasGate)
+                        {
+                            hardcoded->traceProgram << eligibilityVar << " = " << inputGainVar << " * " << inputActivationVar << std::endl;
+                        }
+                        else
+                        {
+                            hardcoded->traceProgram << eligibilityVar << " = " << inputActivationVar << std::endl;
+                        }
+                    }
+                    
+                    for (auto &i : target->extended)
+                    {
+                        // extended elegibility trace
+                        const Id neighbourNeuronUuid = i.first;
+                        const Value influence = influences[neighbourNeuronUuid];
+                        
+                        Neuron::EligibilityMap &xtrace = i.second;
+                        Neuron::Ptr neighbour = target->neighbours[neighbourNeuronUuid];
+                        
+                        const auto neighbourData = neighbour->getTrainingData();
+                        
+                        const size_t influenceVar =
+                        context->allocateOrReuseVariable(influence,
+                                                         {neighbour->getUuid(), Keys::Mapping::Influence});
+                        
+                        const size_t eligibilityVar =
+                        context->allocateOrReuseVariable(target->eligibility[inputConnection->getUuid()],
+                                                         {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
+                        
+                        const size_t extendedTraceVar =
+                        context->allocateOrReuseVariable(xtrace[inputConnection->getUuid()],
+                                                         {target->getUuid(), neighbourNeuronUuid, inputConnection->getUuid(), Keys::Mapping::ExtendedTrace});
+                        
+                        if (Neuron::Connection::Ptr neighbourSelfConnection = neighbour->getSelfConnection())
+                        {
+                            const auto neighbourSelfConnectionData = neighbourSelfConnection->getTrainingData();
+                            
+                            if (neighbourSelfConnection->getGateNeuron() != nullptr)
+                            {
+                                hardcoded->traceProgram << extendedTraceVar << " = " << selfConnectionGainVar << " * " << selfConnectionWeightVar << " * " << extendedTraceVar << " + " << derivativeVar << " * " << eligibilityVar << " * " << influenceVar << std::endl;
+                            }
+                            else
+                            {
+                                hardcoded->traceProgram << extendedTraceVar << " = " << selfConnectionWeightVar << " * " << extendedTraceVar << " + " << derivativeVar << " * " << eligibilityVar << " * " << influenceVar << std::endl;
+                            }
+                        }
+                        else
+                        {
+                            hardcoded->traceProgram << extendedTraceVar << " = " << derivativeVar << " * " << eligibilityVar << " * " << influenceVar << std::endl;
+                        }
                     }
                 }
             }
@@ -368,7 +374,7 @@ namespace TinyRNN
                 
                 const size_t gatedConnectionGainVar =
                 context->allocateOrReuseVariable(gatedConnectionData->gain,
-                {gatedConnection->getUuid(), Keys::Mapping::Gain});
+                                                 {gatedConnection->getUuid(), Keys::Mapping::Gain});
                 
                 hardcoded->feedProgram << gatedConnectionGainVar << " = " << activationVar << std::endl;
             }
@@ -376,11 +382,12 @@ namespace TinyRNN
         
         // Done with feed program, now fix the train program:
         
-        if (!asInput)
+        if (!asInput &&
+            !asConst)
         {
             const size_t responsibilityVar =
             context->allocateOrReuseVariable(targetData->errorResponsibility,
-            {target->getUuid(), Keys::Mapping::ErrorResponsibility});
+                                             {target->getUuid(), Keys::Mapping::ErrorResponsibility});
             
             const bool noOutgoingConnections = target->outgoingConnections.empty();
             const bool noGates = target->gatedConnections.empty();
@@ -389,7 +396,7 @@ namespace TinyRNN
             {
                 const size_t myTargetVar =
                 context->allocateOrReuseVariable(0.0,
-                {target->getUuid(), Keys::Mapping::Target});
+                                                 {target->getUuid(), Keys::Mapping::Target});
                 
                 context->registerTargetVariable(myTargetVar);
                 context->registerOutputVariable(activationVar);
@@ -403,11 +410,11 @@ namespace TinyRNN
                     
                     const size_t eligibilityVar =
                     context->allocateOrReuseVariable(target->eligibility[inputConnection->getUuid()],
-                    {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
+                                                     {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
                     
                     const size_t inputWeightVar =
                     context->allocateOrReuseVariable(inputConnectionData->weight,
-                    {inputConnection->getUuid(), Keys::Mapping::Weight});
+                                                     {inputConnection->getUuid(), Keys::Mapping::Weight});
                     
                     hardcoded->trainProgram << inputWeightVar << " += " << rateVar << " * (" << responsibilityVar << " * " << eligibilityVar << ")" << std::endl;
                 }
@@ -418,7 +425,7 @@ namespace TinyRNN
                 {
                     const size_t errorAccumulatorVar =
                     context->allocateOrReuseVariable(0.0,
-                    {Keys::Mapping::ErrorAccumulator});
+                                                     {Keys::Mapping::ErrorAccumulator});
                     
                     // error responsibilities from all the connections projected from this neuron
                     for (auto &i : target->outgoingConnections)
@@ -430,17 +437,17 @@ namespace TinyRNN
                         
                         const size_t outputWeightVar =
                         context->allocateOrReuseVariable(outputConnectionData->weight,
-                        {outputConnection->getUuid(), Keys::Mapping::Weight});
+                                                         {outputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         const size_t outputResponsibilityVar =
                         context->allocateOrReuseVariable(outputNeuronData->errorResponsibility,
-                        {outputNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
+                                                         {outputNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
                         
                         if (outputConnection->getGateNeuron() != nullptr)
                         {
                             const size_t outputGainVar =
                             context->allocateOrReuseVariable(outputConnectionData->gain,
-                            {outputConnection->getUuid(), Keys::Mapping::Gain});
+                                                             {outputConnection->getUuid(), Keys::Mapping::Gain});
                             
                             hardcoded->trainProgram << errorAccumulatorVar << " += " << outputResponsibilityVar << " * " << outputGainVar << " * " << outputWeightVar << std::endl;
                         }
@@ -452,7 +459,7 @@ namespace TinyRNN
                     
                     const size_t projectedErrorVar =
                     context->allocateOrReuseVariable(targetData->projectedActivity,
-                    {target->getUuid(), Keys::Mapping::ProjectedActivity});
+                                                     {target->getUuid(), Keys::Mapping::ProjectedActivity});
                     
                     // projected error responsibility
                     hardcoded->trainProgram << projectedErrorVar << " = " << derivativeVar << " * " << errorAccumulatorVar << std::endl;
@@ -467,11 +474,11 @@ namespace TinyRNN
                         
                         const size_t influenceTempVar =
                         context->allocateOrReuseVariable(0.0,
-                        {Keys::Mapping::Influence});
+                                                         {Keys::Mapping::Influence});
                         
                         const size_t gatedNeuronOldStateVar =
                         context->allocateOrReuseVariable(gatedNeuronData->oldState,
-                        {gatedNeuron->getUuid(), Keys::Mapping::OldState});
+                                                         {gatedNeuron->getUuid(), Keys::Mapping::OldState});
                         
                         // if gated neuron's selfconnection is gated by this neuron
                         if (auto gatedNeuronSelfConnection = gatedNeuron->getSelfConnection())
@@ -486,28 +493,31 @@ namespace TinyRNN
                             }
                         }
                         
-                        // index runs over all the connections to the gated neuron that are gated by this neuron
-                        for (auto &i : target->influences[gatedNeuronId])
-                        { // captures the effect that the input connection of this neuron have, on a neuron which its input/s is/are gated by this neuron
-                            const Neuron::Connection::Ptr inputConnection = i.second;
-                            const Neuron::Ptr inputNeuron = inputConnection->getInputNeuron();
-                            const auto inputConnectionData = inputConnection->getTrainingData();
-                            const auto inputNeuronData = inputNeuron->getTrainingData();
-                            
-                            const size_t inputActivationVar =
-                            context->allocateOrReuseVariable(inputNeuronData->activation,
-                            {inputNeuron->getUuid(), Keys::Mapping::Activation});
-                            
-                            const size_t inputWeightVar =
-                            context->allocateOrReuseVariable(inputConnectionData->weight,
-                            {inputConnection->getUuid(), Keys::Mapping::Weight});
-                            
-                            hardcoded->trainProgram << influenceTempVar << " += " << inputWeightVar << " * " << inputActivationVar << std::endl;
+                        if (! asConst)
+                        {
+                            // index runs over all the connections to the gated neuron that are gated by this neuron
+                            for (auto &i : target->influences[gatedNeuronId])
+                            { // captures the effect that the input connection of this neuron have, on a neuron which its input/s is/are gated by this neuron
+                                const Neuron::Connection::Ptr inputConnection = i.second;
+                                const Neuron::Ptr inputNeuron = inputConnection->getInputNeuron();
+                                const auto inputConnectionData = inputConnection->getTrainingData();
+                                const auto inputNeuronData = inputNeuron->getTrainingData();
+                                
+                                const size_t inputActivationVar =
+                                context->allocateOrReuseVariable(inputNeuronData->activation,
+                                                                 {inputNeuron->getUuid(), Keys::Mapping::Activation});
+                                
+                                const size_t inputWeightVar =
+                                context->allocateOrReuseVariable(inputConnectionData->weight,
+                                                                 {inputConnection->getUuid(), Keys::Mapping::Weight});
+                                
+                                hardcoded->trainProgram << influenceTempVar << " += " << inputWeightVar << " * " << inputActivationVar << std::endl;
+                            }
                         }
                         
                         const size_t gatedResponsibilityVar =
                         context->allocateOrReuseVariable(gatedNeuronData->errorResponsibility,
-                        {gatedNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
+                                                         {gatedNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
                         
                         // eq. 22
                         hardcoded->trainProgram << errorAccumulatorVar << " += " << gatedResponsibilityVar << " * " << influenceTempVar << std::endl;
@@ -515,7 +525,7 @@ namespace TinyRNN
                     
                     const size_t gatedErrorVar =
                     context->allocateOrReuseVariable(targetData->gatingActivity,
-                    {target->getUuid(), Keys::Mapping::GatingActivity});
+                                                     {target->getUuid(), Keys::Mapping::GatingActivity});
                     
                     // gated error responsibility
                     hardcoded->trainProgram << gatedErrorVar << " = " << derivativeVar << " * " << errorAccumulatorVar << std::endl;
@@ -531,11 +541,11 @@ namespace TinyRNN
                         
                         const size_t gradientTempVar =
                         context->allocateOrReuseVariable(0.0,
-                        {Keys::Mapping::Gradient});
+                                                         {Keys::Mapping::Gradient});
                         
                         const size_t eligibilityVar =
                         context->allocateOrReuseVariable(target->eligibility[inputConnection->getUuid()],
-                        {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
+                                                         {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
                         
                         // Eq. 24
                         hardcoded->trainProgram << gradientTempVar << " = " << projectedErrorVar << " * " << eligibilityVar << std::endl;
@@ -550,11 +560,11 @@ namespace TinyRNN
                             
                             const size_t neighbourResponsibilityVar =
                             context->allocateOrReuseVariable(neighbourData->errorResponsibility,
-                            {neighbourNeuronId, Keys::Mapping::ErrorResponsibility});
+                                                             {neighbourNeuronId, Keys::Mapping::ErrorResponsibility});
                             
                             const size_t extendedTraceVar =
                             context->allocateOrReuseVariable(xtrace[inputConnection->getUuid()],
-                            {target->getUuid(), neighbourNeuronId, inputConnectionUuid, Keys::Mapping::ExtendedTrace});
+                                                             {target->getUuid(), neighbourNeuronId, inputConnectionUuid, Keys::Mapping::ExtendedTrace});
                             
                             hardcoded->trainProgram << gradientTempVar << " += " << neighbourResponsibilityVar << " * " << extendedTraceVar << std::endl;
                         }
@@ -564,7 +574,7 @@ namespace TinyRNN
                         
                         const size_t inputWeightVar =
                         context->allocateOrReuseVariable(inputConnectionData->weight,
-                        {inputConnection->getUuid(), Keys::Mapping::Weight});
+                                                         {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         hardcoded->trainProgram << inputWeightVar << " += " << rateVar << " * " << gradientTempVar << std::endl;
                     }
@@ -583,17 +593,17 @@ namespace TinyRNN
                         
                         const size_t outputWeightVar =
                         context->allocateOrReuseVariable(outputConnectionData->weight,
-                        {outputConnection->getUuid(), Keys::Mapping::Weight});
+                                                         {outputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         const size_t outputResponsibilityVar =
                         context->allocateOrReuseVariable(outputNeuronData->errorResponsibility,
-                        {outputNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
+                                                         {outputNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
                         
                         if (outputConnection->getGateNeuron() != nullptr)
                         {
                             const size_t outputGainVar =
                             context->allocateOrReuseVariable(outputConnectionData->gain,
-                            {outputConnection->getUuid(), Keys::Mapping::Gain});
+                                                             {outputConnection->getUuid(), Keys::Mapping::Gain});
                             
                             hardcoded->trainProgram << responsibilityVar << " += " << outputResponsibilityVar << " * " << outputGainVar << " * " << outputWeightVar << std::endl;
                         }
@@ -612,11 +622,11 @@ namespace TinyRNN
                         
                         const size_t eligibilityVar =
                         context->allocateOrReuseVariable(target->eligibility[inputConnection->getUuid()],
-                        {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
+                                                         {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
                         
                         const size_t inputWeightVar =
                         context->allocateOrReuseVariable(inputConnectionData->weight,
-                        {inputConnection->getUuid(), Keys::Mapping::Weight});
+                                                         {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         // learn
                         hardcoded->trainProgram << inputWeightVar << " += " << rateVar << " * (" << responsibilityVar << " * " << eligibilityVar << ")" << std::endl;
@@ -635,11 +645,11 @@ namespace TinyRNN
                         
                         const size_t influenceTempVar =
                         context->allocateOrReuseVariable(0.0,
-                        {Keys::Mapping::Influence});
+                                                         {Keys::Mapping::Influence});
                         
                         const size_t gatedNeuronOldStateVar =
                         context->allocateOrReuseVariable(gatedNeuronData->oldState,
-                        {gatedNeuron->getUuid(), Keys::Mapping::OldState});
+                                                         {gatedNeuron->getUuid(), Keys::Mapping::OldState});
                         
                         // if gated neuron's selfconnection is gated by this neuron
                         if (auto gatedNeuronSelfConnection = gatedNeuron->getSelfConnection())
@@ -664,18 +674,18 @@ namespace TinyRNN
                             
                             const size_t inputActivationVar =
                             context->allocateOrReuseVariable(inputNeuronData->activation,
-                            {inputNeuron->getUuid(), Keys::Mapping::Activation});
+                                                             {inputNeuron->getUuid(), Keys::Mapping::Activation});
                             
                             const size_t inputWeightVar =
                             context->allocateOrReuseVariable(inputConnectionData->weight,
-                            {inputConnection->getUuid(), Keys::Mapping::Weight});
+                                                             {inputConnection->getUuid(), Keys::Mapping::Weight});
                             
                             hardcoded->trainProgram << influenceTempVar << " += " << inputWeightVar << " * " << inputActivationVar << std::endl;
                         }
                         
                         const size_t gatedResponsibilityVar =
                         context->allocateOrReuseVariable(gatedNeuronData->errorResponsibility,
-                        {gatedNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
+                                                         {gatedNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
                         
                         // eq. 22
                         hardcoded->trainProgram << responsibilityVar << " += " << gatedResponsibilityVar << " * " << influenceTempVar << std::endl;
@@ -691,7 +701,7 @@ namespace TinyRNN
                         
                         const size_t gradientTempVar =
                         context->allocateOrReuseVariable(0.0,
-                        {Keys::Mapping::Gradient});
+                                                         {Keys::Mapping::Gradient});
                         
                         hardcoded->trainProgram << gradientTempVar << " = 0" << std::endl;
                         
@@ -705,11 +715,11 @@ namespace TinyRNN
                             
                             const size_t neighbourResponsibilityVar =
                             context->allocateOrReuseVariable(neighbourData->errorResponsibility,
-                            {neighbourNeuronId, Keys::Mapping::ErrorResponsibility});
+                                                             {neighbourNeuronId, Keys::Mapping::ErrorResponsibility});
                             
                             const size_t extendedTraceVar =
                             context->allocateOrReuseVariable(xtrace[inputConnection->getUuid()],
-                            {target->getUuid(), neighbourNeuronId, inputConnectionUuid, Keys::Mapping::ExtendedTrace});
+                                                             {target->getUuid(), neighbourNeuronId, inputConnectionUuid, Keys::Mapping::ExtendedTrace});
                             
                             hardcoded->trainProgram << gradientTempVar << " += " << neighbourResponsibilityVar << " * " << extendedTraceVar << std::endl;
                         }
@@ -719,7 +729,7 @@ namespace TinyRNN
                         
                         const size_t inputWeightVar =
                         context->allocateOrReuseVariable(inputConnectionData->weight,
-                        {inputConnection->getUuid(), Keys::Mapping::Weight});
+                                                         {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         hardcoded->trainProgram << inputWeightVar << " += " << rateVar << " * " << gradientTempVar << std::endl;
                     }
@@ -729,7 +739,7 @@ namespace TinyRNN
             // adjust bias
             const size_t biasVar =
             context->allocateOrReuseVariable(targetData->bias,
-            {target->getUuid(), Keys::Mapping::Bias});
+                                             {target->getUuid(), Keys::Mapping::Bias});
             
             hardcoded->trainProgram << biasVar << " += " << rateVar << " * " << responsibilityVar << std::endl;
         }
@@ -740,7 +750,7 @@ namespace TinyRNN
     inline void HardcodedNeuron::restoreNeuronState(Neuron::Ptr target, HardcodedTrainingContext::Ptr context)
     {
         auto targetData = target->getTrainingData();
-
+        
         const Value bias = context->evaluateVariable({target->getUuid(), Keys::Mapping::Bias}, targetData->bias);
         const Value state = context->evaluateVariable({target->getUuid(), Keys::Mapping::State}, targetData->state);
         const Value oldState = context->evaluateVariable({target->getUuid(), Keys::Mapping::OldState}, targetData->oldState);
@@ -817,7 +827,5 @@ namespace TinyRNN
         return this->trainProgram;
     }
 }
-
-#endif // TINYRNN_OPENCL_ACCELERATION
 
 #endif // TINYRNN_HARDCODEDNEURON_H_INCLUDED

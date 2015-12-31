@@ -35,7 +35,7 @@
         <FILE id="mRAFkW" name="ScopedSubscription.h" compile="0" resource="0"
               file="../../Source/ScopedSubscription.h"/>
         <FILE id="zFQWpn" name="ScopedTimer.h" compile="0" resource="0" file="../../Source/ScopedTimer.h"/>
-        <FILE id="wv0qWa" name="Uuid.h" compile="0" resource="0" file="../../Source/Uuid.h"/>
+        <FILE id="wv0qWa" name="Id.h" compile="0" resource="0" file="../../Source/Id.h"/>
       </GROUP>
       <FILE id="z752VW" name="TinyRNN.h" compile="0" resource="0" file="../../Source/TinyRNN.h"/>
       <FILE id="AfuId9" name="Common.h" compile="0" resource="0" file="../../Source/Common.h"/>
@@ -57,10 +57,10 @@
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="../MacOSX" extraFrameworks="OpenCL" extraDefs="TINYRNN_OPENCL_ACCELERATION=1">
       <CONFIGURATIONS>
-        <CONFIGURATION name="Debug" osxSDK="default" osxCompatibility="default" osxArchitecture="default"
-                       isDebug="1" optimisation="1" targetName="TinyRNN"/>
-        <CONFIGURATION name="Release" osxSDK="default" osxCompatibility="default" osxArchitecture="default"
-                       isDebug="0" optimisation="3" targetName="TinyRNN"/>
+        <CONFIGURATION name="Debug" osxSDK="default" osxCompatibility="10.10 SDK" osxArchitecture="default"
+                       isDebug="1" optimisation="1" targetName="TinyRNN" linkTimeOptimisation="0"/>
+        <CONFIGURATION name="Release" osxSDK="default" osxCompatibility="10.10 SDK"
+                       osxArchitecture="default" isDebug="0" optimisation="3" targetName="TinyRNN"/>
       </CONFIGURATIONS>
       <MODULEPATHS/>
     </XCODE_MAC>

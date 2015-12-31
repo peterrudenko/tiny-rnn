@@ -147,10 +147,9 @@ namespace TinyRNN
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(TrainingContext);
     };
     
-    
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // TrainingContext implementation
-    //
+    //===------------------------------------------------------------------===//
     
     inline TrainingContext::TrainingContext(const std::string &contextName) : name(contextName)
     {
@@ -195,9 +194,9 @@ namespace TinyRNN
         this->connectionContexts.clear();
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Serialization
-    //
+    //===------------------------------------------------------------------===//
     
     inline void TrainingContext::deserialize(SerializationContext::Ptr context)
     {
@@ -249,9 +248,9 @@ namespace TinyRNN
         }
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // NeuronData implementation
-    //
+    //===------------------------------------------------------------------===//
     
     inline TrainingContext::NeuronData::NeuronData(const Id &targetNeuronUuid) :
     activation(0.0),
@@ -312,9 +311,9 @@ namespace TinyRNN
         context->setRealProperty(this->gatingActivity, Keys::Core::GatingActivity);
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // ConnectionData implementation
-    //
+    //===------------------------------------------------------------------===//
     
     inline TrainingContext::ConnectionData::ConnectionData(const Id &targetConnectionUuid) :
     weight(0.0),

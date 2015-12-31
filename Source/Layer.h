@@ -28,11 +28,9 @@
 #include "TrainingContext.h"
 #include "HardcodedTrainingContext.h"
 #include "SerializationKeys.h"
-#include "Uuid.h"
+#include "Id.h"
 
-#if TINYRNN_OPENCL_ACCELERATION
 #include "HardcodedNeuron.h"
-#endif
 
 namespace TinyRNN
 {
@@ -84,12 +82,15 @@ namespace TinyRNN
         virtual void deserialize(SerializationContext::Ptr context) override;
         virtual void serialize(SerializationContext::Ptr context) const override;
         
-#if TINYRNN_OPENCL_ACCELERATION
-        HardcodedNeuron::Vector hardcode(HardcodedTrainingContext::Ptr context,
-                                        bool asInput, bool asOutput) const;
+// Needed to create standalone networks:
+//#if TINYRNN_OPENCL_ACCELERATION
+        HardcodedNeuron::Vector
+        hardcode(HardcodedTrainingContext::Ptr context,
+                 bool asInput, bool asOutput,
+                 bool asConst) const;
         
         void restore(HardcodedTrainingContext::Ptr context);
-#endif
+//#endif
         
     private:
         
@@ -105,13 +106,12 @@ namespace TinyRNN
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(Layer);
     };
     
-    
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Layer implementation
-    //
+    //===------------------------------------------------------------------===//
     
     inline Layer::Layer(TrainingContext::Ptr targetContext, int numNeurons) :
-    uuid(Uuid::generate()),
+    uuid(Uuid::generateId()),
     context(targetContext)
     {
         for (int i = 0; i < numNeurons; ++i)
@@ -122,7 +122,7 @@ namespace TinyRNN
     }
     
     inline Layer::Layer(TrainingContext::Ptr targetContext, int numNeurons, Value bias) :
-    uuid(Uuid::generate()),
+    uuid(Uuid::generateId()),
     context(targetContext)
     {
         for (int i = 0; i < numNeurons; ++i)
@@ -148,9 +148,9 @@ namespace TinyRNN
         return this->neurons.size();
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Batch connections
-    //
+    //===------------------------------------------------------------------===//
     
     inline bool Layer::isSelfConnected() const
     {
@@ -306,9 +306,9 @@ namespace TinyRNN
         return true;
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Batch processing
-    //
+    //===------------------------------------------------------------------===//
     
     inline bool Layer::feed(const Neuron::Values &values)
     {
@@ -363,9 +363,9 @@ namespace TinyRNN
         }
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Collecting data
-    //
+    //===------------------------------------------------------------------===//
     
     inline Neuron::Ptr Layer::getNeuron(size_t index) const
     {
@@ -401,9 +401,9 @@ namespace TinyRNN
         return result;
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Serialization
-    //
+    //===------------------------------------------------------------------===//
     
     inline void Layer::deserialize(SerializationContext::Ptr context)
     {
@@ -435,19 +435,22 @@ namespace TinyRNN
         }
     }
     
-#if TINYRNN_OPENCL_ACCELERATION
+//#if TINYRNN_OPENCL_ACCELERATION
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Batch hardcoding stuff
-    //
+    //===------------------------------------------------------------------===//
     
-    inline HardcodedNeuron::Vector Layer::hardcode(HardcodedTrainingContext::Ptr context, bool asInput, bool asOutput) const
+    inline HardcodedNeuron::Vector
+    Layer::hardcode(HardcodedTrainingContext::Ptr context,
+                    bool asInput, bool asOutput,
+                    bool asConst) const
     {
         HardcodedNeuron::Vector result;
         
         for (auto &neuron : this->neurons)
         {
-            result.push_back(HardcodedNeuron::buildFrom(context, neuron, asInput, asOutput));
+            result.push_back(HardcodedNeuron::buildFrom(context, neuron, asInput, asOutput, asConst));
         }
         
         return result;
@@ -461,7 +464,7 @@ namespace TinyRNN
         }
     }
     
-#endif
+//#endif
     
 }
 

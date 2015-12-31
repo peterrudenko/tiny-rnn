@@ -23,11 +23,9 @@
 #ifndef TINYRNN_HARDCODEDTRAININGCONTEXT_H_INCLUDED
 #define TINYRNN_HARDCODEDTRAININGCONTEXT_H_INCLUDED
 
-#if TINYRNN_OPENCL_ACCELERATION
-
 #include "Common.h"
 #include "SerializedObject.h"
-#include "Uuid.h"
+#include "Id.h"
 #include <iostream>
 #include <sstream>
 
@@ -113,9 +111,9 @@ namespace TinyRNN
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(HardcodedTrainingContext);
     };
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // KernelSentence implementation
-    //
+    //===------------------------------------------------------------------===//
     
     inline size_t KernelSentence::getSize() const noexcept
     {
@@ -162,9 +160,9 @@ namespace TinyRNN
         }
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // HardcodedTrainingContext implementation
-    //
+    //===------------------------------------------------------------------===//
     
     inline HardcodedTrainingContext::HardcodedTrainingContext() : rateVariable(0)
     {}
@@ -306,9 +304,9 @@ namespace TinyRNN
         this->rateVariable = 0;
     }
     
-    // =============================================================================
+    //===------------------------------------------------------------------===//
     // Serialization
-    //
+    //===------------------------------------------------------------------===//
     
     inline void HardcodedTrainingContext::deserialize(SerializationContext::Ptr context)
     {
@@ -352,7 +350,5 @@ namespace TinyRNN
         }
     }
 }
-
-#endif // TINYRNN_OPENCL_ACCELERATION
 
 #endif  // TINYRNN_HARDCODEDTRAININGCONTEXT_H_INCLUDED
