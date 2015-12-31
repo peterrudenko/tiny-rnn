@@ -31,10 +31,8 @@
 #include "Id.h"
 #include "ScopedTimer.h"
 
-#if TINYRNN_OPENCL_ACCELERATION
 #include "HardcodedTrainingContext.h"
 #include "HardcodedNetwork.h"
-#endif
 
 namespace TinyRNN
 {
@@ -95,10 +93,23 @@ namespace TinyRNN
         virtual void deserialize(SerializationContext::Ptr context) override;
         virtual void serialize(SerializationContext::Ptr context) const override;
         
-#if TINYRNN_OPENCL_ACCELERATION
+        /**
+         *  Will generate a network that is able to be trained.
+         *
+         *  @return An implementation of the network in C.
+         */
+        HardcodedNetwork::StandaloneSources hardcodeAsStandalone() const;
+        
+        /**
+         *  Will generate a network that is only able to produce output.
+         *  However it is much smaller then a trainable network.
+         *
+         *  @return An implementation of the feed-only network in C.
+         */
+        HardcodedNetwork::StandaloneSources hardcodeAsStandaloneGenerator() const;
+        
         HardcodedNetwork::Ptr hardcode() const;
         void restore(HardcodedTrainingContext::Ptr context);
-#endif
         
     private:
         
@@ -344,8 +355,6 @@ namespace TinyRNN
         return nullptr;
     }
     
-#if TINYRNN_OPENCL_ACCELERATION
-    
     //===------------------------------------------------------------------===//
     // Hardcoding into OpenCL kernels
     //===------------------------------------------------------------------===//
@@ -361,14 +370,14 @@ namespace TinyRNN
         
         {
             const ScopedTimer timer("Network::hardcode");
-            hardcodedLayers.push_back(this->inputLayer->hardcode(context, true, false));
+            hardcodedLayers.push_back(this->inputLayer->hardcode(context, true, false, false));
             
             for (auto &hiddenLayer : this->hiddenLayers)
             {
-                hardcodedLayers.push_back(hiddenLayer->hardcode(context, false, false));
+                hardcodedLayers.push_back(hiddenLayer->hardcode(context, false, false, false));
             }
             
-            hardcodedLayers.push_back(this->outputLayer->hardcode(context, false, true));
+            hardcodedLayers.push_back(this->outputLayer->hardcode(context, false, true, false));
         }
             
         HardcodedNetwork::Ptr hardcodedNetwork(new HardcodedNetwork(context, hardcodedLayers,
@@ -392,7 +401,51 @@ namespace TinyRNN
         this->outputLayer->restore(context);
     }
     
-#endif
+    //===------------------------------------------------------------------===//
+    // Stadalone network code-generation
+    //===------------------------------------------------------------------===//
+    
+    inline HardcodedNetwork::StandaloneSources Network::hardcodeAsStandalone() const
+    {
+        HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());
+        HardcodedNetwork::HardcodedLayers hardcodedLayers;
+        
+        {
+            const ScopedTimer timer("Network::hardcodeAsStandalone");
+            hardcodedLayers.push_back(this->inputLayer->hardcode(context, true, false, false));
+            
+            for (auto &hiddenLayer : this->hiddenLayers)
+            {
+                hardcodedLayers.push_back(hiddenLayer->hardcode(context, false, false, false));
+            }
+            
+            hardcodedLayers.push_back(this->outputLayer->hardcode(context, false, true, false));
+        }
+        
+        HardcodedNetwork::Ptr hardcodedNetwork(new HardcodedNetwork(context, hardcodedLayers, LONG_MAX));
+        return hardcodedNetwork->asStandalone(this->name, false);
+    }
+    
+    inline HardcodedNetwork::StandaloneSources Network::hardcodeAsStandaloneGenerator() const
+    {
+        HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());
+        HardcodedNetwork::HardcodedLayers hardcodedLayers;
+        
+        {
+            const ScopedTimer timer("Network::hardcodeAsStandaloneGenerator");
+            hardcodedLayers.push_back(this->inputLayer->hardcode(context, true, false, true));
+            
+            for (auto &hiddenLayer : this->hiddenLayers)
+            {
+                hardcodedLayers.push_back(hiddenLayer->hardcode(context, false, false, true));
+            }
+            
+            hardcodedLayers.push_back(this->outputLayer->hardcode(context, false, true, true));
+        }
+        
+        HardcodedNetwork::Ptr hardcodedNetwork(new HardcodedNetwork(context, hardcodedLayers, LONG_MAX));
+        return hardcodedNetwork->asStandalone(this->name, true);
+    }
     
     //===------------------------------------------------------------------===//
     // Network prefabs
@@ -480,7 +533,6 @@ namespace TinyRNN
             const auto &output = memoryCell->connectAllToAll(outputLayer);
             
             const auto &self = memoryCell->connectOneToOne(memoryCell);
-            //const auto &self = memoryCell->connectAllToAll(memoryCell);
             
             // optional
             //outputLayer->connectAllToAll(memoryCell);

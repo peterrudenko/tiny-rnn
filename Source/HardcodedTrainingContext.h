@@ -23,8 +23,6 @@
 #ifndef TINYRNN_HARDCODEDTRAININGCONTEXT_H_INCLUDED
 #define TINYRNN_HARDCODEDTRAININGCONTEXT_H_INCLUDED
 
-#if TINYRNN_OPENCL_ACCELERATION
-
 #include "Common.h"
 #include "SerializedObject.h"
 #include "Id.h"
@@ -352,7 +350,5 @@ namespace TinyRNN
         }
     }
 }
-
-#endif // TINYRNN_OPENCL_ACCELERATION
 
 #endif  // TINYRNN_HARDCODEDTRAININGCONTEXT_H_INCLUDED

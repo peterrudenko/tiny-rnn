@@ -23,14 +23,13 @@
 #ifndef TINYRNN_HARDCODEDNETWORK_H_INCLUDED
 #define TINYRNN_HARDCODEDNETWORK_H_INCLUDED
 
-#if TINYRNN_OPENCL_ACCELERATION
-
 #include "Common.h"
 #include "HardcodedNeuron.h"
 #include "HardcodedTrainingContext.h"
 #include "ScopedTimer.h"
 #include "ScopedMemoryBlock.h"
 #include "SerializedObject.h"
+#include "Id.h"
 
 namespace TinyRNN
 {
@@ -40,6 +39,7 @@ namespace TinyRNN
         
         using Ptr = std::shared_ptr<HardcodedNetwork>;
         using HardcodedLayers = std::vector<HardcodedNeuron::Vector>;
+        using StandaloneSources = std::map<std::string, std::string>;
         
     public:
         
@@ -50,6 +50,7 @@ namespace TinyRNN
                          unsigned long maxNumberOfExpressionsPerKernel);
         
         bool compile();
+        StandaloneSources asStandalone(const std::string &name, bool asConst) const;
         
         HardcodedTrainingContext::Ptr getContext() const noexcept;
         
@@ -67,6 +68,8 @@ namespace TinyRNN
         
     private:
         
+#if TINYRNN_OPENCL_ACCELERATION
+        
         cl::Device clDevice;
         cl::Context clContext;
         cl::Program clProgram;
@@ -77,6 +80,8 @@ namespace TinyRNN
         cl::Buffer clOutputsBuffer;
         cl::Buffer clTargetsBuffer;
         cl::Buffer clRateBuffer;
+        
+#endif
         
         class Kernel final : public SerializedObject
         {
@@ -91,7 +96,10 @@ namespace TinyRNN
             size_t numExpressions;
             std::string fullSource;
             std::string entryPoint;
+            
+#if TINYRNN_OPENCL_ACCELERATION
             cl::Kernel clKernel;
+#endif
             
         public:
             
@@ -153,6 +161,8 @@ namespace TinyRNN
     {
         const ScopedTimer timer("HardcodedNetwork::initialize");
         
+#if TINYRNN_OPENCL_ACCELERATION
+        
         std::vector<cl::Platform> allPlatforms;
         cl::Platform::get(&allPlatforms);
         
@@ -179,6 +189,8 @@ namespace TinyRNN
         
         this->clContext = cl::Context(this->clDevice);
         
+#endif
+        
         this->feedKernels = this->compileFeedKernels(targetLayers, maxNumberOfExpressionsPerKernel);
         this->trainKernels = this->compileTrainKernels(targetLayers, maxNumberOfExpressionsPerKernel);
         
@@ -188,6 +200,8 @@ namespace TinyRNN
     inline bool HardcodedNetwork::compile()
     {
         const ScopedTimer timer("HardcodedNetwork::build");
+        
+#if TINYRNN_OPENCL_ACCELERATION
         
         cl::Program::Sources clSources;
         
@@ -233,6 +247,116 @@ namespace TinyRNN
                                           (void *)this->trainingContext->getMemory().data());
         
         return true;
+        
+#else
+        
+        return false;
+        
+#endif
+    }
+    
+    static std::string valueString()
+    {
+        return (sizeof(Value) == sizeof(double)) ? "double" : "float";
+    }
+    
+    inline HardcodedNetwork::StandaloneSources HardcodedNetwork::asStandalone(const std::string &name, bool asConst) const
+    {
+        StandaloneSources result;
+        
+        const bool isTrainable = (!this->trainKernels.empty());
+        
+        if (this->feedKernels.empty())
+        {
+            return result;
+        }
+        
+        const std::string headerName = name + ".h";
+        const std::string sourceName = name + ".c";
+        const std::string feedEntry = name + "Feed";
+        const std::string trainEntry = name + "Train";
+        const std::string networkGuard = "TINYRNN_STANDALONE_GUARD_" + Uuid::generateIsoUuid();
+        
+        std::stringstream header;
+        
+        header << "#ifndef " << networkGuard << std::endl;
+        header << "#define " << networkGuard << std::endl;
+        
+        header << std::endl;
+        header << "extern " + valueString() + " kMemory[];" << std::endl;
+        header << "const int kMemorySize = " << this->trainingContext->getMemory().size() << ";" << std::endl;
+        header << std::endl;
+        header << "extern " + valueString() + " kOutputs[];" << std::endl;
+        header << "const int kOutputsSize = " << this->trainingContext->getOutputs().size() << ";" << std::endl;
+        header << std::endl;
+        
+        header << "void " << feedEntry << "(const " << valueString() << " *input);" << std::endl;
+        
+        if (! asConst)
+        {
+            header << "void " << trainEntry << "(const " << valueString() << " rate, const " << valueString() << " *target);" << std::endl;
+        }
+        
+        header << std::endl;
+        
+        header << "#endif //" << networkGuard << std::endl;
+        
+        std::stringstream source;
+        
+        source << "#include \"" << headerName << "\"" <<  std::endl;
+        source << "#define kernel" << std::endl;
+        source << "#define global" << std::endl;
+        source << std::endl;
+        
+        source << "static " << this->feedKernels.front()->fullSource;
+        source << std::endl;
+        
+        if (! asConst)
+        {
+            source << "static " << this->trainKernels.front()->fullSource;
+            source << std::endl;
+        }
+        
+        source << "void " << feedEntry << "(const " << valueString() << " *input) {" << std::endl;
+        source << "    " << this->feedKernels.front()->entryPoint << "(input, kOutputs, kMemory);" << std::endl;
+        source << "}" << std::endl;
+        source << std::endl;
+        
+        if (! asConst)
+        {
+            source << "void " << trainEntry << "(const " << valueString() << " rate, const " << valueString() << " *target) {" << std::endl;
+            source << "    " << this->trainKernels.front()->entryPoint << "(&rate, target, kMemory);" << std::endl;
+            source << "}" << std::endl;
+            source << std::endl;
+        }
+        
+        const int linebreakEveryNth = 8;
+        
+        source << valueString() + " kMemory[] = " << std::endl;
+        source << "{ " << std::endl;
+        
+        for (size_t i = 0; i < this->trainingContext->getMemory().size(); ++i)
+        {
+            source << this->trainingContext->getMemory().at(i) << ", ";
+            if (i % linebreakEveryNth == (linebreakEveryNth - 1)) { source << std::endl; }
+        }
+        
+        source << "0 }; " << std::endl << std::endl;
+        
+        source << valueString() + " kOutputs[] = " << std::endl;
+        source << "{ " << std::endl;
+        
+        for (size_t i = 0; i < this->trainingContext->getOutputs().size(); ++i)
+        {
+            source << this->trainingContext->getOutputs().at(i) << ", ";
+            if (i % linebreakEveryNth == (linebreakEveryNth - 1)) { source << std::endl; }
+        }
+        
+        source << "0 }; " << std::endl;
+        
+        result[name + ".h"] = header.str();
+        result[name + ".c"] = source.str();
+        return result;
     }
     
     inline bool HardcodedNetwork::isBuilt() const
@@ -267,7 +391,6 @@ namespace TinyRNN
         Kernel::Ptr currentKernel;
         size_t currentKernelExpressionsCounter = 0;
         const size_t maxExpressions = trnn_max(maxNumberOfExpressionsPerKernel, 100);
-        const std::string valueString = (sizeof(Value) == sizeof(double)) ? "double" : "float";
         
         for (const auto &layer : targetLayers)
         {
@@ -295,9 +418,9 @@ namespace TinyRNN
                     currentKernel->entryPoint = ("feed_" + std::to_string(result.size()));
                     currentKernel->fullSource =
                     "void kernel " + currentKernel->entryPoint +
-                    "(global const " + valueString +
-                    " *input, global " + valueString +
-                    " *output, global " + valueString + " *x) {\n";
+                    "(global const " + valueString() +
+                    " *input, global " + valueString() +
+                    " *output, global " + valueString() + " *x) {\n";
                     
                     currentKernel->fullSource += this->trainingContext->buildInputsExpressions();
                 }
@@ -327,7 +450,6 @@ namespace TinyRNN
         Kernel::Ptr currentKernel;
         size_t currentKernelExpressionsCounter = 0;
         const size_t maxExpressions = trnn_max(maxNumberOfExpressionsPerKernel, 100);
-        const std::string valueString = (sizeof(Value) == sizeof(double)) ? "double" : "float";
         
         for (size_t l = targetLayers.size(); l --> 0 ;)
         {
@@ -356,9 +478,9 @@ namespace TinyRNN
                     currentKernel->entryPoint = ("train_" + std::to_string(result.size()));
                     currentKernel->fullSource =
                     "void kernel " + currentKernel->entryPoint +
-                    "(global const " + valueString +
-                    " *rate, global const " + valueString +
-                    " *target, global " + valueString + " *x) {\n";
+                    "(global const " + valueString() +
+                    " *rate, global const " + valueString() +
+                    " *target, global " + valueString() + " *x) {\n";
                     
                     currentKernel->fullSource += this->trainingContext->buildRateExpression();
                     currentKernel->fullSource += this->trainingContext->buildTargetsExpressions();
@@ -387,6 +509,8 @@ namespace TinyRNN
     
     inline HardcodedTrainingContext::RawData HardcodedNetwork::feed(const HardcodedTrainingContext::RawData &inputs)
     {
+#if TINYRNN_OPENCL_ACCELERATION
+        
         std::fill(this->trainingContext->getOutputs().begin(),
                   this->trainingContext->getOutputs().end(),
                   0.0);
@@ -411,10 +535,18 @@ namespace TinyRNN
         }
         
         return this->trainingContext->getOutputs();
+        
+#else
+        
+        return {};
+        
+#endif
     }
     
     inline void HardcodedNetwork::train(Value rate, const HardcodedTrainingContext::RawData &targets)
     {
+#if TINYRNN_OPENCL_ACCELERATION
+        
         this->clTargetsBuffer = cl::Buffer(this->clContext,
                                            CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
                                            sizeof(Value) * targets.size(),
@@ -433,6 +565,8 @@ namespace TinyRNN
             this->clQueue.enqueueNDRangeKernel(kernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
             this->clQueue.finish();
         }
+        
+#endif
     }
     
     //===------------------------------------------------------------------===//
@@ -520,7 +654,5 @@ namespace TinyRNN
         context->setStringProperty(this->fullSource, Keys::Hardcoded::FullSource);
     }
 }
-
-#endif // TINYRNN_OPENCL_ACCELERATION
 
 #endif // TINYRNN_HARDCODEDNETWORK_H_INCLUDED
