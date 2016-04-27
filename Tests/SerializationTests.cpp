@@ -75,7 +75,14 @@ public:
         return childContext;
     }
     
-    virtual SerializationContext::Ptr createChildContext(const std::string &key) override
+    virtual SerializationContext::Ptr addChildContext(const std::string &key) override
+    {
+        pugi::xml_node newChild = node.append_child(key.c_str());
+        XMLSerializationContext::Ptr childContext(new XMLSerializationContext(newChild));
+        return childContext;
+    }
+    
+    virtual SerializationContext::Ptr addChildContextUnordered(const std::string &key) override
     {
         pugi::xml_node newChild = node.append_child(key.c_str());
         XMLSerializationContext::Ptr childContext(new XMLSerializationContext(newChild));
@@ -102,7 +109,7 @@ public:
         
         pugi::xml_document document;
         XMLSerializationContext::Ptr root(new XMLSerializationContext(document.root()));
-        SerializationContext::Ptr mainContext(root->createChildContext(rootNodeName));
+        SerializationContext::Ptr mainContext(root->addChildContext(rootNodeName));
         
         target->serialize(mainContext);
         

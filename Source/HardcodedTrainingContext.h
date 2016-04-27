@@ -340,11 +340,11 @@ namespace TinyRNN
         context->setNumberProperty(this->memory.size(), Keys::Hardcoded::MemorySize);
         context->setNumberProperty(this->outputs.size(), Keys::Hardcoded::OutputsSize);
         
-        SerializationContext::Ptr mappingNode(context->createChildContext(Keys::Hardcoded::VariablesMapping));
+        SerializationContext::Ptr mappingNode(context->addChildContext(Keys::Hardcoded::VariablesMapping));
         
         for (const auto &i : this->mapping)
         {
-            SerializationContext::Ptr variableNode(mappingNode->createChildContext(Keys::Hardcoded::Variable));
+            SerializationContext::Ptr variableNode(mappingNode->addChildContextUnordered(Keys::Hardcoded::Variable));
             variableNode->setStringProperty(i.first, Keys::Hardcoded::Key);
             variableNode->setNumberProperty(i.second, Keys::Hardcoded::Index);
         }

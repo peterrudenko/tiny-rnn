@@ -288,26 +288,26 @@ namespace TinyRNN
         context->setNumberProperty(this->uuid, Keys::Core::Uuid);
         context->setStringProperty(this->name, Keys::Core::Name);
         
-        SerializationContext::Ptr inputLayerNode(context->createChildContext(Keys::Core::InputLayer));
+        SerializationContext::Ptr inputLayerNode(context->addChildContext(Keys::Core::InputLayer));
         this->inputLayer->serialize(inputLayerNode);
         
-        SerializationContext::Ptr allHiddenLayersNode(context->createChildContext(Keys::Core::HiddenLayers));
+        SerializationContext::Ptr allHiddenLayersNode(context->addChildContext(Keys::Core::HiddenLayers));
         
         for (const auto &layer : this->hiddenLayers)
         {
-            SerializationContext::Ptr hiddenLayerNode(allHiddenLayersNode->createChildContext(Keys::Core::Layer));
+            SerializationContext::Ptr hiddenLayerNode(allHiddenLayersNode->addChildContext(Keys::Core::Layer));
             layer->serialize(hiddenLayerNode);
         }
         
-        SerializationContext::Ptr outputLayerNode(context->createChildContext(Keys::Core::OutputLayer));
+        SerializationContext::Ptr outputLayerNode(context->addChildContext(Keys::Core::OutputLayer));
         this->outputLayer->serialize(outputLayerNode);
         
-        SerializationContext::Ptr allConnectionsNode(context->createChildContext(Keys::Core::Connections));
+        SerializationContext::Ptr allConnectionsNode(context->addChildContext(Keys::Core::Connections));
         Neuron::Connection::SortedMap allConnections(this->findAllConnections());
         
         for (const auto &i : allConnections)
         {
-            SerializationContext::Ptr connectionNode(allConnectionsNode->createChildContext(Keys::Core::Connection));
+            SerializationContext::Ptr connectionNode(allConnectionsNode->addChildContext(Keys::Core::Connection));
             const Neuron::Connection::Ptr connection = i.second;
             connection->serialize(connectionNode);
         }
