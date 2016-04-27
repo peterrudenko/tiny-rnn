@@ -38,6 +38,7 @@ namespace TinyRNN
         KernelSentence() {}
         
         friend KernelSentence &operator << (KernelSentence &i, size_t index);
+        friend KernelSentence &operator << (KernelSentence &i, float value);
         friend KernelSentence &operator << (KernelSentence &i, const std::string &operations);
         friend void operator << (KernelSentence &i, std::ostream&(*f)(std::ostream&));
         
@@ -135,6 +136,12 @@ namespace TinyRNN
     inline KernelSentence &operator << (KernelSentence &i, size_t index)
     {
         i.expressionBuilder += "x[" + std::to_string(index) + "]";
+        return i;
+    }
+    
+    inline KernelSentence &operator << (KernelSentence &i, float value)
+    {
+        i.expressionBuilder += std::to_string(value);
         return i;
     }
     
