@@ -601,19 +601,19 @@ namespace TinyRNN
     
     inline void HardcodedNetwork::serialize(SerializationContext::Ptr context) const
     {
-        SerializationContext::Ptr feedKernelsNode(context->createChildContext(Keys::Hardcoded::FeedKernels));
+        SerializationContext::Ptr feedKernelsNode(context->addChildContext(Keys::Hardcoded::FeedKernels));
         
         for (const auto &kernel : this->feedKernels)
         {
-            SerializationContext::Ptr kernelNode(feedKernelsNode->createChildContext(Keys::Hardcoded::FeedKernel));
+            SerializationContext::Ptr kernelNode(feedKernelsNode->addChildContext(Keys::Hardcoded::FeedKernel));
             kernel->serialize(kernelNode);
         }
         
-        SerializationContext::Ptr trainKernelsNode(context->createChildContext(Keys::Hardcoded::TrainKernels));
+        SerializationContext::Ptr trainKernelsNode(context->addChildContext(Keys::Hardcoded::TrainKernels));
         
         for (const auto &kernel : this->trainKernels)
         {
-            SerializationContext::Ptr kernelNode(trainKernelsNode->createChildContext(Keys::Hardcoded::TrainKernel));
+            SerializationContext::Ptr kernelNode(trainKernelsNode->addChildContext(Keys::Hardcoded::TrainKernel));
             kernel->serialize(kernelNode);
         }
         

@@ -231,19 +231,19 @@ namespace TinyRNN
         context->setStringProperty(this->uuid, Keys::Core::Uuid);
         context->setStringProperty(this->name, Keys::Core::Name);
         
-        SerializationContext::Ptr neuronStatesNode(context->createChildContext(Keys::Core::NeuronContexts));
+        SerializationContext::Ptr neuronStatesNode(context->addChildContext(Keys::Core::NeuronContexts));
         const NeuronData::SortedMap sortedNeuronContexts(this->neuronContexts.begin(), this->neuronContexts.end());
         for (const auto &i : sortedNeuronContexts)
         {
-            SerializationContext::Ptr neuronNode(neuronStatesNode->createChildContext(Keys::Core::TrainingNeuronContext));
+            SerializationContext::Ptr neuronNode(neuronStatesNode->addChildContext(Keys::Core::TrainingNeuronContext));
             i.second->serialize(neuronNode);
         }
         
-        SerializationContext::Ptr connectionStatesNode(context->createChildContext(Keys::Core::ConnectionContexts));
+        SerializationContext::Ptr connectionStatesNode(context->addChildContext(Keys::Core::ConnectionContexts));
         const ConnectionData::SortedMap sortedConnectionContexts(this->connectionContexts.begin(), this->connectionContexts.end());
         for (const auto &i : sortedConnectionContexts)
         {
-            SerializationContext::Ptr connectionNode(connectionStatesNode->createChildContext(Keys::Core::TrainingConnectionContext));
+            SerializationContext::Ptr connectionNode(connectionStatesNode->addChildContext(Keys::Core::TrainingConnectionContext));
             i.second->serialize(connectionNode);
         }
     }

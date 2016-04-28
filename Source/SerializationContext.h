@@ -50,7 +50,8 @@ namespace TinyRNN
         virtual SerializationContext::Ptr getChildContext(int index) const = 0;
         
         virtual SerializationContext::Ptr getChildContext(const std::string &key) const = 0;
-        virtual SerializationContext::Ptr createChildContext(const std::string &key) = 0;
+        virtual SerializationContext::Ptr addChildContext(const std::string &key) = 0;
+        virtual SerializationContext::Ptr addChildContextUnordered(const std::string &key) = 0;
         
         static inline std::string encodeBase64(unsigned char const *bytesToEncode, size_t inLen);
         static inline std::string encodeBase64(const std::string &sourceString);

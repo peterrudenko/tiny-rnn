@@ -38,6 +38,7 @@ namespace TinyRNN
         KernelSentence() {}
         
         friend KernelSentence &operator << (KernelSentence &i, size_t index);
+        friend KernelSentence &operator << (KernelSentence &i, float value);
         friend KernelSentence &operator << (KernelSentence &i, const std::string &operations);
         friend void operator << (KernelSentence &i, std::ostream&(*f)(std::ostream&));
         
@@ -135,6 +136,12 @@ namespace TinyRNN
     inline KernelSentence &operator << (KernelSentence &i, size_t index)
     {
         i.expressionBuilder += "x[" + std::to_string(index) + "]";
+        return i;
+    }
+    
+    inline KernelSentence &operator << (KernelSentence &i, float value)
+    {
+        i.expressionBuilder += std::to_string(value);
         return i;
     }
     
@@ -340,11 +347,11 @@ namespace TinyRNN
         context->setNumberProperty(this->memory.size(), Keys::Hardcoded::MemorySize);
         context->setNumberProperty(this->outputs.size(), Keys::Hardcoded::OutputsSize);
         
-        SerializationContext::Ptr mappingNode(context->createChildContext(Keys::Hardcoded::VariablesMapping));
+        SerializationContext::Ptr mappingNode(context->addChildContext(Keys::Hardcoded::VariablesMapping));
         
         for (const auto &i : this->mapping)
         {
-            SerializationContext::Ptr variableNode(mappingNode->createChildContext(Keys::Hardcoded::Variable));
+            SerializationContext::Ptr variableNode(mappingNode->addChildContextUnordered(Keys::Hardcoded::Variable));
             variableNode->setStringProperty(i.first, Keys::Hardcoded::Key);
             variableNode->setNumberProperty(i.second, Keys::Hardcoded::Index);
         }

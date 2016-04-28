@@ -427,10 +427,10 @@ namespace TinyRNN
         context->setNumberProperty(this->uuid, Keys::Core::Uuid);
         context->setStringProperty(this->name, Keys::Core::Name);
         
-        SerializationContext::Ptr allNeuronsNode(context->createChildContext(Keys::Core::Neurons));
+        SerializationContext::Ptr allNeuronsNode(context->addChildContext(Keys::Core::Neurons));
         for (const auto &neuron : this->neurons)
         {
-            SerializationContext::Ptr neuronNode(allNeuronsNode->createChildContext(Keys::Core::Neuron));
+            SerializationContext::Ptr neuronNode(allNeuronsNode->addChildContext(Keys::Core::Neuron));
             neuron->serialize(neuronNode);
         }
     }
