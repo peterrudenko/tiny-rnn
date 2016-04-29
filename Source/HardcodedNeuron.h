@@ -24,9 +24,9 @@
 #define TINYRNN_HARDCODEDNEURON_H_INCLUDED
 
 #include "Common.h"
-#include "Neuron.h"
 #include "HardcodedTrainingContext.h"
-#include "SerializedObject.h"
+#include "Id.h"
+#include "Neuron.h"
 
 namespace TinyRNN
 {
@@ -67,7 +67,7 @@ namespace TinyRNN
     // HardcodedNeuron implementation
     //===------------------------------------------------------------------===//
     
-    inline HardcodedNeuron::HardcodedNeuron() {}
+    inline HardcodedNeuron::HardcodedNeuron() = default;
     
     inline HardcodedNeuron::Ptr HardcodedNeuron::buildFrom(HardcodedTrainingContext::Ptr context,
                                                            Neuron::Ptr target,
@@ -826,6 +826,6 @@ namespace TinyRNN
     {
         return this->trainProgram;
     }
-}
+} // namespace TinyRNN
 
 #endif // TINYRNN_HARDCODEDNEURON_H_INCLUDED

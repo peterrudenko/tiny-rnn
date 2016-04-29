@@ -23,12 +23,12 @@
 #ifndef TINYRNN_LAYER_H_INCLUDED
 #define TINYRNN_LAYER_H_INCLUDED
 
-#include "SerializedObject.h"
 #include "Neuron.h"
-#include "TrainingContext.h"
+#include "SerializedObject.h"
 #include "HardcodedTrainingContext.h"
-#include "SerializationKeys.h"
 #include "Id.h"
+#include "SerializationKeys.h"
+#include "TrainingContext.h"
 
 #include "HardcodedNeuron.h"
 
@@ -466,6 +466,6 @@ namespace TinyRNN
     
 //#endif
     
-}
+} // namespace TinyRNN
 
 #endif // TINYRNN_LAYER_H_INCLUDED

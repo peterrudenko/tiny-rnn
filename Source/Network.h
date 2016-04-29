@@ -24,15 +24,15 @@
 #define TINYRNN_NETWORK_H_INCLUDED
 
 #include "Common.h"
-#include "SerializedObject.h"
 #include "SerializationKeys.h"
+#include "SerializedObject.h"
 #include "Layer.h"
-#include "TrainingContext.h"
-#include "Id.h"
 #include "ScopedTimer.h"
+#include "SerializedObject.h"
+#include "TrainingContext.h"
 
-#include "HardcodedTrainingContext.h"
 #include "HardcodedNetwork.h"
+#include "HardcodedTrainingContext.h"
 
 namespace TinyRNN
 {
@@ -567,6 +567,6 @@ namespace TinyRNN
         Network::Ptr network = Network::Ptr(new Network(name, context, inputLayer, hiddenLayers, outputLayer));
         return network;
     }
-}
+}  // namespace TinyRNN
 
 #endif // TINYRNN_NETWORK_H_INCLUDED

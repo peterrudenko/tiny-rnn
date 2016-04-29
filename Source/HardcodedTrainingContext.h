@@ -24,9 +24,9 @@
 #define TINYRNN_HARDCODEDTRAININGCONTEXT_H_INCLUDED
 
 #include "Common.h"
-#include "SerializedObject.h"
 #include "Id.h"
-#include <iostream>
+#include "SerializedObject.h"
+#include <random>
 #include <sstream>
 
 namespace TinyRNN
@@ -35,7 +35,7 @@ namespace TinyRNN
     {
     public:
         
-        KernelSentence() {}
+        KernelSentence() = default;
         
         friend KernelSentence &operator << (KernelSentence &i, size_t index);
         friend KernelSentence &operator << (KernelSentence &i, float value);
@@ -356,6 +356,6 @@ namespace TinyRNN
             variableNode->setNumberProperty(i.second, Keys::Hardcoded::Index);
         }
     }
-}
+}  // namespace TinyRNN
 
 #endif  // TINYRNN_HARDCODEDTRAININGCONTEXT_H_INCLUDED

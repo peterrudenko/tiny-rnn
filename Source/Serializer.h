@@ -31,15 +31,15 @@ namespace TinyRNN
     {
     public:
         
-        Serializer() {}
+        Serializer() = default;
         
-        virtual ~Serializer() {}
+        virtual ~Serializer() = default;
         
         virtual std::string serialize(SerializedObject::Ptr target, const std::string rootNodeName) const = 0;
         
         virtual void deserialize(SerializedObject::Ptr target, const std::string &data) = 0;
         
     };
-}
+}  // namespace TinyRNN
 
 #endif // TINYRNN_SERIALIZER_H_INCLUDED

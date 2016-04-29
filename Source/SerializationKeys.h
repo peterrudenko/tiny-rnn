@@ -76,7 +76,7 @@ namespace TinyRNN
             
             static const std::string ErrorAccumulator = "ErrorAccumulator";
             static const std::string Gradient = "Gradient";
-        }
+        }  // namespace Core
         
         namespace Mapping
         {
@@ -125,7 +125,7 @@ namespace TinyRNN
             
             static const Id ErrorAccumulator = 38;
             static const Id Gradient = 39;
-        }
+        } // namespace Mapping
         
         namespace Hardcoded
         {
@@ -163,8 +163,8 @@ namespace TinyRNN
             static const std::string Variable = "Variable";
             static const std::string Key = "Key";
             static const std::string Index = "Index";
-        }
-    }
-}
+        }  // namespace Hardcoded
+    } // namespace Keys
+}  // namespace TinyRNN
 
 #endif  // TINYRNN_SERIALIZATIONKEYS_H_INCLUDED

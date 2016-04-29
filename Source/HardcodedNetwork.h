@@ -26,10 +26,10 @@
 #include "Common.h"
 #include "HardcodedNeuron.h"
 #include "HardcodedTrainingContext.h"
-#include "ScopedTimer.h"
-#include "ScopedMemoryBlock.h"
-#include "SerializedObject.h"
 #include "Id.h"
+#include "ScopedMemoryBlock.h"
+#include "ScopedTimer.h"
+#include "SerializedObject.h"
 
 namespace TinyRNN
 {
@@ -617,7 +617,7 @@ namespace TinyRNN
             kernel->serialize(kernelNode);
         }
         
-        // TODO also save the compiled program binaries, if any
+        // TODO(peterrudenko): also save the compiled program binaries, if any
 //        context->setNumberProperty(this->isBuilt(), Keys::Hardcoded::IsBuilt);
 //        
 //        if (this->isBuilt())
@@ -653,6 +653,6 @@ namespace TinyRNN
         context->setStringProperty(this->entryPoint, Keys::Hardcoded::EntryPoint);
         context->setStringProperty(this->fullSource, Keys::Hardcoded::FullSource);
     }
-}
+}  // namespace TinyRNN
 
 #endif // TINYRNN_HARDCODEDNETWORK_H_INCLUDED

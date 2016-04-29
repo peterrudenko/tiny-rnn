@@ -72,6 +72,6 @@ namespace TinyRNN
         
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(ScopedMemoryBlock);
     };
-}
+}  // namespace TinyRNN
 
 #endif  // SCOPEDMEMORYBLOCK_H_INCLUDED

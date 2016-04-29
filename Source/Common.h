@@ -35,7 +35,7 @@ namespace TinyRNN
 {
     using Id = unsigned long;
     using Value = float;
-}
+} // namespace TinyRNN
 
 #if TINYRNN_OPENCL_ACCELERATION
 #include "OpenCL/cl.hpp"

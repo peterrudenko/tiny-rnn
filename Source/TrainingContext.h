@@ -24,9 +24,9 @@
 #define TINYRNN_LEARNINGCONTEXT_H_INCLUDED
 
 #include <random>
-#include "SerializedObject.h"
-#include "SerializationKeys.h"
 #include "HardcodedTrainingContext.h"
+#include "SerializationKeys.h"
+#include "SerializedObject.h"
 
 namespace TinyRNN
 {
@@ -121,7 +121,7 @@ namespace TinyRNN
         
     public:
         
-        explicit TrainingContext(const std::string &name);
+        explicit TrainingContext(const std::string &contextName);
         
         std::string getName() const noexcept;
         NeuronData::Ptr getNeuronContext(const Id &uuid);
@@ -349,6 +349,6 @@ namespace TinyRNN
         context->setRealProperty(this->weight, Keys::Core::Weight);
         context->setRealProperty(this->gain, Keys::Core::Gain);
     }
-}
+}  // namespace TinyRNN
 
 #endif // TINYRNN_LEARNINGCONTEXT_H_INCLUDED
