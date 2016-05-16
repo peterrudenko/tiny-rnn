@@ -30,6 +30,29 @@
 
 namespace TinyRNN
 {
+    class KernelSentence final
+    {
+    public:
+        
+        KernelSentence() = default;
+        
+        friend KernelSentence &operator << (KernelSentence &i, size_t index);
+        friend KernelSentence &operator << (KernelSentence &i, float value);
+        friend KernelSentence &operator << (KernelSentence &i, const std::string &operations);
+        friend void operator << (KernelSentence &i, std::ostream&(*f)(std::ostream&));
+        
+        size_t getSize() const noexcept;
+        std::string build() const;
+        
+    private:
+        
+        std::string expressionBuilder;              // i.e. one line like "x[123] += x[0] * (x[183] * x[342]);"
+        std::vector<std::string> expressions;       // an array of lines for this neuron
+        
+        TINYRNN_DISALLOW_COPY_AND_ASSIGN(KernelSentence);
+    };
+    
+    // TODO(peterrudenko): rename to ProgramBuilder or so
     class HardcodedNeuron final
     {
     public:
@@ -62,6 +85,61 @@ namespace TinyRNN
         
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(HardcodedNeuron);
     };
+    
+    //===------------------------------------------------------------------===//
+    // KernelSentence implementation
+    //===------------------------------------------------------------------===//
+    
+    inline size_t KernelSentence::getSize() const noexcept
+    {
+        return this->expressions.size();
+    }
+    
+    inline std::string KernelSentence::build() const
+    {
+        std::string result;
+        
+        for (const auto &expression : this->expressions)
+        {
+            result = result + expression;
+        }
+        
+        return result;
+    }
+    
+    inline KernelSentence &operator << (KernelSentence &i, size_t index)
+    {
+        i.expressionBuilder += "x[" + std::to_string(index) + "]";
+        return i;
+    }
+    
+    inline KernelSentence &operator << (KernelSentence &i, float value)
+    {
+        i.expressionBuilder += std::to_string(value);
+        return i;
+    }
+    
+    inline KernelSentence &operator << (KernelSentence &i, const std::string &operations)
+    {
+        i.expressionBuilder += operations;
+        return i;
+    }
+    
+    inline void operator << (KernelSentence &i, std::ostream&(*f)(std::ostream&))
+    {
+        // What a mess, I just wanted to have std::endl to finish the current line..
+        if (f == (std::ostream&(*)(std::ostream&)) &std::endl)
+        {
+            if (i.expressionBuilder.back() != ';')
+            {
+                i.expressionBuilder += ";";
+            }
+            
+            i.expressionBuilder += "\n";
+            i.expressions.push_back(i.expressionBuilder);
+            i.expressionBuilder.clear();
+        }
+    }
     
     //===------------------------------------------------------------------===//
     // HardcodedNeuron implementation

@@ -30,30 +30,8 @@
 #include <sstream>
 
 namespace TinyRNN
-{
-    class KernelSentence final
-    {
-    public:
-        
-        KernelSentence() = default;
-        
-        friend KernelSentence &operator << (KernelSentence &i, size_t index);
-        friend KernelSentence &operator << (KernelSentence &i, float value);
-        friend KernelSentence &operator << (KernelSentence &i, const std::string &operations);
-        friend void operator << (KernelSentence &i, std::ostream&(*f)(std::ostream&));
-        
-        size_t getSize() const noexcept;
-        std::string build() const;
-        
-    private:
-        
-        std::string expressionBuilder;              // i.e. one line like "x[123] += x[0] * (x[183] * x[342]);"
-        std::vector<std::string> expressions;       // an array of lines for this neuron
-        
-        TINYRNN_DISALLOW_COPY_AND_ASSIGN(KernelSentence);
-    };
-    
-    class HardcodedTrainingContext final : public SerializedObject // todo #3
+{   
+    class HardcodedTrainingContext final : public SerializedObject
     {
     public:
         
@@ -75,10 +53,10 @@ namespace TinyRNN
         void registerTargetVariable(size_t variableIndex);
         void registerRateVariable(size_t variableIndex);
         
-        std::string buildInputsExpressions() const;
-        std::string buildOutputsExpressions() const;
-        std::string buildTargetsExpressions() const;
-        std::string buildRateExpression() const;
+        Indices getInputVariables() const;
+        Indices getOutputVariables() const;
+        Indices getTargetVariables() const;
+        size_t getRateVariable() const;
         
         RawData &getMemory();
         RawData &getOutputs();
@@ -98,9 +76,9 @@ namespace TinyRNN
     private: // temporary stuff, never serialized:
         
         RawData outputs;                        // holds the most recent output
-        Indices inputVariables;                 // indexes of input variables
-        Indices outputVariables;                // indexes of output variables
-        Indices targetVariables;                // indexes of target variables
+        Indices inputVariables;                 // indices of input variables
+        Indices outputVariables;                // indices of output variables
+        Indices targetVariables;                // indices of target variables
         size_t rateVariable;
         
     private:
@@ -111,61 +89,6 @@ namespace TinyRNN
         
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(HardcodedTrainingContext);
     };
-    
-    //===------------------------------------------------------------------===//
-    // KernelSentence implementation
-    //===------------------------------------------------------------------===//
-    
-    inline size_t KernelSentence::getSize() const noexcept
-    {
-        return this->expressions.size();
-    }
-    
-    inline std::string KernelSentence::build() const
-    {
-        std::string result;
-        
-        for (const auto &expression : this->expressions)
-        {
-            result = result + expression;
-        }
-        
-        return result;
-    }
-    
-    inline KernelSentence &operator << (KernelSentence &i, size_t index)
-    {
-        i.expressionBuilder += "x[" + std::to_string(index) + "]";
-        return i;
-    }
-    
-    inline KernelSentence &operator << (KernelSentence &i, float value)
-    {
-        i.expressionBuilder += std::to_string(value);
-        return i;
-    }
-    
-    inline KernelSentence &operator << (KernelSentence &i, const std::string &operations)
-    {
-        i.expressionBuilder += operations;
-        return i;
-    }
-    
-    inline void operator << (KernelSentence &i, std::ostream&(*f)(std::ostream&))
-    {
-        // What a mess, I just wanted to have std::endl to finish the current line..
-        if (f == (std::ostream&(*)(std::ostream&)) &std::endl)
-        {
-            if (i.expressionBuilder.back() != ';')
-            {
-                i.expressionBuilder += ";";
-            }
-            
-            i.expressionBuilder += "\n";
-            i.expressions.push_back(i.expressionBuilder);
-            i.expressionBuilder.clear();
-        }
-    }
     
     //===------------------------------------------------------------------===//
     // HardcodedTrainingContext implementation
@@ -247,47 +170,27 @@ namespace TinyRNN
         this->rateVariable = variableIndex;
     }
     
-    inline std::string HardcodedTrainingContext::buildInputsExpressions() const
+    inline HardcodedTrainingContext::Indices 
+    HardcodedTrainingContext::getInputVariables() const
     {
-        KernelSentence sentence;
-        
-        for (size_t i = 0; i < this->inputVariables.size(); ++i)
-        {
-            sentence << this->inputVariables[i] << " = input[" << std::to_string(i) << "]"<< std::endl;
-        }
-        
-        return sentence.build();
+        return this->inputVariables;
     }
     
-    inline std::string HardcodedTrainingContext::buildOutputsExpressions() const
+    inline HardcodedTrainingContext::Indices
+    HardcodedTrainingContext::getOutputVariables() const
     {
-        KernelSentence sentence;
-        
-        for (size_t i = 0; i < this->outputVariables.size(); ++i)
-        {
-            sentence << "output[" << std::to_string(i) << "] = " << this->outputVariables[i] << std::endl;
-        }
-        
-        return sentence.build();
+        return this->outputVariables;
     }
     
-    inline std::string HardcodedTrainingContext::buildTargetsExpressions() const
+    inline HardcodedTrainingContext::Indices
+    HardcodedTrainingContext::getTargetVariables() const
     {
-        KernelSentence sentence;
-        
-        for (size_t i = 0; i < this->targetVariables.size(); ++i)
-        {
-            sentence << this->targetVariables[i] << " = target[" << std::to_string(i) << "]"<< std::endl;
-        }
-        
-        return sentence.build();
+        return this->targetVariables;
     }
     
-    inline std::string HardcodedTrainingContext::buildRateExpression() const
+    inline size_t HardcodedTrainingContext::getRateVariable() const
     {
-        KernelSentence sentence;
-        sentence << rateVariable << " = rate[0]" << std::endl;
-        return sentence.build();
+        return this->rateVariable;
     }
     
     inline HardcodedTrainingContext::RawData &HardcodedTrainingContext::getMemory()

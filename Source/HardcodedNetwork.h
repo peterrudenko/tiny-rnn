@@ -120,6 +120,11 @@ namespace TinyRNN
         Kernel::Vector compileTrainKernels(const HardcodedLayers &targetLayers,
                                            unsigned long maxNumberOfExpressionsPerKernel) const;
         
+        std::string buildInputsExpressions() const;
+        std::string buildOutputsExpressions() const;
+        std::string buildTargetsExpressions() const;
+        std::string buildRateExpression() const;
+                                           
         bool initialize(const HardcodedLayers &targetLayers,
                         unsigned long maxNumberOfExpressionsPerKernel);
         
@@ -407,7 +412,7 @@ namespace TinyRNN
                 {
                     if (currentKernel != nullptr)
                     {
-                        currentKernel->fullSource += this->trainingContext->buildOutputsExpressions();
+                        currentKernel->fullSource += this->buildOutputsExpressions();
                         currentKernel->fullSource += "}\n";
                         //std::cout << "Adding a feed kernel of " << currentKernel->numExpressions << " lines." << std::endl;
                         result.push_back(currentKernel);
@@ -422,7 +427,7 @@ namespace TinyRNN
                     " *input, global " + valueString() +
                     " *output, global " + valueString() + " *x) {\n";
                     
-                    currentKernel->fullSource += this->trainingContext->buildInputsExpressions();
+                    currentKernel->fullSource += this->buildInputsExpressions();
                 }
                 
                 currentKernelExpressionsCounter += numExpressionsToCome;
@@ -433,7 +438,7 @@ namespace TinyRNN
         
         if (currentKernel != nullptr)
         {
-            currentKernel->fullSource += this->trainingContext->buildOutputsExpressions();
+            currentKernel->fullSource += this->buildOutputsExpressions();
             currentKernel->fullSource += "}\n";
             //std::cout << "Adding a feed kernel of " << currentKernel->numExpressions << " lines." << std::endl;
             result.push_back(currentKernel);
@@ -482,8 +487,8 @@ namespace TinyRNN
                     " *rate, global const " + valueString() +
                     " *target, global " + valueString() + " *x) {\n";
                     
-                    currentKernel->fullSource += this->trainingContext->buildRateExpression();
-                    currentKernel->fullSource += this->trainingContext->buildTargetsExpressions();
+                    currentKernel->fullSource += this->buildRateExpression();
+                    currentKernel->fullSource += this->buildTargetsExpressions();
                     
                 }
                 
@@ -501,6 +506,52 @@ namespace TinyRNN
         }
         
         return result;
+    }
+        
+    inline std::string HardcodedNetwork::buildInputsExpressions() const
+    {
+        KernelSentence sentence;
+        const auto &inputVariables = this->trainingContext->getInputVariables();
+        
+        for (size_t i = 0; i < inputVariables.size(); ++i)
+        {
+            sentence << inputVariables[i] << " = input[" << std::to_string(i) << "]"<< std::endl;
+        }
+        
+        return sentence.build();
+    }
+    
+    inline std::string HardcodedNetwork::buildOutputsExpressions() const
+    {
+        KernelSentence sentence;
+        const auto &outputVariables = this->trainingContext->getOutputVariables();
+        
+        for (size_t i = 0; i < outputVariables.size(); ++i)
+        {
+            sentence << "output[" << std::to_string(i) << "] = " << outputVariables[i] << std::endl;
+        }
+        
+        return sentence.build();
+    }
+    
+    inline std::string HardcodedNetwork::buildTargetsExpressions() const
+    {
+        KernelSentence sentence;
+        const auto &targetVariables = this->trainingContext->getTargetVariables();
+        
+        for (size_t i = 0; i < targetVariables.size(); ++i)
+        {
+            sentence << targetVariables[i] << " = target[" << std::to_string(i) << "]"<< std::endl;
+        }
+        
+        return sentence.build();
+    }
+    
+    inline std::string HardcodedNetwork::buildRateExpression() const
+    {
+        KernelSentence sentence;
+        sentence << this->trainingContext->getRateVariable() << " = rate[0]" << std::endl;
+        return sentence.build();
     }
     
     //===------------------------------------------------------------------===//
