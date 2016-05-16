@@ -39,8 +39,8 @@ namespace TinyRNN
         
         using Ptr = std::shared_ptr<HardcodedTrainingContext>;
         using RawData = std::vector<Value>;
-        using Indices = std::vector<size_t>;
-        using Mapping = std::map<std::string, size_t>;
+        using Indices = std::vector<Index>;
+        using Mapping = std::map<std::string, Index>;
         using VariableKey = std::vector<Id>;
         
     public:
@@ -50,17 +50,17 @@ namespace TinyRNN
         void restoreNeuronState(Neuron::Ptr targetNeuron);
 
         Value evaluateVariable(const VariableKey &variableKey, Value defaultValue);
-        size_t allocateOrReuseVariable(Value value, const VariableKey &variableKey);
+        Index allocateOrReuseVariable(Value value, const VariableKey &variableKey);
         
-        void registerInputVariable(size_t variableIndex);
-        void registerOutputVariable(size_t variableIndex);
-        void registerTargetVariable(size_t variableIndex);
-        void registerRateVariable(size_t variableIndex);
+        void registerInputVariable(Index variableIndex);
+        void registerOutputVariable(Index variableIndex);
+        void registerTargetVariable(Index variableIndex);
+        void registerRateVariable(Index variableIndex);
         
         Indices getInputVariables() const;
         Indices getOutputVariables() const;
         Indices getTargetVariables() const;
-        size_t getRateVariable() const;
+        Index getRateVariable() const;
         
         RawData &getMemory();
         RawData &getOutputs();
@@ -83,7 +83,7 @@ namespace TinyRNN
         Indices inputVariables;                 // indices of input variables
         Indices outputVariables;                // indices of output variables
         Indices targetVariables;                // indices of target variables
-        size_t rateVariable;
+        Index rateVariable;
         
     private:
         
@@ -101,14 +101,14 @@ namespace TinyRNN
     inline HardcodedTrainingContext::HardcodedTrainingContext() : rateVariable(0)
     {}
     
-    inline size_t HardcodedTrainingContext::allocateOrReuseVariable(Value value, const VariableKey &variableKey)
+    inline Index HardcodedTrainingContext::allocateOrReuseVariable(Value value, const VariableKey &variableKey)
     {
         const std::string &key = this->getKeyForVariable(variableKey);
         const bool variableExists = (this->mapping.find(key) != this->mapping.end());
         
         if (variableExists)
         {
-            const size_t variableIndex = this->mapping[key];
+            const Index variableIndex = this->mapping[key];
             this->memory[variableIndex] = value;
             return variableIndex;
         }
@@ -116,7 +116,7 @@ namespace TinyRNN
         {
             //std::cout << this->memory.size() << " is " << key << std::endl;
             this->memory.push_back(value);
-            const size_t variableIndex = (this->memory.size() - 1);
+            const Index variableIndex = (this->memory.size() - 1);
             this->mapping[key] = variableIndex;
             return variableIndex;
         }
@@ -131,7 +131,7 @@ namespace TinyRNN
         
         if (variableExists)
         {
-            const size_t variableIndex = this->mapping[key];
+            const Index variableIndex = this->mapping[key];
             //std::cout << "Variable: " << key << " = " << std::to_string(this->memory[variableIndex]) << std::endl;
             return this->memory[variableIndex];
         }
@@ -153,23 +153,23 @@ namespace TinyRNN
         return key.str();
     }
     
-    inline void HardcodedTrainingContext::registerInputVariable(size_t variableIndex)
+    inline void HardcodedTrainingContext::registerInputVariable(Index variableIndex)
     {
         this->inputVariables.push_back(variableIndex);
     }
     
-    inline void HardcodedTrainingContext::registerOutputVariable(size_t variableIndex)
+    inline void HardcodedTrainingContext::registerOutputVariable(Index variableIndex)
     {
         this->outputVariables.push_back(variableIndex);
         this->outputs.resize(this->outputVariables.size());
     }
     
-    inline void HardcodedTrainingContext::registerTargetVariable(size_t variableIndex)
+    inline void HardcodedTrainingContext::registerTargetVariable(Index variableIndex)
     {
         this->targetVariables.push_back(variableIndex);
     }
     
-    inline void HardcodedTrainingContext::registerRateVariable(size_t variableIndex)
+    inline void HardcodedTrainingContext::registerRateVariable(Index variableIndex)
     {
         this->rateVariable = variableIndex;
     }
@@ -192,7 +192,7 @@ namespace TinyRNN
         return this->targetVariables;
     }
     
-    inline size_t HardcodedTrainingContext::getRateVariable() const
+    inline Index HardcodedTrainingContext::getRateVariable() const
     {
         return this->rateVariable;
     }
