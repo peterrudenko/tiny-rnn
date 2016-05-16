@@ -460,7 +460,7 @@ namespace TinyRNN
     {
         for (auto &neuron : this->neurons)
         {
-            HardcodedNeuron::restoreNeuronState(neuron, context);
+            context->restoreNeuronState(neuron);
         }
     }
     

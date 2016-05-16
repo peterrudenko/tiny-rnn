@@ -152,6 +152,7 @@ namespace TinyRNN
         
         friend class Layer;
         friend class HardcodedNeuron;
+        friend class HardcodedTrainingContext;
         
     private:
         

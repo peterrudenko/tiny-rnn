@@ -70,9 +70,6 @@ namespace TinyRNN
                                               bool asOutput,
                                               bool asConst);
         
-        static void restoreNeuronState(Neuron::Ptr targetNeuron,
-                                       HardcodedTrainingContext::Ptr context);
-        
         const KernelSentence &getFeedChunk() const noexcept;
         const KernelSentence &getTraceChunk() const noexcept;
         const KernelSentence &getTrainChunk() const noexcept;
@@ -823,71 +820,6 @@ namespace TinyRNN
         }
         
         return hardcoded;
-    }
-    
-    inline void HardcodedNeuron::restoreNeuronState(Neuron::Ptr target, HardcodedTrainingContext::Ptr context)
-    {
-        auto targetData = target->getTrainingData();
-        
-        const Value bias = context->evaluateVariable({target->getUuid(), Keys::Mapping::Bias}, targetData->bias);
-        const Value state = context->evaluateVariable({target->getUuid(), Keys::Mapping::State}, targetData->state);
-        const Value oldState = context->evaluateVariable({target->getUuid(), Keys::Mapping::OldState}, targetData->oldState);
-        const Value activation = context->evaluateVariable({target->getUuid(), Keys::Mapping::Activation}, targetData->activation);
-        
-        targetData->bias = bias;
-        targetData->state = state;
-        targetData->oldState = oldState;
-        targetData->activation = activation;
-        
-        for (auto &i : target->eligibility)
-        {
-            const Id &inputConnectionUuid = i.first;
-            target->eligibility[inputConnectionUuid] =
-            context->evaluateVariable({target->getUuid(), inputConnectionUuid, Keys::Mapping::Eligibility},
-                                      target->eligibility[inputConnectionUuid]);
-        }
-        
-        for (auto &i : target->extended)
-        {
-            const Id &neighbourNeuronUuid = i.first;
-            Neuron::EligibilityMap &map = i.second;
-            
-            for (auto &j : map)
-            {
-                const Id &inputConnectionUuid = j.first;
-                
-                const Value extendedTrace =
-                context->evaluateVariable({target->getUuid(), neighbourNeuronUuid, inputConnectionUuid, Keys::Mapping::ExtendedTrace},
-                                          target->extended[neighbourNeuronUuid][inputConnectionUuid]);
-                
-                target->extended[neighbourNeuronUuid][inputConnectionUuid] = extendedTrace;
-            }
-        }
-        
-        for (auto &i : target->outgoingConnections)
-        {
-            auto outgoingConnection = i.second;
-            auto outgoingConnectionUuid = i.first;
-            auto outgoingConnectionData = outgoingConnection->getTrainingData();
-            
-            outgoingConnectionData->weight = context->evaluateVariable({outgoingConnectionUuid, Keys::Mapping::Weight},
-                                                                       outgoingConnectionData->weight);
-            
-            outgoingConnectionData->gain = context->evaluateVariable({outgoingConnectionUuid, Keys::Mapping::Gain},
-                                                                     outgoingConnectionData->gain);
-        }
-        
-        if (target->isSelfConnected())
-        {
-            auto selfConnection = target->getSelfConnection();
-            auto selfConnectionData = selfConnection->getTrainingData();
-            
-            selfConnectionData->weight = context->evaluateVariable({selfConnection->getUuid(), Keys::Mapping::Weight},
-                                                                   selfConnectionData->weight);
-            
-            selfConnectionData->gain = context->evaluateVariable({selfConnection->getUuid(), Keys::Mapping::Gain},
-                                                                 selfConnectionData->gain);
-        }
     }
     
     inline const KernelSentence &HardcodedNeuron::getFeedChunk() const noexcept

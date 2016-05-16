@@ -25,7 +25,9 @@
 
 #include "Common.h"
 #include "Id.h"
+#include "Neuron.h"
 #include "SerializedObject.h"
+
 #include <random>
 #include <sstream>
 
@@ -45,6 +47,8 @@ namespace TinyRNN
         
         HardcodedTrainingContext();
         
+        void restoreNeuronState(Neuron::Ptr targetNeuron);
+
         Value evaluateVariable(const VariableKey &variableKey, Value defaultValue);
         size_t allocateOrReuseVariable(Value value, const VariableKey &variableKey);
         
@@ -212,6 +216,75 @@ namespace TinyRNN
         this->outputVariables.clear();
         this->targetVariables.clear();
         this->rateVariable = 0;
+    }
+    
+    //===------------------------------------------------------------------===//
+    // Restore neuron state
+    //===------------------------------------------------------------------===//
+    
+    inline void HardcodedTrainingContext::restoreNeuronState(Neuron::Ptr target)
+    {
+        auto targetData = target->getTrainingData();
+        
+        const Value bias = this->evaluateVariable({target->getUuid(), Keys::Mapping::Bias}, targetData->bias);
+        const Value state = this->evaluateVariable({target->getUuid(), Keys::Mapping::State}, targetData->state);
+        const Value oldState = this->evaluateVariable({target->getUuid(), Keys::Mapping::OldState}, targetData->oldState);
+        const Value activation = this->evaluateVariable({target->getUuid(), Keys::Mapping::Activation}, targetData->activation);
+        
+        targetData->bias = bias;
+        targetData->state = state;
+        targetData->oldState = oldState;
+        targetData->activation = activation;
+        
+        for (auto &i : target->eligibility)
+        {
+            const Id &inputConnectionUuid = i.first;
+            target->eligibility[inputConnectionUuid] =
+            this->evaluateVariable({target->getUuid(), inputConnectionUuid, Keys::Mapping::Eligibility},
+                                   target->eligibility[inputConnectionUuid]);
+        }
+        
+        for (auto &i : target->extended)
+        {
+            const Id &neighbourNeuronUuid = i.first;
+            Neuron::EligibilityMap &map = i.second;
+            
+            for (auto &j : map)
+            {
+                const Id &inputConnectionUuid = j.first;
+                
+                const Value extendedTrace =
+                this->evaluateVariable({target->getUuid(), neighbourNeuronUuid, inputConnectionUuid, Keys::Mapping::ExtendedTrace},
+                                       target->extended[neighbourNeuronUuid][inputConnectionUuid]);
+                
+                target->extended[neighbourNeuronUuid][inputConnectionUuid] = extendedTrace;
+            }
+        }
+        
+        for (auto &i : target->outgoingConnections)
+        {
+            auto outgoingConnection = i.second;
+            auto outgoingConnectionUuid = i.first;
+            auto outgoingConnectionData = outgoingConnection->getTrainingData();
+            
+            outgoingConnectionData->weight = this->evaluateVariable({outgoingConnectionUuid, Keys::Mapping::Weight},
+                                                                    outgoingConnectionData->weight);
+            
+            outgoingConnectionData->gain = this->evaluateVariable({outgoingConnectionUuid, Keys::Mapping::Gain},
+                                                                  outgoingConnectionData->gain);
+        }
+        
+        if (target->isSelfConnected())
+        {
+            auto selfConnection = target->getSelfConnection();
+            auto selfConnectionData = selfConnection->getTrainingData();
+            
+            selfConnectionData->weight = this->evaluateVariable({selfConnection->getUuid(), Keys::Mapping::Weight},
+                                                                selfConnectionData->weight);
+            
+            selfConnectionData->gain = this->evaluateVariable({selfConnection->getUuid(), Keys::Mapping::Gain},
+                                                              selfConnectionData->gain);
+        }
     }
     
     //===------------------------------------------------------------------===//
