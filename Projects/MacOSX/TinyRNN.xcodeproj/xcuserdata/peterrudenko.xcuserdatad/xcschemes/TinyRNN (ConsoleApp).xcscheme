@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "0640"
+   LastUpgradeVersion = "0720"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "5439141A0B4765861A78AEBD"
+               BlueprintIdentifier = "3104756C2ABDFF8E0E22B37E"
                BuildableName = "TinyRNN"
-               BlueprintName = "TinyRNN"
+               BlueprintName = "TinyRNN (ConsoleApp)"
                ReferencedContainer = "container:TinyRNN.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -32,9 +32,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "5439141A0B4765861A78AEBD"
+            BlueprintIdentifier = "3104756C2ABDFF8E0E22B37E"
             BuildableName = "TinyRNN"
-            BlueprintName = "TinyRNN"
+            BlueprintName = "TinyRNN (ConsoleApp)"
             ReferencedContainer = "container:TinyRNN.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -55,9 +55,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "5439141A0B4765861A78AEBD"
+            BlueprintIdentifier = "3104756C2ABDFF8E0E22B37E"
             BuildableName = "TinyRNN"
-            BlueprintName = "TinyRNN"
+            BlueprintName = "TinyRNN (ConsoleApp)"
             ReferencedContainer = "container:TinyRNN.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -74,9 +74,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "5439141A0B4765861A78AEBD"
+            BlueprintIdentifier = "3104756C2ABDFF8E0E22B37E"
             BuildableName = "TinyRNN"
-            BlueprintName = "TinyRNN"
+            BlueprintName = "TinyRNN (ConsoleApp)"
             ReferencedContainer = "container:TinyRNN.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

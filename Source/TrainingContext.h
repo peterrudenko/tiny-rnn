@@ -74,8 +74,9 @@ namespace TinyRNN
             void feedWithRandomBias(Value signal);
             void setRandomBias();
             
-            friend class Neuron;
             friend class Layer;
+            friend class Neuron;
+            friend class VMNeuron;
             friend class HardcodedNeuron;
             friend class HardcodedTrainingContext;
             friend class Connection;
@@ -111,6 +112,7 @@ namespace TinyRNN
             Id connectionUuid;
             
             friend class Neuron;
+            friend class VMNeuron;
             friend class HardcodedNeuron;
             friend class HardcodedTrainingContext;
             friend class Connection;

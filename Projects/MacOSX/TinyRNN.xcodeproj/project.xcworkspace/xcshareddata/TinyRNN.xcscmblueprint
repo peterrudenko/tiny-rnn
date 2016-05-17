@@ -7,10 +7,10 @@
     "581472FE46A8D84AEF54472B538BE0C9ABF6D0E1" : 0,
     "13F07027D54F08459BE53661891C73ADCEDB5A7F" : 0
   },
-  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "71757081-5F11-4D45-B2D7-B4F368A3EE6B",
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "D955A7A4-081A-4421-ABFC-257119A7457A",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
-    "581472FE46A8D84AEF54472B538BE0C9ABF6D0E1" : "TinyRNN",
-    "13F07027D54F08459BE53661891C73ADCEDB5A7F" : "TinyRNN\/Tests\/ThirdParty\/pugixml"
+    "581472FE46A8D84AEF54472B538BE0C9ABF6D0E1" : "TinyRNN\/",
+    "13F07027D54F08459BE53661891C73ADCEDB5A7F" : "TinyRNN\/Tests\/ThirdParty\/pugixml\/"
   },
   "DVTSourceControlWorkspaceBlueprintNameKey" : "TinyRNN",
   "DVTSourceControlWorkspaceBlueprintVersion" : 204,

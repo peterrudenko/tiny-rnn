@@ -4,7 +4,7 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
-		<key>TinyRNN.xcscheme</key>
+		<key>TinyRNN (ConsoleApp).xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
@@ -12,7 +12,7 @@
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
-		<key>5439141A0B4765861A78AEBD</key>
+		<key>3104756C2ABDFF8E0E22B37E</key>
 		<dict>
 			<key>primary</key>
 			<true/>

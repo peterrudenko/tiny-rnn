@@ -76,7 +76,7 @@ namespace TinyRNN
             
             static const std::string ErrorAccumulator = "ErrorAccumulator";
             static const std::string Gradient = "Gradient";
-        }  // namespace Core
+        } // namespace Core
         
         namespace Mapping
         {
@@ -163,7 +163,15 @@ namespace TinyRNN
             static const std::string Variable = "Variable";
             static const std::string Key = "Key";
             static const std::string Index = "Index";
-        }  // namespace Hardcoded
+        } // namespace Hardcoded
+        
+        namespace VM
+        {
+            static const std::string Network = "VMNetwork";
+            static const std::string Commands = "Commands";
+            static const std::string Indices = "Indices";
+            // TODO
+        } // namespace VM
     } // namespace Keys
 }  // namespace TinyRNN
 

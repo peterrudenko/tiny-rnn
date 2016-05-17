@@ -33,6 +33,7 @@
 
 namespace TinyRNN
 {
+    // TODO(peterrudenko): rename to UnfoldedNetwork or so
     class HardcodedNetwork final : public SerializedObject
     {
     public:
@@ -260,11 +261,8 @@ namespace TinyRNN
 #endif
     }
     
-    static std::string valueString()
-    {
-        return (sizeof(Value) == sizeof(double)) ? "double" : "float";
-    }
-    
+#define VALUE_STRING std::string((sizeof(Value) == sizeof(double)) ? "double" : "float")
+
     inline HardcodedNetwork::StandaloneSources HardcodedNetwork::asStandalone(const std::string &name, bool asConst) const
     {
         StandaloneSources result;
@@ -288,18 +286,18 @@ namespace TinyRNN
         header << "#define " << networkGuard << std::endl;
         
         header << std::endl;
-        header << "extern " + valueString() + " kMemory[];" << std::endl;
+        header << "extern " + VALUE_STRING + " kMemory[];" << std::endl;
         header << "const int kMemorySize = " << this->trainingContext->getMemory().size() << ";" << std::endl;
         header << std::endl;
-        header << "extern " + valueString() + " kOutputs[];" << std::endl;
+        header << "extern " + VALUE_STRING + " kOutputs[];" << std::endl;
         header << "const int kOutputsSize = " << this->trainingContext->getOutputs().size() << ";" << std::endl;
         header << std::endl;
         
-        header << "void " << feedEntry << "(const " << valueString() << " *input);" << std::endl;
+        header << "void " << feedEntry << "(const " << VALUE_STRING << " *input);" << std::endl;
         
         if (! asConst)
         {
-            header << "void " << trainEntry << "(const " << valueString() << " rate, const " << valueString() << " *target);" << std::endl;
+            header << "void " << trainEntry << "(const " << VALUE_STRING << " rate, const " << VALUE_STRING << " *target);" << std::endl;
         }
         
         header << std::endl;
@@ -322,14 +320,14 @@ namespace TinyRNN
             source << std::endl;
         }
         
-        source << "void " << feedEntry << "(const " << valueString() << " *input) {" << std::endl;
+        source << "void " << feedEntry << "(const " << VALUE_STRING << " *input) {" << std::endl;
         source << "    " << this->feedKernels.front()->entryPoint << "(input, kOutputs, kMemory);" << std::endl;
         source << "}" << std::endl;
         source << std::endl;
         
         if (! asConst)
         {
-            source << "void " << trainEntry << "(const " << valueString() << " rate, const " << valueString() << " *target) {" << std::endl;
+            source << "void " << trainEntry << "(const " << VALUE_STRING << " rate, const " << VALUE_STRING << " *target) {" << std::endl;
             source << "    " << this->trainKernels.front()->entryPoint << "(&rate, target, kMemory);" << std::endl;
             source << "}" << std::endl;
             source << std::endl;
@@ -337,7 +335,7 @@ namespace TinyRNN
         
         const int linebreakEveryNth = 8;
         
-        source << valueString() + " kMemory[] = " << std::endl;
+        source << VALUE_STRING + " kMemory[] = " << std::endl;
         source << "{ " << std::endl;
         
         for (size_t i = 0; i < this->trainingContext->getMemory().size(); ++i)
@@ -348,7 +346,7 @@ namespace TinyRNN
         
         source << "0 }; " << std::endl << std::endl;
         
-        source << valueString() + " kOutputs[] = " << std::endl;
+        source << VALUE_STRING + " kOutputs[] = " << std::endl;
         source << "{ " << std::endl;
         
         for (size_t i = 0; i < this->trainingContext->getOutputs().size(); ++i)
@@ -423,9 +421,9 @@ namespace TinyRNN
                     currentKernel->entryPoint = ("feed_" + std::to_string(result.size()));
                     currentKernel->fullSource =
                     "void kernel " + currentKernel->entryPoint +
-                    "(global const " + valueString() +
-                    " *input, global " + valueString() +
-                    " *output, global " + valueString() + " *x) {\n";
+                    "(global const " + VALUE_STRING +
+                    " *input, global " + VALUE_STRING +
+                    " *output, global " + VALUE_STRING + " *x) {\n";
                     
                     currentKernel->fullSource += this->buildInputsExpressions();
                 }
@@ -483,9 +481,9 @@ namespace TinyRNN
                     currentKernel->entryPoint = ("train_" + std::to_string(result.size()));
                     currentKernel->fullSource =
                     "void kernel " + currentKernel->entryPoint +
-                    "(global const " + valueString() +
-                    " *rate, global const " + valueString() +
-                    " *target, global " + valueString() + " *x) {\n";
+                    "(global const " + VALUE_STRING +
+                    " *rate, global const " + VALUE_STRING +
+                    " *target, global " + VALUE_STRING + " *x) {\n";
                     
                     currentKernel->fullSource += this->buildRateExpression();
                     currentKernel->fullSource += this->buildTargetsExpressions();
