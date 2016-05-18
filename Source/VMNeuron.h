@@ -59,6 +59,7 @@ namespace TinyRNN
             APPS = 12,          // x[1] = x[2] * x[3] * x[4] + x[5];
             APPSP = 13,         // x[1] = x[2] * x[3] * x[4] + x[5] * x[6];
             APPSPP = 14,        // x[1] = x[2] * x[3] * x[4] + x[5] * x[6] * x[7];
+            End = 15
         };
         
         friend VMProgram &operator << (VMProgram &i, Index index);
