@@ -31,6 +31,7 @@
 #include "SerializedObject.h"
 #include "TrainingContext.h"
 
+#include "VMNetwork.h"
 #include "HardcodedNetwork.h"
 #include "HardcodedTrainingContext.h"
 
@@ -108,6 +109,7 @@ namespace TinyRNN
          */
         HardcodedNetwork::StandaloneSources hardcodeAsStandaloneGenerator() const;
         
+        VMNetwork::Ptr toVM() const;
         HardcodedNetwork::Ptr hardcode() const;
         void restore(HardcodedTrainingContext::Ptr context);
         
@@ -363,6 +365,29 @@ namespace TinyRNN
 #define TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL 10000
 #endif
     
+    inline VMNetwork::Ptr Network::toVM() const
+    {
+        HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());
+        VMNetwork::VMLayers vmLayers;
+        
+        {
+            const ScopedTimer timer("Network::toVM");
+            vmLayers.push_back(this->inputLayer->toVM(context, true, false, false));
+            
+            for (auto &hiddenLayer : this->hiddenLayers)
+            {
+                vmLayers.push_back(hiddenLayer->toVM(context, false, false, false));
+            }
+            
+            vmLayers.push_back(this->outputLayer->toVM(context, false, true, false));
+        }
+        
+        VMNetwork::Ptr vmNetwork(new VMNetwork(context, vmLayers));
+        
+        std::cout << "Hardcoded context memory size: " << context->getMemory().size() << std::endl;
+        return vmNetwork;
+    }
+
     inline HardcodedNetwork::Ptr Network::hardcode() const
     {
         HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());

@@ -90,12 +90,14 @@ namespace TinyRNN
             std::string fullSource;
             std::string entryPoint;
             
+            uint32_t numCommands; // Need to have this field for cl buffer
             std::vector<char> commands;
             std::vector<Index> indices; // Index is the same type as cl_uint
             
 #if TINYRNN_OPENCL_ACCELERATION
             cl::Kernel clKernel;
             cl::Buffer clCommandsBuffer;
+            cl::Buffer clNumCommandsBuffer;
             cl::Buffer clIndicesBuffer;
 #endif
             
@@ -218,32 +220,50 @@ namespace TinyRNN
         {
             const ScopedTimer feedTimer("Compiling feed kernel");
             this->feedKernel->clKernel = cl::Kernel(this->clProgram, this->feedKernel->entryPoint.c_str());
+            
             this->feedKernel->clCommandsBuffer =
             cl::Buffer(this->clContext,
                        CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
                        sizeof(char) * this->feedKernel->commands.size(),
                        (void *)this->feedKernel->commands.data());
+            
+            this->feedKernel->clNumCommandsBuffer =
+            cl::Buffer(this->clContext,
+                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                       sizeof(uint32_t),
+                       (void *)&this->feedKernel->numCommands);
+            
             this->feedKernel->clIndicesBuffer =
             cl::Buffer(this->clContext,
                        CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
                        sizeof(Index) * this->feedKernel->indices.size(),
                        (void *)this->feedKernel->indices.data());
+
             this->feedKernel->isBuilt = true;
         }
         
         {
-            const ScopedTimer feedTimer("Compiling train kernel");
+            const ScopedTimer trainTimer("Compiling train kernel");
             this->trainKernel->clKernel = cl::Kernel(this->clProgram, this->trainKernel->entryPoint.c_str());
+            
             this->trainKernel->clCommandsBuffer =
             cl::Buffer(this->clContext,
                        CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
                        sizeof(char) * this->trainKernel->commands.size(),
                        (void *)this->trainKernel->commands.data());
+            
+            this->trainKernel->clNumCommandsBuffer =
+            cl::Buffer(this->clContext,
+                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                       sizeof(uint32_t),
+                       (void *)&this->trainKernel->numCommands);
+            
             this->trainKernel->clIndicesBuffer =
             cl::Buffer(this->clContext,
                        CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
                        sizeof(Index) * this->trainKernel->indices.size(),
                        (void *)this->trainKernel->indices.data());
+            
             this->trainKernel->isBuilt = true;
         }
         
@@ -275,8 +295,8 @@ namespace TinyRNN
     // Compiling all the expressions
     //===------------------------------------------------------------------===//
     
-    void vmProcess(const char *commands, uint32_t numCommands,
-                   const Index *indices, Value *registers)
+    static void vmProcess(const char *commands, uint32_t numCommands,
+                          const Index *indices, Value *registers)
     {
         uint32_t c = 0; // command number
         uint32_t i = 0; // index number
@@ -285,7 +305,7 @@ namespace TinyRNN
         
         while (c < numCommands)
         {
-            switch (commands[c])
+            switch (commands[c++])
             {
                 case VMProgram::Zero:
                     X(0) = 0;
@@ -300,11 +320,11 @@ namespace TinyRNN
                     i += 2;
                     break;
                 case VMProgram::AAP:
-                    X(0) += X(1) * X(2);
+                    X(0) = X(0) + X(1) * X(2);
                     i += 3;
                     break;
                 case VMProgram::AAPP:
-                    X(0) += X(1) * X(2) * X(3);
+                    X(0) = X(0) + X(1) * X(2) * X(3);
                     i += 4;
                     break;
                 case VMProgram::A:
@@ -350,81 +370,108 @@ namespace TinyRNN
                 default:
                     break;
             }
-            c++;
         }
     }
     
     static std::string kVMProcessingKernel =
     "\
-    uint32_t c = 0; // command number\
-    uint32_t i = 0; // index number\
-    \
-    #define X(INDEX) (registers[indices[i + INDEX]])\
+    uint c = 0;\
+    uint i = 0;\
     \
     while (c < numCommands)\
     {\
         switch (commands[c])\
         {\
             case 0:\
-                X(0) = 0;\
+            {\
+                x[indices[i+0]] = 0;\
                 i += 1;\
                 break;\
+            }\
             case 1:\
-                X(0) = (1.0 / (1.0 + exp(-X(1))));\
+            {\
+                x[indices[i+0]] = (1.0 / (1.0 + exp(-x[indices[i+1]])));\
                 i += 2;\
                 break;\
+            }\
             case 2:\
-                X(0) = X(1) * (1.0 - X(1));\
+            {\
+                x[indices[i+0]] = x[indices[i+1]] * (1.0 - x[indices[i+1]]);\
                 i += 2;\
                 break;\
+            }\
             case 3:\
-                X(0) += X(1) * X(2);\
+            {\
+                x[indices[i+0]] += x[indices[i+1]] * x[indices[i+2]];\
                 i += 3;\
                 break;\
+            }\
             case 4:\
-                X(0) += X(1) * X(2) * X(3);\
+            {\
+                x[indices[i+0]] += x[indices[i+1]] * x[indices[i+2]] * x[indices[i+3]];\
                 i += 4;\
                 break;\
+            }\
             case 5:\
-                X(0) = X(1);\
+            {\
+                x[indices[i+0]] = x[indices[i+1]];\
                 i += 2;\
                 break;\
+            }\
             case 6:\
-                X(0) = X(1) + X(2);\
+            {\
+                x[indices[i+0]] = x[indices[i+1]] + x[indices[i+2]];\
                 i += 3;\
                 break;\
+            }\
             case 7:\
-                X(0) = X(1) - X(2);\
+            {\
+                x[indices[i+0]] = x[indices[i+1]] - x[indices[i+2]];\
                 i += 3;\
                 break;\
+            }\
             case 8:\
-                X(0) = X(1) * X(2);\
+            {\
+                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]];\
                 i += 3;\
                 break;\
+            }\
             case 9:\
-                X(0) = X(1) * X(2) * X(3);\
+            {\
+                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] * x[indices[i+3]];\
                 i += 4;\
                 break;\
+            }\
             case 10:\
-                X(0) = X(1) * X(2) + X(3);\
+            {\
+                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] + x[indices[i+3]];\
                 i += 4;\
                 break;\
+            }\
             case 11:\
-                X(0) = X(1) * X(2) + X(3) * X(4);\
+            {\
+                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] + x[indices[i+3]] * x[indices[i+4]];\
                 i += 5;\
                 break;\
+            }\
             case 12:\
-                X(0) = X(1) * X(2) * X(3) + X(4);\
+            {\
+                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] * x[indices[i+3]] + x[indices[i+4]];\
                 i += 5;\
                 break;\
+            }\
             case 13:\
-                X(0) = X(1) * X(2) * X(3) + X(4) * X(5);\
+            {\
+                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] * x[indices[i+3]] + x[indices[i+4]] * x[indices[i+5]];\
                 i += 6;\
                 break;\
+            }\
             case 14:\
-                X(0) = X(1) * X(2) * X(3) + X(4) * X(5) * X(6);\
+            {\
+                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] * x[indices[i+3]] + x[indices[i+4]] * x[indices[i+5]] * x[indices[i+6]];\
                 i += 7;\
                 break;\
+            }\
             default:\
                 break;\
         }\
@@ -436,20 +483,22 @@ namespace TinyRNN
     VMNetwork::compileFeedKernel(const VMLayers &targetLayers) const
     {
         Kernel::Ptr kernel(new Kernel());
-        kernel->entryPoint = ("feed");
+        kernel->entryPoint = "feed";
         kernel->fullSource =
         "void kernel " + kernel->entryPoint +
         "(global const " + VALUE_STRING + " *input, " +
         "global " + VALUE_STRING + " *output, " +
         "global const char *commands, " +
-        "global const uint numCommands, " +
+        "const uint numCommands, " +
         "global const uint *indices, " +
-        "global " + VALUE_STRING + " *registers) {\n";
+        "global " + VALUE_STRING + " *x) {\n";
         
         kernel->fullSource += this->buildInputsExpressions();
         kernel->fullSource += kVMProcessingKernel;
         kernel->fullSource += this->buildOutputsExpressions();
         kernel->fullSource += "}\n";
+        
+        //std::cout << kernel->fullSource << std::endl;
         
         for (const auto &layer : targetLayers)
         {
@@ -469,6 +518,7 @@ namespace TinyRNN
             }
         }
         
+        kernel->numCommands = kernel->commands.size(); // oh what a hack
         return kernel;
     }
     
@@ -482,14 +532,16 @@ namespace TinyRNN
         "(global const " + VALUE_STRING + " *rate, " +
         "global const " + VALUE_STRING + " *target, " +
         "global const char *commands, " +
-        "global const uint numCommands, " +
+        "const uint numCommands, " +
         "global const uint *indices, " +
-        "global " + VALUE_STRING + " *registers) {\n";
+        "global " + VALUE_STRING + " *x) {\n";
         
         kernel->fullSource += this->buildRateExpression();
         kernel->fullSource += this->buildTargetsExpressions();
         kernel->fullSource += kVMProcessingKernel;
         kernel->fullSource += "}\n";
+        
+        //std::cout << kernel->fullSource << std::endl;
 
         for (size_t l = targetLayers.size(); l --> 0 ;)
         {
@@ -507,6 +559,7 @@ namespace TinyRNN
             }
         }
         
+        kernel->numCommands = kernel->commands.size();
         return kernel;
     }
     
@@ -566,73 +619,91 @@ namespace TinyRNN
                   this->trainingContext->getOutputs().end(),
                   0.0);
         
-#if TINYRNN_OPENCL_ACCELERATION
+//#if TINYRNN_OPENCL_ACCELERATION
+//        
+//        this->clInputsBuffer = cl::Buffer(this->clContext,
+//                                          CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+//                                          sizeof(Value) * inputs.size(),
+//                                          (void *)inputs.data());
+//        
+//        this->clOutputsBuffer = cl::Buffer(this->clContext,
+//                                           CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
+//                                           sizeof(Value) * this->trainingContext->getOutputs().size(),
+//                                           (void *)this->trainingContext->getOutputs().data());
+//        
+//        this->feedKernel->clKernel.setArg(0, this->clInputsBuffer);
+//        this->feedKernel->clKernel.setArg(1, this->clOutputsBuffer);
+//        this->feedKernel->clKernel.setArg(2, this->feedKernel->clCommandsBuffer);
+//        this->feedKernel->clKernel.setArg(3, this->feedKernel->clNumCommandsBuffer);
+//        this->feedKernel->clKernel.setArg(4, this->feedKernel->clIndicesBuffer);
+//        this->feedKernel->clKernel.setArg(5, this->clMemoryBuffer);
+//        this->clQueue.enqueueNDRangeKernel(this->feedKernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
+//        this->clQueue.finish();
+//        
+//#else
         
-        this->clInputsBuffer = cl::Buffer(this->clContext,
-                                          CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                          sizeof(Value) * inputs.size(),
-                                          (void *)inputs.data());
-        
-        this->clOutputsBuffer = cl::Buffer(this->clContext,
-                                           CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
-                                           sizeof(Value) * this->trainingContext->getOutputs().size(),
-                                           (void *)this->trainingContext->getOutputs().data());
-        
-        this->feedKernel->clKernel.setArg(0, this->clInputsBuffer);
-        this->feedKernel->clKernel.setArg(1, this->clOutputsBuffer);
-        this->feedKernel->clKernel.setArg(2, this->feedKernel->clCommandsBuffer);
-        this->feedKernel->clKernel.setArg(3, this->feedKernel->clIndicesBuffer);
-        this->feedKernel->clKernel.setArg(4, this->clMemoryBuffer);
-        this->clQueue.enqueueNDRangeKernel(this->feedKernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
-        this->clQueue.finish();
-        
-        
-#else
-        
-        // TODO handle inputs and outputs
+        const auto &inputIds = this->trainingContext->getInputVariables();
+        for (size_t i = 0; i < inputIds.size(); ++i)
+        {
+            this->trainingContext->getMemory()[inputIds[i]] = inputs[i];
+        }
         
         vmProcess(this->feedKernel->commands.data(),
                   this->feedKernel->commands.size(),
                   this->feedKernel->indices.data(),
                   this->trainingContext->getMemory().data());
         
-#endif
+        const auto &outputIds = this->trainingContext->getOutputVariables();
+        for (size_t i = 0; i < outputIds.size(); ++i)
+        {
+            this->trainingContext->getOutputs()[i] = this->trainingContext->getMemory()[outputIds[i]];
+        }
+        
+//#endif
         
         return this->trainingContext->getOutputs();
     }
     
     inline void VMNetwork::train(Value rate, const HardcodedTrainingContext::RawData &targets)
     {
-#if TINYRNN_OPENCL_ACCELERATION
+//#if TINYRNN_OPENCL_ACCELERATION
+//        
+//        this->clTargetsBuffer = cl::Buffer(this->clContext,
+//                                           CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+//                                           sizeof(Value) * targets.size(),
+//                                           (void *)targets.data());
+//        
+//        this->clRateBuffer = cl::Buffer(this->clContext,
+//                                        CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+//                                        sizeof(Value),
+//                                        (void *)&rate);
+//        
+//        this->trainKernel->clKernel.setArg(0, this->clRateBuffer);
+//        this->trainKernel->clKernel.setArg(1, this->clTargetsBuffer);
+//        this->trainKernel->clKernel.setArg(2, this->trainKernel->clCommandsBuffer);
+//        this->trainKernel->clKernel.setArg(3, this->trainKernel->clNumCommandsBuffer);
+//        this->trainKernel->clKernel.setArg(4, this->trainKernel->clIndicesBuffer);
+//        this->trainKernel->clKernel.setArg(5, this->clMemoryBuffer);
+//        this->clQueue.enqueueNDRangeKernel(this->trainKernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
+//        this->clQueue.finish();
+//        
+//#else
         
-        this->clTargetsBuffer = cl::Buffer(this->clContext,
-                                           CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                           sizeof(Value) * targets.size(),
-                                           (void *)targets.data());
+        const auto &targetIds = this->trainingContext->getTargetVariables();
+        for (size_t i = 0; i < targetIds.size(); ++i)
+        {
+            this->trainingContext->getMemory()[targetIds[i]] = targets[i];
+        }
         
-        this->clRateBuffer = cl::Buffer(this->clContext,
-                                        CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                        sizeof(Value),
-                                        (void *)&rate);
+        const auto rateId = this->trainingContext->getRateVariable();
+        this->trainingContext->getMemory()[rateId] = rate;
         
-        this->trainKernel->clKernel.setArg(0, this->clRateBuffer);
-        this->trainKernel->clKernel.setArg(1, this->clTargetsBuffer);
-        this->trainKernel->clKernel.setArg(2, this->trainKernel->clCommandsBuffer);
-        this->trainKernel->clKernel.setArg(3, this->trainKernel->clIndicesBuffer);
-        this->trainKernel->clKernel.setArg(4, this->clMemoryBuffer);
-        this->clQueue.enqueueNDRangeKernel(this->trainKernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
-        this->clQueue.finish();
-        
-#else
-        
-        // TODO handle rate and targets
-        
-        vmProcess(this->feedKernel->commands.data(),
-                  this->feedKernel->commands.size(),
-                  this->feedKernel->indices.data(),
+        vmProcess(this->trainKernel->commands.data(),
+                  this->trainKernel->commands.size(),
+                  this->trainKernel->indices.data(),
                   this->trainingContext->getMemory().data());
         
-#endif
+//#endif
     }
     
     //===------------------------------------------------------------------===//
