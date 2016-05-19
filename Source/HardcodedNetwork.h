@@ -33,6 +33,7 @@
 
 namespace TinyRNN
 {
+    // TODO(peterrudenko): rename to UnfoldedNetwork or so
     class HardcodedNetwork final : public SerializedObject
     {
     public:
@@ -120,6 +121,11 @@ namespace TinyRNN
         Kernel::Vector compileTrainKernels(const HardcodedLayers &targetLayers,
                                            unsigned long maxNumberOfExpressionsPerKernel) const;
         
+        std::string buildInputsExpressions() const;
+        std::string buildOutputsExpressions() const;
+        std::string buildTargetsExpressions() const;
+        std::string buildRateExpression() const;
+                                           
         bool initialize(const HardcodedLayers &targetLayers,
                         unsigned long maxNumberOfExpressionsPerKernel);
         
@@ -255,11 +261,8 @@ namespace TinyRNN
 #endif
     }
     
-    static std::string valueString()
-    {
-        return (sizeof(Value) == sizeof(double)) ? "double" : "float";
-    }
-    
+#define VALUE_STRING std::string((sizeof(Value) == sizeof(double)) ? "double" : "float")
+
     inline HardcodedNetwork::StandaloneSources HardcodedNetwork::asStandalone(const std::string &name, bool asConst) const
     {
         StandaloneSources result;
@@ -283,18 +286,18 @@ namespace TinyRNN
         header << "#define " << networkGuard << std::endl;
         
         header << std::endl;
-        header << "extern " + valueString() + " kMemory[];" << std::endl;
+        header << "extern " + VALUE_STRING + " kMemory[];" << std::endl;
         header << "const int kMemorySize = " << this->trainingContext->getMemory().size() << ";" << std::endl;
         header << std::endl;
-        header << "extern " + valueString() + " kOutputs[];" << std::endl;
+        header << "extern " + VALUE_STRING + " kOutputs[];" << std::endl;
         header << "const int kOutputsSize = " << this->trainingContext->getOutputs().size() << ";" << std::endl;
         header << std::endl;
         
-        header << "void " << feedEntry << "(const " << valueString() << " *input);" << std::endl;
+        header << "void " << feedEntry << "(const " << VALUE_STRING << " *input);" << std::endl;
         
         if (! asConst)
         {
-            header << "void " << trainEntry << "(const " << valueString() << " rate, const " << valueString() << " *target);" << std::endl;
+            header << "void " << trainEntry << "(const " << VALUE_STRING << " rate, const " << VALUE_STRING << " *target);" << std::endl;
         }
         
         header << std::endl;
@@ -317,14 +320,14 @@ namespace TinyRNN
             source << std::endl;
         }
         
-        source << "void " << feedEntry << "(const " << valueString() << " *input) {" << std::endl;
+        source << "void " << feedEntry << "(const " << VALUE_STRING << " *input) {" << std::endl;
         source << "    " << this->feedKernels.front()->entryPoint << "(input, kOutputs, kMemory);" << std::endl;
         source << "}" << std::endl;
         source << std::endl;
         
         if (! asConst)
         {
-            source << "void " << trainEntry << "(const " << valueString() << " rate, const " << valueString() << " *target) {" << std::endl;
+            source << "void " << trainEntry << "(const " << VALUE_STRING << " rate, const " << VALUE_STRING << " *target) {" << std::endl;
             source << "    " << this->trainKernels.front()->entryPoint << "(&rate, target, kMemory);" << std::endl;
             source << "}" << std::endl;
             source << std::endl;
@@ -332,7 +335,7 @@ namespace TinyRNN
         
         const int linebreakEveryNth = 8;
         
-        source << valueString() + " kMemory[] = " << std::endl;
+        source << VALUE_STRING + " kMemory[] = " << std::endl;
         source << "{ " << std::endl;
         
         for (size_t i = 0; i < this->trainingContext->getMemory().size(); ++i)
@@ -343,7 +346,7 @@ namespace TinyRNN
         
         source << "0 }; " << std::endl << std::endl;
         
-        source << valueString() + " kOutputs[] = " << std::endl;
+        source << VALUE_STRING + " kOutputs[] = " << std::endl;
         source << "{ " << std::endl;
         
         for (size_t i = 0; i < this->trainingContext->getOutputs().size(); ++i)
@@ -407,7 +410,7 @@ namespace TinyRNN
                 {
                     if (currentKernel != nullptr)
                     {
-                        currentKernel->fullSource += this->trainingContext->buildOutputsExpressions();
+                        currentKernel->fullSource += this->buildOutputsExpressions();
                         currentKernel->fullSource += "}\n";
                         //std::cout << "Adding a feed kernel of " << currentKernel->numExpressions << " lines." << std::endl;
                         result.push_back(currentKernel);
@@ -418,11 +421,11 @@ namespace TinyRNN
                     currentKernel->entryPoint = ("feed_" + std::to_string(result.size()));
                     currentKernel->fullSource =
                     "void kernel " + currentKernel->entryPoint +
-                    "(global const " + valueString() +
-                    " *input, global " + valueString() +
-                    " *output, global " + valueString() + " *x) {\n";
+                    "(global const " + VALUE_STRING +
+                    " *input, global " + VALUE_STRING +
+                    " *output, global " + VALUE_STRING + " *x) {\n";
                     
-                    currentKernel->fullSource += this->trainingContext->buildInputsExpressions();
+                    currentKernel->fullSource += this->buildInputsExpressions();
                 }
                 
                 currentKernelExpressionsCounter += numExpressionsToCome;
@@ -433,7 +436,7 @@ namespace TinyRNN
         
         if (currentKernel != nullptr)
         {
-            currentKernel->fullSource += this->trainingContext->buildOutputsExpressions();
+            currentKernel->fullSource += this->buildOutputsExpressions();
             currentKernel->fullSource += "}\n";
             //std::cout << "Adding a feed kernel of " << currentKernel->numExpressions << " lines." << std::endl;
             result.push_back(currentKernel);
@@ -478,12 +481,12 @@ namespace TinyRNN
                     currentKernel->entryPoint = ("train_" + std::to_string(result.size()));
                     currentKernel->fullSource =
                     "void kernel " + currentKernel->entryPoint +
-                    "(global const " + valueString() +
-                    " *rate, global const " + valueString() +
-                    " *target, global " + valueString() + " *x) {\n";
+                    "(global const " + VALUE_STRING +
+                    " *rate, global const " + VALUE_STRING +
+                    " *target, global " + VALUE_STRING + " *x) {\n";
                     
-                    currentKernel->fullSource += this->trainingContext->buildRateExpression();
-                    currentKernel->fullSource += this->trainingContext->buildTargetsExpressions();
+                    currentKernel->fullSource += this->buildRateExpression();
+                    currentKernel->fullSource += this->buildTargetsExpressions();
                     
                 }
                 
@@ -501,6 +504,52 @@ namespace TinyRNN
         }
         
         return result;
+    }
+        
+    inline std::string HardcodedNetwork::buildInputsExpressions() const
+    {
+        KernelSentence sentence;
+        const auto &inputVariables = this->trainingContext->getInputVariables();
+        
+        for (size_t i = 0; i < inputVariables.size(); ++i)
+        {
+            sentence << inputVariables[i] << " = input[" << std::to_string(i) << "]"<< std::endl;
+        }
+        
+        return sentence.build();
+    }
+    
+    inline std::string HardcodedNetwork::buildOutputsExpressions() const
+    {
+        KernelSentence sentence;
+        const auto &outputVariables = this->trainingContext->getOutputVariables();
+        
+        for (size_t i = 0; i < outputVariables.size(); ++i)
+        {
+            sentence << "output[" << std::to_string(i) << "] = " << outputVariables[i] << std::endl;
+        }
+        
+        return sentence.build();
+    }
+    
+    inline std::string HardcodedNetwork::buildTargetsExpressions() const
+    {
+        KernelSentence sentence;
+        const auto &targetVariables = this->trainingContext->getTargetVariables();
+        
+        for (size_t i = 0; i < targetVariables.size(); ++i)
+        {
+            sentence << targetVariables[i] << " = target[" << std::to_string(i) << "]"<< std::endl;
+        }
+        
+        return sentence.build();
+    }
+    
+    inline std::string HardcodedNetwork::buildRateExpression() const
+    {
+        KernelSentence sentence;
+        sentence << this->trainingContext->getRateVariable() << " = rate[0]" << std::endl;
+        return sentence.build();
     }
     
     //===------------------------------------------------------------------===//
@@ -578,24 +627,26 @@ namespace TinyRNN
         this->feedKernels.clear();
         this->trainKernels.clear();
         
-        SerializationContext::Ptr feedKernelsNode(context->getChildContext(Keys::Hardcoded::FeedKernels));
-        
-        for (size_t i = 0; i < feedKernelsNode->getNumChildrenContexts(); ++i)
+        if (auto feedKernelsNode = context->getChildContext(Keys::Hardcoded::FeedKernels))
         {
-            SerializationContext::Ptr kernelNode(feedKernelsNode->getChildContext(i));
-            Kernel::Ptr kernel(new Kernel());
-            kernel->deserialize(kernelNode);
-            this->feedKernels.push_back(kernel);
+            for (size_t i = 0; i < feedKernelsNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr kernelNode(feedKernelsNode->getChildContext(i));
+                Kernel::Ptr kernel(new Kernel());
+                kernel->deserialize(kernelNode);
+                this->feedKernels.push_back(kernel);
+            }
         }
         
-        SerializationContext::Ptr trainKernelsNode(context->getChildContext(Keys::Hardcoded::TrainKernels));
-        
-        for (size_t i = 0; i < trainKernelsNode->getNumChildrenContexts(); ++i)
+        if (auto trainKernelsNode = context->getChildContext(Keys::Hardcoded::TrainKernels))
         {
-            SerializationContext::Ptr kernelNode(trainKernelsNode->getChildContext(i));
-            Kernel::Ptr kernel(new Kernel());
-            kernel->deserialize(kernelNode);
-            this->trainKernels.push_back(kernel);
+            for (size_t i = 0; i < trainKernelsNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr kernelNode(trainKernelsNode->getChildContext(i));
+                Kernel::Ptr kernel(new Kernel());
+                kernel->deserialize(kernelNode);
+                this->trainKernels.push_back(kernel);
+            }
         }
     }
     
@@ -616,28 +667,6 @@ namespace TinyRNN
             SerializationContext::Ptr kernelNode(trainKernelsNode->addChildContext(Keys::Hardcoded::TrainKernel));
             kernel->serialize(kernelNode);
         }
-        
-        // TODO(peterrudenko): also save the compiled program binaries, if any
-//        context->setNumberProperty(this->isBuilt(), Keys::Hardcoded::IsBuilt);
-//        
-//        if (this->isBuilt())
-//        {
-//            SerializationContext::Ptr binariesNode(context->createChildContext(Keys::Hardcoded::KernelBinaries));
-//            const std::vector<size_t> sizes = this->clProgram.getInfo<CL_PROGRAM_BINARY_SIZES>();
-//            const std::vector<char *> binaries = this->clProgram.getInfo<CL_PROGRAM_BINARIES>();
-//            
-//            for (size_t i = 0; i < binaries.size(); ++i)
-//            {
-//                SerializationContext::Ptr binaryNode(binariesNode->createChildContext(Keys::Hardcoded::KernelBinary));
-//                const size_t size = sizes[i];
-//                const std::string binary(context->encodeBase64((unsigned const char *)binaries[i], size));
-//                
-//                //std::cout << binary << std::endl;
-//                // todo base64encode?
-//                
-//                //binaryNode->setStringProperty(binary, Keys::Hardcoded::Content);
-//            }
-//        }
     }
     
     inline void HardcodedNetwork::Kernel::deserialize(SerializationContext::Ptr context)

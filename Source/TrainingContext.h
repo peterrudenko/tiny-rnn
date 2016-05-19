@@ -24,7 +24,6 @@
 #define TINYRNN_LEARNINGCONTEXT_H_INCLUDED
 
 #include <random>
-#include "HardcodedTrainingContext.h"
 #include "SerializationKeys.h"
 #include "SerializedObject.h"
 
@@ -75,9 +74,11 @@ namespace TinyRNN
             void feedWithRandomBias(Value signal);
             void setRandomBias();
             
-            friend class Neuron;
             friend class Layer;
+            friend class Neuron;
+            friend class VMNeuron;
             friend class HardcodedNeuron;
+            friend class HardcodedTrainingContext;
             friend class Connection;
             
             TINYRNN_DISALLOW_COPY_AND_ASSIGN(NeuronData);
@@ -111,7 +112,9 @@ namespace TinyRNN
             Id connectionUuid;
             
             friend class Neuron;
+            friend class VMNeuron;
             friend class HardcodedNeuron;
+            friend class HardcodedTrainingContext;
             friend class Connection;
             
             void setRandomWeight();

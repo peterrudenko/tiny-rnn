@@ -152,6 +152,57 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
             }
         }
         
+        WHEN("The VM network is trained with some random number of iterations")
+        {
+            network->getContext()->clear();
+            
+            VMNetwork::Ptr vmNetwork = network->toVM();
+            vmNetwork->compile();
+            
+            {
+                const ScopedTimer timer("Training VM network");
+                Value rate = 0.5;
+                
+                for (int i = 0; i < numIterations; ++i)
+                {
+                    vmNetwork->feed({0.0, 1.0});
+                    vmNetwork->train(rate, {1.0});
+                    
+                    vmNetwork->feed({1.0, 0.0});
+                    vmNetwork->train(rate, {1.0});
+                    
+                    vmNetwork->feed({0.0, 0.0});
+                    vmNetwork->train(rate, {0.0});
+                    
+                    vmNetwork->feed({1.0, 1.0});
+                    vmNetwork->train(rate, {0.0});
+                }
+            }
+            
+            THEN("It gives a reasonable output")
+            {
+                const auto result1 = vmNetwork->feed({0.0, 1.0});
+                REQUIRE(result1.size() == 1);
+                INFO(result1.front());
+                REQUIRE(result1.front() > 0.9);
+                
+                const auto result2 = vmNetwork->feed({1.0, 0.0});
+                REQUIRE(result2.size() == 1);
+                INFO(result2.front());
+                REQUIRE(result2.front() > 0.9);
+                
+                const auto result3 = vmNetwork->feed({0.0, 0.0});
+                REQUIRE(result3.size() == 1);
+                INFO(result3.front());
+                REQUIRE(result3.front() < 0.1);
+                
+                const auto result4 = vmNetwork->feed({1.0, 1.0});
+                REQUIRE(result4.size() == 1);
+                INFO(result4.front());
+                REQUIRE(result4.front() < 0.1);
+            }
+        }
+        
 #endif
         
     }
@@ -246,6 +297,38 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
                 {
                     const Value x = RANDOM(-10.0, 10.0);
                     const auto result = clNetwork->feed({x});
+                    const Value error = meanSquaredErrorCost({f(x, fxSeed)}, result);
+                    REQUIRE(error < 0.1);
+                }
+            }
+        }
+    }
+    
+    GIVEN("A VM deep belief network")
+    {
+        const int fxSeed = RANDOM(-1.0, 1.0);
+        const int numIterations = RANDOM(2000, 3000);
+        Network::Ptr network = Network::Prefabs::feedForward(RANDOMNAME(), 1, { 32, 16, 8, 4, 2 }, 1);
+        VMNetwork::Ptr vmNetwork = network->toVM();
+        vmNetwork->compile();
+        
+        WHEN("The network is trained with some random number of iterations")
+        {
+            for (int i = 0; i < numIterations; ++i)
+            {
+                const Value x = RANDOM(-10.0, 10.0);
+                vmNetwork->feed({x});
+                vmNetwork->train(0.5, {f(x, fxSeed)});
+            }
+            
+            THEN("It gives a reasonable output")
+            {
+                const int numChecks = RANDOM(50, 100);
+                
+                for (int i = 0; i < numChecks; ++i)
+                {
+                    const Value x = RANDOM(-10.0, 10.0);
+                    const auto result = vmNetwork->feed({x});
                     const Value error = meanSquaredErrorCost({f(x, fxSeed)}, result);
                     REQUIRE(error < 0.1);
                 }

@@ -151,7 +151,9 @@ namespace TinyRNN
         void learn(Value rate = 0.1);
         
         friend class Layer;
+        friend class VMNeuron;
         friend class HardcodedNeuron;
+        friend class HardcodedTrainingContext;
         
     private:
         

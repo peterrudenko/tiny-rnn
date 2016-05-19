@@ -25,60 +25,42 @@
 
 #include "Common.h"
 #include "Id.h"
+#include "Neuron.h"
 #include "SerializedObject.h"
+
 #include <random>
 #include <sstream>
 
 namespace TinyRNN
-{
-    class KernelSentence final
-    {
-    public:
-        
-        KernelSentence() = default;
-        
-        friend KernelSentence &operator << (KernelSentence &i, size_t index);
-        friend KernelSentence &operator << (KernelSentence &i, float value);
-        friend KernelSentence &operator << (KernelSentence &i, const std::string &operations);
-        friend void operator << (KernelSentence &i, std::ostream&(*f)(std::ostream&));
-        
-        size_t getSize() const noexcept;
-        std::string build() const;
-        
-    private:
-        
-        std::string expressionBuilder;              // i.e. one line like "x[123] += x[0] * (x[183] * x[342]);"
-        std::vector<std::string> expressions;       // an array of lines for this neuron
-        
-        TINYRNN_DISALLOW_COPY_AND_ASSIGN(KernelSentence);
-    };
-    
-    class HardcodedTrainingContext final : public SerializedObject // todo #3
+{   
+    class HardcodedTrainingContext final : public SerializedObject
     {
     public:
         
         using Ptr = std::shared_ptr<HardcodedTrainingContext>;
         using RawData = std::vector<Value>;
-        using Indices = std::vector<size_t>;
-        using Mapping = std::map<std::string, size_t>;
+        using Indices = std::vector<Index>;
+        using Mapping = std::map<std::string, Index>;
         using VariableKey = std::vector<Id>;
         
     public:
         
         HardcodedTrainingContext();
         
+        void restoreNeuronState(Neuron::Ptr targetNeuron);
+
         Value evaluateVariable(const VariableKey &variableKey, Value defaultValue);
-        size_t allocateOrReuseVariable(Value value, const VariableKey &variableKey);
+        Index allocateOrReuseVariable(Value value, const VariableKey &variableKey);
         
-        void registerInputVariable(size_t variableIndex);
-        void registerOutputVariable(size_t variableIndex);
-        void registerTargetVariable(size_t variableIndex);
-        void registerRateVariable(size_t variableIndex);
+        void registerInputVariable(Index variableIndex);
+        void registerOutputVariable(Index variableIndex);
+        void registerTargetVariable(Index variableIndex);
+        void registerRateVariable(Index variableIndex);
         
-        std::string buildInputsExpressions() const;
-        std::string buildOutputsExpressions() const;
-        std::string buildTargetsExpressions() const;
-        std::string buildRateExpression() const;
+        Indices getInputVariables() const;
+        Indices getOutputVariables() const;
+        Indices getTargetVariables() const;
+        Index getRateVariable() const;
         
         RawData &getMemory();
         RawData &getOutputs();
@@ -95,13 +77,14 @@ namespace TinyRNN
         RawData memory;                         // the actual data passed to the kernel
         Mapping mapping;                        // variable name connected to its index in memory
         
+        Indices inputVariables;                 // indices of input variables
+        Indices outputVariables;                // indices of output variables
+        Indices targetVariables;                // indices of target variables
+        Index rateVariable;
+        
     private: // temporary stuff, never serialized:
         
         RawData outputs;                        // holds the most recent output
-        Indices inputVariables;                 // indexes of input variables
-        Indices outputVariables;                // indexes of output variables
-        Indices targetVariables;                // indexes of target variables
-        size_t rateVariable;
         
     private:
         
@@ -113,75 +96,20 @@ namespace TinyRNN
     };
     
     //===------------------------------------------------------------------===//
-    // KernelSentence implementation
-    //===------------------------------------------------------------------===//
-    
-    inline size_t KernelSentence::getSize() const noexcept
-    {
-        return this->expressions.size();
-    }
-    
-    inline std::string KernelSentence::build() const
-    {
-        std::string result;
-        
-        for (const auto &expression : this->expressions)
-        {
-            result = result + expression;
-        }
-        
-        return result;
-    }
-    
-    inline KernelSentence &operator << (KernelSentence &i, size_t index)
-    {
-        i.expressionBuilder += "x[" + std::to_string(index) + "]";
-        return i;
-    }
-    
-    inline KernelSentence &operator << (KernelSentence &i, float value)
-    {
-        i.expressionBuilder += std::to_string(value);
-        return i;
-    }
-    
-    inline KernelSentence &operator << (KernelSentence &i, const std::string &operations)
-    {
-        i.expressionBuilder += operations;
-        return i;
-    }
-    
-    inline void operator << (KernelSentence &i, std::ostream&(*f)(std::ostream&))
-    {
-        // What a mess, I just wanted to have std::endl to finish the current line..
-        if (f == (std::ostream&(*)(std::ostream&)) &std::endl)
-        {
-            if (i.expressionBuilder.back() != ';')
-            {
-                i.expressionBuilder += ";";
-            }
-            
-            i.expressionBuilder += "\n";
-            i.expressions.push_back(i.expressionBuilder);
-            i.expressionBuilder.clear();
-        }
-    }
-    
-    //===------------------------------------------------------------------===//
     // HardcodedTrainingContext implementation
     //===------------------------------------------------------------------===//
     
     inline HardcodedTrainingContext::HardcodedTrainingContext() : rateVariable(0)
     {}
     
-    inline size_t HardcodedTrainingContext::allocateOrReuseVariable(Value value, const VariableKey &variableKey)
+    inline Index HardcodedTrainingContext::allocateOrReuseVariable(Value value, const VariableKey &variableKey)
     {
         const std::string &key = this->getKeyForVariable(variableKey);
         const bool variableExists = (this->mapping.find(key) != this->mapping.end());
         
         if (variableExists)
         {
-            const size_t variableIndex = this->mapping[key];
+            const Index variableIndex = this->mapping[key];
             this->memory[variableIndex] = value;
             return variableIndex;
         }
@@ -189,7 +117,7 @@ namespace TinyRNN
         {
             //std::cout << this->memory.size() << " is " << key << std::endl;
             this->memory.push_back(value);
-            const size_t variableIndex = (this->memory.size() - 1);
+            const Index variableIndex = (this->memory.size() - 1);
             this->mapping[key] = variableIndex;
             return variableIndex;
         }
@@ -204,7 +132,7 @@ namespace TinyRNN
         
         if (variableExists)
         {
-            const size_t variableIndex = this->mapping[key];
+            const Index variableIndex = this->mapping[key];
             //std::cout << "Variable: " << key << " = " << std::to_string(this->memory[variableIndex]) << std::endl;
             return this->memory[variableIndex];
         }
@@ -226,68 +154,48 @@ namespace TinyRNN
         return key.str();
     }
     
-    inline void HardcodedTrainingContext::registerInputVariable(size_t variableIndex)
+    inline void HardcodedTrainingContext::registerInputVariable(Index variableIndex)
     {
         this->inputVariables.push_back(variableIndex);
     }
     
-    inline void HardcodedTrainingContext::registerOutputVariable(size_t variableIndex)
+    inline void HardcodedTrainingContext::registerOutputVariable(Index variableIndex)
     {
         this->outputVariables.push_back(variableIndex);
         this->outputs.resize(this->outputVariables.size());
     }
     
-    inline void HardcodedTrainingContext::registerTargetVariable(size_t variableIndex)
+    inline void HardcodedTrainingContext::registerTargetVariable(Index variableIndex)
     {
         this->targetVariables.push_back(variableIndex);
     }
     
-    inline void HardcodedTrainingContext::registerRateVariable(size_t variableIndex)
+    inline void HardcodedTrainingContext::registerRateVariable(Index variableIndex)
     {
         this->rateVariable = variableIndex;
     }
     
-    inline std::string HardcodedTrainingContext::buildInputsExpressions() const
+    inline HardcodedTrainingContext::Indices 
+    HardcodedTrainingContext::getInputVariables() const
     {
-        KernelSentence sentence;
-        
-        for (size_t i = 0; i < this->inputVariables.size(); ++i)
-        {
-            sentence << this->inputVariables[i] << " = input[" << std::to_string(i) << "]"<< std::endl;
-        }
-        
-        return sentence.build();
+        return this->inputVariables;
     }
     
-    inline std::string HardcodedTrainingContext::buildOutputsExpressions() const
+    inline HardcodedTrainingContext::Indices
+    HardcodedTrainingContext::getOutputVariables() const
     {
-        KernelSentence sentence;
-        
-        for (size_t i = 0; i < this->outputVariables.size(); ++i)
-        {
-            sentence << "output[" << std::to_string(i) << "] = " << this->outputVariables[i] << std::endl;
-        }
-        
-        return sentence.build();
+        return this->outputVariables;
     }
     
-    inline std::string HardcodedTrainingContext::buildTargetsExpressions() const
+    inline HardcodedTrainingContext::Indices
+    HardcodedTrainingContext::getTargetVariables() const
     {
-        KernelSentence sentence;
-        
-        for (size_t i = 0; i < this->targetVariables.size(); ++i)
-        {
-            sentence << this->targetVariables[i] << " = target[" << std::to_string(i) << "]"<< std::endl;
-        }
-        
-        return sentence.build();
+        return this->targetVariables;
     }
     
-    inline std::string HardcodedTrainingContext::buildRateExpression() const
+    inline Index HardcodedTrainingContext::getRateVariable() const
     {
-        KernelSentence sentence;
-        sentence << rateVariable << " = rate[0]" << std::endl;
-        return sentence.build();
+        return this->rateVariable;
     }
     
     inline HardcodedTrainingContext::RawData &HardcodedTrainingContext::getMemory()
@@ -312,6 +220,75 @@ namespace TinyRNN
     }
     
     //===------------------------------------------------------------------===//
+    // Restore neuron state
+    //===------------------------------------------------------------------===//
+    
+    inline void HardcodedTrainingContext::restoreNeuronState(Neuron::Ptr target)
+    {
+        auto targetData = target->getTrainingData();
+        
+        const Value bias = this->evaluateVariable({target->getUuid(), Keys::Mapping::Bias}, targetData->bias);
+        const Value state = this->evaluateVariable({target->getUuid(), Keys::Mapping::State}, targetData->state);
+        const Value oldState = this->evaluateVariable({target->getUuid(), Keys::Mapping::OldState}, targetData->oldState);
+        const Value activation = this->evaluateVariable({target->getUuid(), Keys::Mapping::Activation}, targetData->activation);
+        
+        targetData->bias = bias;
+        targetData->state = state;
+        targetData->oldState = oldState;
+        targetData->activation = activation;
+        
+        for (auto &i : target->eligibility)
+        {
+            const Id &inputConnectionUuid = i.first;
+            target->eligibility[inputConnectionUuid] =
+            this->evaluateVariable({target->getUuid(), inputConnectionUuid, Keys::Mapping::Eligibility},
+                                   target->eligibility[inputConnectionUuid]);
+        }
+        
+        for (auto &i : target->extended)
+        {
+            const Id &neighbourNeuronUuid = i.first;
+            Neuron::EligibilityMap &map = i.second;
+            
+            for (auto &j : map)
+            {
+                const Id &inputConnectionUuid = j.first;
+                
+                const Value extendedTrace =
+                this->evaluateVariable({target->getUuid(), neighbourNeuronUuid, inputConnectionUuid, Keys::Mapping::ExtendedTrace},
+                                       target->extended[neighbourNeuronUuid][inputConnectionUuid]);
+                
+                target->extended[neighbourNeuronUuid][inputConnectionUuid] = extendedTrace;
+            }
+        }
+        
+        for (auto &i : target->outgoingConnections)
+        {
+            auto outgoingConnection = i.second;
+            auto outgoingConnectionUuid = i.first;
+            auto outgoingConnectionData = outgoingConnection->getTrainingData();
+            
+            outgoingConnectionData->weight = this->evaluateVariable({outgoingConnectionUuid, Keys::Mapping::Weight},
+                                                                    outgoingConnectionData->weight);
+            
+            outgoingConnectionData->gain = this->evaluateVariable({outgoingConnectionUuid, Keys::Mapping::Gain},
+                                                                  outgoingConnectionData->gain);
+        }
+        
+        if (target->isSelfConnected())
+        {
+            auto selfConnection = target->getSelfConnection();
+            auto selfConnectionData = selfConnection->getTrainingData();
+            
+            selfConnectionData->weight = this->evaluateVariable({selfConnection->getUuid(), Keys::Mapping::Weight},
+                                                                selfConnectionData->weight);
+            
+            selfConnectionData->gain = this->evaluateVariable({selfConnection->getUuid(), Keys::Mapping::Gain},
+                                                              selfConnectionData->gain);
+        }
+    }
+    
+    //===------------------------------------------------------------------===//
     // Serialization
     //===------------------------------------------------------------------===//
     
@@ -326,35 +303,95 @@ namespace TinyRNN
         const std::vector<unsigned char> &memoryDecoded = context->decodeBase64(memoryEncoded);
         memcpy(this->memory.data(), memoryDecoded.data(), sizeof(Value) * memorySize);
         
-        const size_t outputsSize = context->getNumberProperty(Keys::Hardcoded::OutputsSize);
-        this->outputs.resize(outputsSize);
-        
-        SerializationContext::Ptr mappingNode(context->getChildContext(Keys::Hardcoded::VariablesMapping));
-        
-        for (size_t i = 0; i < mappingNode->getNumChildrenContexts(); ++i)
+        if (auto mappingNode = context->getChildContext(Keys::Hardcoded::VariablesMapping))
         {
-            SerializationContext::Ptr variableNode(mappingNode->getChildContext(i));
-            const std::string &key = variableNode->getStringProperty(Keys::Hardcoded::Key);
-            const size_t index = variableNode->getNumberProperty(Keys::Hardcoded::Index);
-            this->mapping[key] = index;
+            for (size_t i = 0; i < mappingNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr variableNode(mappingNode->getChildContext(i));
+                const std::string &key = variableNode->getStringProperty(Keys::Hardcoded::Key);
+                const size_t index = variableNode->getNumberProperty(Keys::Hardcoded::Index);
+                this->mapping[key] = index;
+            }
+        }
+        
+        if (auto inputsNode = context->getChildContext(Keys::Hardcoded::InputsMapping))
+        {
+            for (size_t i = 0; i < inputsNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr variableNode(inputsNode->getChildContext(i));
+                const size_t index = variableNode->getNumberProperty(Keys::Hardcoded::Index);
+                this->inputVariables.push_back(index);
+            }
+        }
+        
+        if (auto outputsNode = context->getChildContext(Keys::Hardcoded::OutputsMapping))
+        {
+            for (size_t i = 0; i < outputsNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr variableNode(outputsNode->getChildContext(i));
+                const size_t index = variableNode->getNumberProperty(Keys::Hardcoded::Index);
+                this->outputVariables.push_back(index);
+            }
+            
+            this->outputs.resize(this->outputVariables.size());
+        }
+        
+        if (auto targetsNode = context->getChildContext(Keys::Hardcoded::TargetsMapping))
+        {
+            for (size_t i = 0; i < targetsNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr variableNode(targetsNode->getChildContext(i));
+                const size_t index = variableNode->getNumberProperty(Keys::Hardcoded::Index);
+                this->targetVariables.push_back(index);
+            }
+        }
+        
+        if (auto rateNode = context->getChildContext(Keys::Hardcoded::RateMapping))
+        {
+            this->rateVariable = rateNode->getNumberProperty(Keys::Hardcoded::Index);
         }
     }
     
     inline void HardcodedTrainingContext::serialize(SerializationContext::Ptr context) const
     {
-        const std::string memoryEncoded = context->encodeBase64((const unsigned char *)this->memory.data(), sizeof(Value) * this->memory.size());
+        const std::string memoryEncoded =
+        context->encodeBase64((const unsigned char *)this->memory.data(),
+                              sizeof(Value) * this->memory.size());
+        
         context->setStringProperty(memoryEncoded, Keys::Hardcoded::RawMemory);
         context->setNumberProperty(this->memory.size(), Keys::Hardcoded::MemorySize);
-        context->setNumberProperty(this->outputs.size(), Keys::Hardcoded::OutputsSize);
         
         SerializationContext::Ptr mappingNode(context->addChildContext(Keys::Hardcoded::VariablesMapping));
-        
         for (const auto &i : this->mapping)
         {
             SerializationContext::Ptr variableNode(mappingNode->addChildContextUnordered(Keys::Hardcoded::Variable));
             variableNode->setStringProperty(i.first, Keys::Hardcoded::Key);
             variableNode->setNumberProperty(i.second, Keys::Hardcoded::Index);
         }
+        
+        SerializationContext::Ptr inputsNode(context->addChildContext(Keys::Hardcoded::InputsMapping));
+        for (const auto &i : this->inputVariables)
+        {
+            SerializationContext::Ptr variableNode(inputsNode->addChildContext(Keys::Hardcoded::Variable));
+            variableNode->setNumberProperty(i, Keys::Hardcoded::Index);
+        }
+        
+        SerializationContext::Ptr outputsNode(context->addChildContext(Keys::Hardcoded::OutputsMapping));
+        for (const auto &i : this->outputVariables)
+        {
+            SerializationContext::Ptr variableNode(outputsNode->addChildContext(Keys::Hardcoded::Variable));
+            variableNode->setNumberProperty(i, Keys::Hardcoded::Index);
+        }
+        
+        SerializationContext::Ptr targetsNode(context->addChildContext(Keys::Hardcoded::TargetsMapping));
+        for (const auto &i : this->targetVariables)
+        {
+            SerializationContext::Ptr variableNode(targetsNode->addChildContext(Keys::Hardcoded::Variable));
+            variableNode->setNumberProperty(i, Keys::Hardcoded::Index);
+        }
+        
+        SerializationContext::Ptr rateNode(context->addChildContext(Keys::Hardcoded::RateMapping));
+        rateNode->setNumberProperty(this->rateVariable, Keys::Hardcoded::Index);
     }
 }  // namespace TinyRNN
 

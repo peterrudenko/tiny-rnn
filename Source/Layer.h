@@ -30,6 +30,7 @@
 #include "SerializationKeys.h"
 #include "TrainingContext.h"
 
+#include "VMNeuron.h"
 #include "HardcodedNeuron.h"
 
 namespace TinyRNN
@@ -84,10 +85,13 @@ namespace TinyRNN
         
 // Needed to create standalone networks:
 //#if TINYRNN_OPENCL_ACCELERATION
-        HardcodedNeuron::Vector
-        hardcode(HardcodedTrainingContext::Ptr context,
-                 bool asInput, bool asOutput,
-                 bool asConst) const;
+        VMNeuron::Vector toVM(HardcodedTrainingContext::Ptr context,
+                              bool asInput, bool asOutput,
+                              bool asConst) const;
+        
+        HardcodedNeuron::Vector hardcode(HardcodedTrainingContext::Ptr context,
+                                         bool asInput, bool asOutput,
+                                         bool asConst) const;
         
         void restore(HardcodedTrainingContext::Ptr context);
 //#endif
@@ -441,6 +445,20 @@ namespace TinyRNN
     // Batch hardcoding stuff
     //===------------------------------------------------------------------===//
     
+    inline VMNeuron::Vector Layer::toVM(HardcodedTrainingContext::Ptr context,
+                                        bool asInput, bool asOutput,
+                                        bool asConst) const
+    {
+        VMNeuron::Vector result;
+        
+        for (auto &neuron : this->neurons)
+        {
+            result.push_back(VMNeuron::buildFrom(context, neuron, asInput, asOutput, asConst));
+        }
+        
+        return result;
+    }
+    
     inline HardcodedNeuron::Vector
     Layer::hardcode(HardcodedTrainingContext::Ptr context,
                     bool asInput, bool asOutput,
@@ -460,7 +478,7 @@ namespace TinyRNN
     {
         for (auto &neuron : this->neurons)
         {
-            HardcodedNeuron::restoreNeuronState(neuron, context);
+            context->restoreNeuronState(neuron);
         }
     }
     
