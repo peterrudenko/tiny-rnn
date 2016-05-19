@@ -432,6 +432,11 @@ namespace TinyRNN
         
         // The training program:
         
+        if (asOutput && asConst)
+        {
+            context->registerOutputVariable(activationVar);
+        }
+        
         if (!asInput &&
             !asConst)
         {

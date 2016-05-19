@@ -453,7 +453,12 @@ namespace TinyRNN
             }
         }
         
-        // Done with feed program, now fix the train program:
+        // The training program:
+        
+        if (asOutput && asConst)
+        {
+            context->registerOutputVariable(activationVar);
+        }
         
         if (!asInput &&
             !asConst)
