@@ -116,7 +116,7 @@ namespace TinyRNN
     }
     
     //===------------------------------------------------------------------===//
-    // HardcodedNeuron implementation
+    // VMNeuron implementation
     //===------------------------------------------------------------------===//
     
     inline VMNeuron::Ptr VMNeuron::buildFrom(HardcodedTrainingContext::Ptr context,
@@ -198,18 +198,15 @@ namespace TinyRNN
                                                      {target->selfConnection->getUuid(), Keys::Mapping::Gain});
                     
                     vm->feedProgram << VMProgram::APPS << stateVar << selfGainVar << selfWeightVar << stateVar << biasVar;
-                    //hardcoded->feedProgram << stateVar << " = " << selfGainVar << " * " << selfWeightVar << " * " << stateVar << " + " << biasVar << std::endl;
                 }
                 else
                 {
                     vm->feedProgram << VMProgram::APS << stateVar << selfWeightVar << stateVar << biasVar;
-                    //hardcoded->feedProgram << stateVar << " = " << selfWeightVar << " * " << stateVar << " + " << biasVar << std::endl;
                 }
             }
             else
             {
                 vm->feedProgram << VMProgram::A << stateVar << biasVar;
-                //hardcoded->feedProgram << stateVar << " = " << biasVar << std::endl;
             }
             
             for (auto &i : target->incomingConnections)
@@ -234,22 +231,18 @@ namespace TinyRNN
                                                      {inputConnection->getUuid(), Keys::Mapping::Gain});
                     
                     vm->feedProgram << VMProgram::AAPP << stateVar << inputActivationVar << inputWeightVar << inputGainVar;
-                    //hardcoded->feedProgram << stateVar << " += " << inputActivationVar << " * " << inputWeightVar << " * " << inputGainVar << std::endl;
                 }
                 else
                 {
                     vm->feedProgram << VMProgram::AAP << stateVar << inputActivationVar << inputWeightVar;
-                    //hardcoded->feedProgram << stateVar << " += " << inputActivationVar << " * " << inputWeightVar << std::endl;
                 }
             }
             
             // eq. 16
             vm->feedProgram << VMProgram::Activation << activationVar << stateVar;
-            //hardcoded->feedProgram << activationVar << " = (1.0 / (1.0 + exp(-" << stateVar << ")))" << std::endl;
             
             // f'(s)
             vm->feedProgram << VMProgram::Derivative << derivativeVar << activationVar;
-            //hardcoded->feedProgram << derivativeVar << " = " << activationVar << " * (1.0 - " << activationVar << ")" << std::endl;
             
             if (! asConst)
             {
@@ -280,7 +273,6 @@ namespace TinyRNN
                         if (neighbourSelfconnection->getGateNeuron() == target)
                         {
                             vm->traceProgram << VMProgram::A << influenceVar << neighbourOldStateVar;
-                            //hardcoded->traceProgram << influenceVar << " = " << neighbourOldStateVar << std::endl;
                             influenceWasInitialized = true;
                         }
                     }
@@ -304,12 +296,10 @@ namespace TinyRNN
                         if (influenceWasInitialized)
                         {
                             vm->traceProgram << VMProgram::AAP << influenceVar << incomingWeightVar << incomingActivationVar;
-                            //hardcoded->traceProgram << influenceVar << " += " << incomingWeightVar << " * " << incomingActivationVar << std::endl;
                         }
                         else
                         {
                             vm->traceProgram << VMProgram::AP << influenceVar << incomingWeightVar << incomingActivationVar;
-                            //hardcoded->traceProgram << influenceVar << " = " << incomingWeightVar << " * " << incomingActivationVar << std::endl;
                             influenceWasInitialized = true;
                         }
                     }
@@ -351,12 +341,10 @@ namespace TinyRNN
                             if (inputConnectionHasGate)
                             {
                                 vm->traceProgram << VMProgram::APPSP << eligibilityVar << selfConnectionGainVar << selfConnectionWeightVar << eligibilityVar << inputGainVar << inputActivationVar;
-                                //hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionGainVar << " * " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputGainVar << " * " << inputActivationVar << std::endl;
                             }
                             else
                             {
                                 vm->traceProgram << VMProgram::APPS << eligibilityVar << selfConnectionGainVar << selfConnectionWeightVar << eligibilityVar << inputActivationVar;
-                                //hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionGainVar << " * " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputActivationVar << std::endl;
                             }
                         }
                         else
@@ -364,13 +352,11 @@ namespace TinyRNN
                             if (inputConnectionHasGate)
                             {
                                 vm->traceProgram << VMProgram::APSP << eligibilityVar << selfConnectionWeightVar << eligibilityVar << inputGainVar << inputActivationVar;
-                                //hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputGainVar << " * " << inputActivationVar << std::endl;
                                 
                             }
                             else
                             {
                                 vm->traceProgram << VMProgram::APS << eligibilityVar << selfConnectionWeightVar << eligibilityVar << inputActivationVar;
-                                //hardcoded->traceProgram << eligibilityVar << " = " << selfConnectionWeightVar << " * " << eligibilityVar << " + " << inputActivationVar << std::endl;
                             }
                         }
                     }
@@ -379,12 +365,10 @@ namespace TinyRNN
                         if (inputConnectionHasGate)
                         {
                             vm->traceProgram << VMProgram::AP << eligibilityVar << inputGainVar << inputActivationVar;
-                            //hardcoded->traceProgram << eligibilityVar << " = " << inputGainVar << " * " << inputActivationVar << std::endl;
                         }
                         else
                         {
                             vm->traceProgram << VMProgram::A << eligibilityVar << inputActivationVar;
-                            //hardcoded->traceProgram << eligibilityVar << " = " << inputActivationVar << std::endl;
                         }
                     }
                     
@@ -418,19 +402,15 @@ namespace TinyRNN
                             if (neighbourSelfConnection->getGateNeuron() != nullptr)
                             {
                                 vm->traceProgram << VMProgram::APPSPP << extendedTraceVar << selfConnectionGainVar << selfConnectionWeightVar << extendedTraceVar << derivativeVar << eligibilityVar << influenceVar;
-                                //hardcoded->traceProgram << extendedTraceVar << " = " << selfConnectionGainVar << " * " << selfConnectionWeightVar << " * " << extendedTraceVar << " + " << derivativeVar << " * " << eligibilityVar << " * " << influenceVar << std::endl;
                             }
                             else
                             {
                                 vm->traceProgram << VMProgram::APPSP << extendedTraceVar << derivativeVar << eligibilityVar << influenceVar << selfConnectionWeightVar << extendedTraceVar;
-                                //vm->traceProgram << VMProgram::APSPP << extendedTraceVar << selfConnectionWeightVar << extendedTraceVar << derivativeVar << eligibilityVar << influenceVar;
-                                //hardcoded->traceProgram << extendedTraceVar << " = " << selfConnectionWeightVar << " * " << extendedTraceVar << " + " << derivativeVar << " * " << eligibilityVar << " * " << influenceVar << std::endl;
                             }
                         }
                         else
                         {
                             vm->traceProgram << VMProgram::APP << extendedTraceVar << derivativeVar << eligibilityVar << influenceVar;
-                            //hardcoded->traceProgram << extendedTraceVar << " = " << derivativeVar << " * " << eligibilityVar << " * " << influenceVar << std::endl;
                         }
                     }
                 }
@@ -447,11 +427,10 @@ namespace TinyRNN
                                                  {gatedConnection->getUuid(), Keys::Mapping::Gain});
                 
                 vm->feedProgram << VMProgram::A << gatedConnectionGainVar << activationVar;
-                //hardcoded->feedProgram << gatedConnectionGainVar << " = " << activationVar << std::endl;
             }
         }
         
-        // Done with feed program, now fix the train program:
+        // The training program:
         
         if (!asInput &&
             !asConst)
@@ -473,7 +452,6 @@ namespace TinyRNN
                 context->registerOutputVariable(activationVar);
                 
                 vm->trainProgram << VMProgram::AD << responsibilityVar << myTargetVar << activationVar;
-                //hardcoded->trainProgram << responsibilityVar << " = " << myTargetVar << " - " << activationVar << std::endl;
                 
                 for (auto &i : target->incomingConnections)
                 {
@@ -489,7 +467,6 @@ namespace TinyRNN
                                                      {inputConnection->getUuid(), Keys::Mapping::Weight});
                     
                     vm->trainProgram << VMProgram::AAPP << inputWeightVar << rateVar << responsibilityVar << eligibilityVar;
-                    //hardcoded->trainProgram << inputWeightVar << " += " << rateVar << " * (" << responsibilityVar << " * " << eligibilityVar << ")" << std::endl;
                 }
             }
             else
@@ -523,12 +500,10 @@ namespace TinyRNN
                                                              {outputConnection->getUuid(), Keys::Mapping::Gain});
                             
                             vm->trainProgram << VMProgram::AAPP << errorAccumulatorVar << outputResponsibilityVar << outputGainVar << outputWeightVar;
-                            //hardcoded->trainProgram << errorAccumulatorVar << " += " << outputResponsibilityVar << " * " << outputGainVar << " * " << outputWeightVar << std::endl;
                         }
                         else
                         {
                             vm->trainProgram << VMProgram::AAP << errorAccumulatorVar << outputResponsibilityVar << outputWeightVar;
-                            //hardcoded->trainProgram << errorAccumulatorVar << " += " << outputResponsibilityVar << " * " << outputWeightVar << std::endl;
                         }
                     }
                     
@@ -539,8 +514,6 @@ namespace TinyRNN
                     // projected error responsibility
                     vm->trainProgram << VMProgram::AP << projectedErrorVar << derivativeVar << errorAccumulatorVar;
                     vm->trainProgram << VMProgram::Zero << errorAccumulatorVar;
-                    //hardcoded->trainProgram << projectedErrorVar << " = " << derivativeVar << " * " << errorAccumulatorVar << std::endl;
-                    //hardcoded->trainProgram << errorAccumulatorVar << " = 0" << std::endl;
                     
                     // error responsibilities from all the connections gated by this neuron
                     for (auto &i : target->extended)
@@ -563,12 +536,10 @@ namespace TinyRNN
                             if (gatedNeuronSelfConnection->getGateNeuron() == target)
                             {
                                 vm->trainProgram << VMProgram::A << influenceTempVar << gatedNeuronOldStateVar;
-                                //hardcoded->trainProgram << influenceTempVar << " = " << gatedNeuronOldStateVar << std::endl;
                             }
                             else
                             {
                                 vm->trainProgram << VMProgram::Zero << influenceTempVar;
-                                //hardcoded->trainProgram << influenceTempVar << " = 0" << std::endl;
                             }
                         }
                         
@@ -591,7 +562,6 @@ namespace TinyRNN
                                                                  {inputConnection->getUuid(), Keys::Mapping::Weight});
                                 
                                 vm->trainProgram << VMProgram::AAP << influenceTempVar << inputWeightVar << inputActivationVar;
-                                //hardcoded->trainProgram << influenceTempVar << " += " << inputWeightVar << " * " << inputActivationVar << std::endl;
                             }
                         }
                         
@@ -601,7 +571,6 @@ namespace TinyRNN
                         
                         // eq. 22
                         vm->trainProgram << VMProgram::AAP << errorAccumulatorVar << gatedResponsibilityVar << influenceTempVar;
-                        //hardcoded->trainProgram << errorAccumulatorVar << " += " << gatedResponsibilityVar << " * " << influenceTempVar << std::endl;
                     }
                     
                     const Index gatedErrorVar =
@@ -610,11 +579,9 @@ namespace TinyRNN
                     
                     // gated error responsibility
                     vm->trainProgram << VMProgram::AP << gatedErrorVar << derivativeVar << errorAccumulatorVar;
-                    //hardcoded->trainProgram << gatedErrorVar << " = " << derivativeVar << " * " << errorAccumulatorVar << std::endl;
                     
                     // error responsibility - Eq. 23
                     vm->trainProgram << VMProgram::AS << responsibilityVar << projectedErrorVar << gatedErrorVar;
-                    //hardcoded->trainProgram << responsibilityVar << " = " << projectedErrorVar << " + " << gatedErrorVar << std::endl;
                     
                     // adjust all the neuron's incoming connections
                     for (auto &i : target->incomingConnections)
@@ -632,7 +599,6 @@ namespace TinyRNN
                         
                         // Eq. 24
                         vm->trainProgram << VMProgram::AP << gradientTempVar << projectedErrorVar << eligibilityVar;
-                        //hardcoded->trainProgram << gradientTempVar << " = " << projectedErrorVar << " * " << eligibilityVar << std::endl;
                         
                         for (auto &ext : target->extended)
                         {
@@ -651,7 +617,6 @@ namespace TinyRNN
                                                              {target->getUuid(), neighbourNeuronId, inputConnectionUuid, Keys::Mapping::ExtendedTrace});
                             
                             vm->trainProgram << VMProgram::AAP << gradientTempVar << neighbourResponsibilityVar << extendedTraceVar;
-                            //hardcoded->trainProgram << gradientTempVar << " += " << neighbourResponsibilityVar << " * " << extendedTraceVar << std::endl;
                         }
                         
                         // adjust weights - aka learn
@@ -662,13 +627,11 @@ namespace TinyRNN
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         vm->trainProgram << VMProgram::AAP << inputWeightVar << rateVar << gradientTempVar;
-                        //hardcoded->trainProgram << inputWeightVar << " += " << rateVar << " * " << gradientTempVar << std::endl;
                     }
                 }
                 else if (noGates)
                 {
                     vm->trainProgram << VMProgram::Zero << responsibilityVar;
-                    //hardcoded->trainProgram << responsibilityVar << " = 0" << std::endl;
                     
                     // error responsibilities from all the connections projected from this neuron
                     for (auto &i : target->outgoingConnections)
@@ -693,17 +656,14 @@ namespace TinyRNN
                                                              {outputConnection->getUuid(), Keys::Mapping::Gain});
                             
                             vm->trainProgram << VMProgram::AAPP << responsibilityVar << outputResponsibilityVar << outputGainVar << outputWeightVar;
-                            //hardcoded->trainProgram << responsibilityVar << " += " << outputResponsibilityVar << " * " << outputGainVar << " * " << outputWeightVar << std::endl;
                         }
                         else
                         {
                             vm->trainProgram << VMProgram::AAP << responsibilityVar << outputResponsibilityVar << outputWeightVar;
-                            //hardcoded->trainProgram << responsibilityVar << " += " << outputResponsibilityVar << " * " << outputWeightVar << std::endl;
                         }
                     }
                     
                     vm->trainProgram << VMProgram::AP << responsibilityVar << responsibilityVar << derivativeVar;
-                    //hardcoded->trainProgram << responsibilityVar << " *= " << derivativeVar << std::endl;
                     
                     for (auto &i : target->incomingConnections)
                     {
@@ -720,13 +680,11 @@ namespace TinyRNN
                         
                         // learn
                         vm->trainProgram << VMProgram::AAPP << inputWeightVar << rateVar << responsibilityVar << eligibilityVar;
-                        //hardcoded->trainProgram << inputWeightVar << " += " << rateVar << " * (" << responsibilityVar << " * " << eligibilityVar << ")" << std::endl;
                     }
                 }
                 else if (noOutgoingConnections)
                 {
                     vm->trainProgram << VMProgram::Zero << responsibilityVar;
-                    //hardcoded->trainProgram << responsibilityVar << " = 0" << std::endl;
                     
                     // error responsibilities from all the connections gated by this neuron
                     for (auto &i : target->extended)
@@ -749,12 +707,10 @@ namespace TinyRNN
                             if (gatedNeuronSelfConnection->getGateNeuron() == target)
                             {
                                 vm->trainProgram << VMProgram::A << influenceTempVar << gatedNeuronOldStateVar;
-                                //hardcoded->trainProgram << influenceTempVar << " = " << gatedNeuronOldStateVar << std::endl;
                             }
                             else
                             {
                                 vm->trainProgram << VMProgram::Zero << influenceTempVar;
-                                //hardcoded->trainProgram << influenceTempVar << " = 0" << std::endl;
                             }
                         }
                         
@@ -775,7 +731,6 @@ namespace TinyRNN
                                                              {inputConnection->getUuid(), Keys::Mapping::Weight});
                             
                             vm->trainProgram << VMProgram::AAP << influenceTempVar << inputWeightVar << inputActivationVar;
-                            //hardcoded->trainProgram << influenceTempVar << " += " << inputWeightVar << " * " << inputActivationVar << std::endl;
                         }
                         
                         const Index gatedResponsibilityVar =
@@ -784,11 +739,9 @@ namespace TinyRNN
                         
                         // eq. 22
                         vm->trainProgram << VMProgram::AAP << responsibilityVar << gatedResponsibilityVar << influenceTempVar;
-                        //hardcoded->trainProgram << responsibilityVar << " += " << gatedResponsibilityVar << " * " << influenceTempVar << std::endl;
                     }
                     
                     vm->trainProgram << VMProgram::AP << responsibilityVar << responsibilityVar << derivativeVar;
-                    //hardcoded->trainProgram << responsibilityVar << " *= " << derivativeVar << std::endl;
                     
                     // adjust all the neuron's incoming connections
                     for (auto &i : target->incomingConnections)
@@ -801,7 +754,6 @@ namespace TinyRNN
                                                          {Keys::Mapping::Gradient});
                         
                         vm->trainProgram << VMProgram::Zero << gradientTempVar;
-                        //hardcoded->trainProgram << gradientTempVar << " = 0" << std::endl;
                         
                         for (auto &ext : target->extended)
                         {
@@ -820,7 +772,6 @@ namespace TinyRNN
                                                              {target->getUuid(), neighbourNeuronId, inputConnectionUuid, Keys::Mapping::ExtendedTrace});
                             
                             vm->trainProgram << VMProgram::AAP << gradientTempVar << neighbourResponsibilityVar << extendedTraceVar;
-                            //hardcoded->trainProgram << gradientTempVar << " += " << neighbourResponsibilityVar << " * " << extendedTraceVar << std::endl;
                         }
                         
                         // adjust weights - aka learn
@@ -831,7 +782,6 @@ namespace TinyRNN
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         vm->trainProgram << VMProgram::AAP << inputWeightVar << rateVar << gradientTempVar;
-                        //hardcoded->trainProgram << inputWeightVar << " += " << rateVar << " * " << gradientTempVar << std::endl;
                     }
                 }
             }
@@ -842,7 +792,6 @@ namespace TinyRNN
                                              {target->getUuid(), Keys::Mapping::Bias});
             
             vm->trainProgram << VMProgram::AAP << biasVar << rateVar << responsibilityVar;
-            //hardcoded->trainProgram << biasVar << " += " << rateVar << " * " << responsibilityVar << std::endl;
         }
         
         return vm;
