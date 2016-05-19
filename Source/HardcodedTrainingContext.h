@@ -66,6 +66,7 @@ namespace TinyRNN
         RawData &getOutputs();
         
         void clear();
+        void clearMappings();
         
     public:
         
@@ -217,6 +218,11 @@ namespace TinyRNN
         this->outputVariables.clear();
         this->targetVariables.clear();
         this->rateVariable = 0;
+    }
+    
+    inline void HardcodedTrainingContext::clearMappings()
+    {
+        this->mapping.clear();
     }
     
     //===------------------------------------------------------------------===//
