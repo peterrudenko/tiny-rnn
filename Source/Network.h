@@ -107,9 +107,11 @@ namespace TinyRNN
          *
          *  @return An implementation of the feed-only network in C.
          */
-        HardcodedNetwork::StandaloneSources hardcodeAsStandaloneGenerator() const;
+        HardcodedNetwork::StandaloneSources hardcodeAsStandaloneFeedOnly() const;
         
         VMNetwork::Ptr toVM() const;
+        VMNetwork::Ptr toFeedOnlyVM() const;
+        
         HardcodedNetwork::Ptr hardcode() const;
         void restore(HardcodedTrainingContext::Ptr context);
         
@@ -387,7 +389,30 @@ namespace TinyRNN
         std::cout << "Hardcoded context memory size: " << context->getMemory().size() << std::endl;
         return vmNetwork;
     }
-
+    
+    inline VMNetwork::Ptr Network::toFeedOnlyVM() const
+    {
+        HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());
+        VMNetwork::VMLayers vmLayers;
+        
+        {
+            const ScopedTimer timer("Network::toFeedOnlyVM");
+            vmLayers.push_back(this->inputLayer->toVM(context, true, false, true));
+            
+            for (auto &hiddenLayer : this->hiddenLayers)
+            {
+                vmLayers.push_back(hiddenLayer->toVM(context, false, false, true));
+            }
+            
+            vmLayers.push_back(this->outputLayer->toVM(context, false, true, true));
+        }
+        
+        VMNetwork::Ptr vmNetwork(new VMNetwork(context, vmLayers));
+        
+        std::cout << "Hardcoded context memory size: " << context->getMemory().size() << std::endl;
+        return vmNetwork;
+    }
+    
     inline HardcodedNetwork::Ptr Network::hardcode() const
     {
         HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());
@@ -451,13 +476,13 @@ namespace TinyRNN
         return hardcodedNetwork->asStandalone(this->name, false);
     }
     
-    inline HardcodedNetwork::StandaloneSources Network::hardcodeAsStandaloneGenerator() const
+    inline HardcodedNetwork::StandaloneSources Network::hardcodeAsStandaloneFeedOnly() const
     {
         HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());
         HardcodedNetwork::HardcodedLayers hardcodedLayers;
         
         {
-            const ScopedTimer timer("Network::hardcodeAsStandaloneGenerator");
+            const ScopedTimer timer("Network::hardcodeAsStandaloneFeedOnly");
             hardcodedLayers.push_back(this->inputLayer->hardcode(context, true, false, true));
             
             for (auto &hiddenLayer : this->hiddenLayers)
