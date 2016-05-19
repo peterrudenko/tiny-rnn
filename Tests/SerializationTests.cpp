@@ -167,18 +167,18 @@ SCENARIO("Networks can be serialized and deserialized correctly", "[serializatio
         XMLSerializer serializer;
         const std::string &serializedTopology = serializer.serialize(network, Keys::Core::Network);
         
-        WHEN("a new network with the same context is deserialized from that data and serialized back")
+        WHEN("A new network with the same context is deserialized from that data and serialized back")
         {
             Network::Ptr recreatedNetwork(new Network(network->getContext()));
             serializer.deserialize(recreatedNetwork, serializedTopology);
             const std::string &reserializedTopology = serializer.serialize(recreatedNetwork, Keys::Core::Network);
             
-            THEN("the serialization results should be equal")
+            THEN("The serialization results should be equal")
             {
                 REQUIRE(serializedTopology == reserializedTopology);
             }
             
-            THEN("both networks should produce the same output")
+            THEN("Both networks should produce the same output")
             {
                 const int numChecks = RANDOM(10, 20);
                 
@@ -213,13 +213,13 @@ SCENARIO("Networks can be serialized and deserialized correctly", "[serializatio
         XMLSerializer serializer;
         const std::string &serializedTrainingState = serializer.serialize(network->getContext(), Keys::Core::TrainingContext);
         
-        WHEN("a new state is deserialized from that data and serialized back")
+        WHEN("A new state is deserialized from that data and serialized back")
         {
             TrainingContext::Ptr recreatedContext(new TrainingContext(""));
             serializer.deserialize(recreatedContext, serializedTrainingState);
             const std::string &reserializedState = serializer.serialize(recreatedContext, Keys::Core::TrainingContext);
             
-            THEN("the serialization results should be equal")
+            THEN("The serialization results should be equal")
             {
                 REQUIRE(serializedTrainingState == reserializedState);
             }
@@ -253,19 +253,19 @@ SCENARIO("Hardcoded network can be serialized and deserialized correctly", "[ser
         const std::string &serializedTopology = serializer.serialize(clNetwork, Keys::Hardcoded::Network);
         //std::cout << serializedTopology;
         
-        WHEN("a new network with the same context is deserialized from that data and serialized back")
+        WHEN("A new network with the same context is deserialized from that data and serialized back")
         {
             HardcodedNetwork::Ptr clRecreatedNetwork(new HardcodedNetwork(clNetwork->getContext()));
             serializer.deserialize(clRecreatedNetwork, serializedTopology);
             clRecreatedNetwork->compile();
             const std::string &reserializedTopology = serializer.serialize(clRecreatedNetwork, Keys::Hardcoded::Network);
             
-            THEN("the serialization results should be equal")
+            THEN("The serialization results should be equal")
             {
                 REQUIRE(serializedTopology == reserializedTopology);
             }
             
-            THEN("both networks should produce the same output")
+            THEN("Both networks should produce the same output")
             {
                 const int numChecks = RANDOM(5, 10);
                 
@@ -304,16 +304,70 @@ SCENARIO("Hardcoded network can be serialized and deserialized correctly", "[ser
         const std::string &serializedMemory = serializer.serialize(clNetwork->getContext(), Keys::Hardcoded::TrainingContext);
         //std::cout << serializedMemory;
         
-        WHEN("a new state is deserialized from that data and serialized back")
+        WHEN("A new state is deserialized from that data and serialized back")
         {
             HardcodedTrainingContext::Ptr recreatedContext(new HardcodedTrainingContext());
             serializer.deserialize(recreatedContext, serializedMemory);
             const std::string &reserializedMemory = serializer.serialize(recreatedContext, Keys::Hardcoded::TrainingContext);
             //std::cout << reserializedMemory;
             
-            THEN("the serialization results should be equal")
+            THEN("The serialization results should be equal")
             {
                 REQUIRE(serializedMemory == reserializedMemory);
+            }
+        }
+    }
+}
+
+SCENARIO("VM network can be serialized and deserialized correctly", "[serialization]")
+{
+    GIVEN("Serialized kernel chunks of a randomly trained VM network")
+    {
+        const int layerSize = RANDOM(5, 10);
+        const auto networkName = RANDOMNAME();
+        
+        const auto network = Network::Prefabs::longShortTermMemory(networkName, 3, {layerSize}, 3);
+        REQUIRE(network->getName() == networkName);
+        
+        VMNetwork::Ptr vmNetwork = network->toVM();
+        vmNetwork->compile();
+        
+        const int numTrainingIterations = RANDOM(100, 200);
+        for (int i = 0; i < numTrainingIterations; ++i)
+        {
+            vmNetwork->feed({ RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
+            vmNetwork->train(0.5, { RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
+        }
+        
+        XMLSerializer serializer;
+        const std::string &serializedTopology = serializer.serialize(vmNetwork, Keys::VM::Network);
+        //std::cout << serializedTopology;
+        
+        WHEN("A new network with the same context is deserialized from that data and serialized back")
+        {
+            VMNetwork::Ptr vmRecreatedNetwork(new VMNetwork(vmNetwork->getContext()));
+            serializer.deserialize(vmRecreatedNetwork, serializedTopology);
+            vmRecreatedNetwork->compile();
+            const std::string &reserializedTopology = serializer.serialize(vmRecreatedNetwork, Keys::VM::Network);
+            
+            THEN("The serialization results should be equal")
+            {
+                REQUIRE(serializedTopology == reserializedTopology);
+            }
+            
+            THEN("Both networks should produce the same output")
+            {
+                const int numChecks = RANDOM(5, 10);
+                
+                for (int i = 0; i < numTrainingIterations; ++i)
+                {
+                    const Value r1 = RANDOM(0.0, 10000.0);
+                    const Value r2 = RANDOM(0.0, 10000.0);
+                    const Value r3 = RANDOM(0.0, 10000.0);
+                    Neuron::Values result1 = vmNetwork->feed({r1, r2, r3});
+                    Neuron::Values result2 = vmRecreatedNetwork->feed({r1, r2, r3});
+                    REQUIRE(result1 == result2);
+                }
             }
         }
     }

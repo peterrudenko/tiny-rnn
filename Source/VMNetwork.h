@@ -293,8 +293,7 @@ namespace TinyRNN
         
         while (command != VMProgram::End)
         {
-            command = commands[c++];
-            switch (command)
+            switch (command = commands[c++])
             {
                 case VMProgram::Zero:
                     X(0) = 0;
@@ -370,101 +369,83 @@ namespace TinyRNN
     \
     while (command != 15)\
     {\
-        command = commands[c++];\
-        switch (command)\
+        switch (command = commands[c++])\
         {\
-            case 0:\
-            {\
-                x[indices[i+0]] = 0;\
+            case 0: {\
+                x[id[i+0]] = 0;\
                 i += 1;\
                 break;\
             }\
-            case 1:\
-            {\
-                x[indices[i+0]] = (1.0 / (1.0 + exp(-x[indices[i+1]])));\
+            case 1: {\
+                x[id[i+0]] = (1.0 / (1.0 + exp(-x[id[i+1]])));\
                 i += 2;\
                 break;\
             }\
-            case 2:\
-            {\
-                x[indices[i+0]] = x[indices[i+1]] * (1.0 - x[indices[i+1]]);\
+            case 2: {\
+                x[id[i+0]] = x[id[i+1]] * (1.0 - x[id[i+1]]);\
                 i += 2;\
                 break;\
             }\
-            case 3:\
-            {\
-                x[indices[i+0]] += x[indices[i+1]] * x[indices[i+2]];\
+            case 3: {\
+                x[id[i+0]] += x[id[i+1]] * x[id[i+2]];\
                 i += 3;\
                 break;\
             }\
-            case 4:\
-            {\
-                x[indices[i+0]] += x[indices[i+1]] * x[indices[i+2]] * x[indices[i+3]];\
+            case 4: {\
+                x[id[i+0]] += x[id[i+1]] * x[id[i+2]] * x[id[i+3]];\
                 i += 4;\
                 break;\
             }\
-            case 5:\
-            {\
-                x[indices[i+0]] = x[indices[i+1]];\
+            case 5: {\
+                x[id[i+0]] = x[id[i+1]];\
                 i += 2;\
                 break;\
             }\
-            case 6:\
-            {\
-                x[indices[i+0]] = x[indices[i+1]] + x[indices[i+2]];\
+            case 6: {\
+                x[id[i+0]] = x[id[i+1]] + x[id[i+2]];\
                 i += 3;\
                 break;\
             }\
-            case 7:\
-            {\
-                x[indices[i+0]] = x[indices[i+1]] - x[indices[i+2]];\
+            case 7: {\
+                x[id[i+0]] = x[id[i+1]] - x[id[i+2]];\
                 i += 3;\
                 break;\
             }\
-            case 8:\
-            {\
-                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]];\
+            case 8: {\
+                x[id[i+0]] = x[id[i+1]] * x[id[i+2]];\
                 i += 3;\
                 break;\
             }\
-            case 9:\
-            {\
-                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] * x[indices[i+3]];\
+            case 9: {\
+                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]];\
                 i += 4;\
                 break;\
             }\
-            case 10:\
-            {\
-                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] + x[indices[i+3]];\
+            case 10: {\
+                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] + x[id[i+3]];\
                 i += 4;\
                 break;\
             }\
-            case 11:\
-            {\
-                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] + x[indices[i+3]] * x[indices[i+4]];\
+            case 11: {\
+                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] + x[id[i+3]] * x[id[i+4]];\
                 i += 5;\
                 break;\
             }\
-            case 12:\
-            {\
-                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] * x[indices[i+3]] + x[indices[i+4]];\
+            case 12: {\
+                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]] + x[id[i+4]];\
                 i += 5;\
                 break;\
             }\
-            case 13:\
-            {\
-                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] * x[indices[i+3]] + x[indices[i+4]] * x[indices[i+5]];\
+            case 13: {\
+                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]] + x[id[i+4]] * x[id[i+5]];\
                 i += 6;\
                 break;\
             }\
-            case 14:\
-            {\
-                x[indices[i+0]] = x[indices[i+1]] * x[indices[i+2]] * x[indices[i+3]] + x[indices[i+4]] * x[indices[i+5]] * x[indices[i+6]];\
+            case 14: {\
+                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]] + x[id[i+4]] * x[id[i+5]] * x[id[i+6]];\
                 i += 7;\
                 break;\
             }\
-            default:\
-                break;\
         }\
     }\
     ";
@@ -479,7 +460,7 @@ namespace TinyRNN
         "(global const " + VALUE_STRING + " *input, " +
         "global " + VALUE_STRING + " *output, " +
         "global const char *commands, " +
-        "global const uint *indices, " +
+        "global const uint *id, " +
         "global " + VALUE_STRING + " *x) {\n";
         
         kernel->fullSource += this->buildInputsExpressions();
@@ -521,7 +502,7 @@ namespace TinyRNN
         "(global const " + VALUE_STRING + " *rate, " +
         "global const " + VALUE_STRING + " *target, " +
         "global const char *commands, " +
-        "global const uint *indices, " +
+        "global const uint *id, " +
         "global " + VALUE_STRING + " *x) {\n";
         
         kernel->fullSource += this->buildRateExpression();
@@ -624,7 +605,7 @@ namespace TinyRNN
         this->feedKernel->clKernel.setArg(2, this->feedKernel->clCommandsBuffer);
         this->feedKernel->clKernel.setArg(3, this->feedKernel->clIndicesBuffer);
         this->feedKernel->clKernel.setArg(4, this->clMemoryBuffer);
-        const cl_int err = this->clQueue.enqueueNDRangeKernel(this->feedKernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
+        this->clQueue.enqueueNDRangeKernel(this->feedKernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
         this->clQueue.finish();
         
 #else
@@ -669,7 +650,7 @@ namespace TinyRNN
         this->trainKernel->clKernel.setArg(2, this->trainKernel->clCommandsBuffer);
         this->trainKernel->clKernel.setArg(3, this->trainKernel->clIndicesBuffer);
         this->trainKernel->clKernel.setArg(4, this->clMemoryBuffer);
-        const cl_int err = this->clQueue.enqueueNDRangeKernel(this->trainKernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
+        this->clQueue.enqueueNDRangeKernel(this->trainKernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
         this->clQueue.finish();
         
 #else
@@ -698,22 +679,69 @@ namespace TinyRNN
     {
         this->feedKernel = nullptr;
         this->trainKernel = nullptr;
-        // TODO
+        
+        if (auto feedKernelNode = context->getChildContext(Keys::VM::FeedKernel))
+        {
+            this->feedKernel = Kernel::Ptr(new Kernel());
+            this->feedKernel->deserialize(feedKernelNode);
+        }
+        
+        if (auto trainKernelNode = context->getChildContext(Keys::VM::TrainKernel))
+        {
+            this->trainKernel = Kernel::Ptr(new Kernel());
+            this->trainKernel->deserialize(trainKernelNode);
+        }
+        
+        this->compile();
     }
     
     inline void VMNetwork::serialize(SerializationContext::Ptr context) const
     {
-        // TODO
+        SerializationContext::Ptr feedKernelNode(context->addChildContext(Keys::VM::FeedKernel));
+        this->feedKernel->serialize(feedKernelNode);
+        
+        SerializationContext::Ptr trainKernelNode(context->addChildContext(Keys::VM::TrainKernel));
+        this->trainKernel->serialize(trainKernelNode);
     }
     
     inline void VMNetwork::Kernel::deserialize(SerializationContext::Ptr context)
     {
-        // TODO
+        const std::string &commandsEncoded = context->getStringProperty(Keys::VM::Commands);
+        const size_t commandsSize = context->getNumberProperty(Keys::VM::CommandsSize);
+        const auto &commandsDecoded = context->decodeBase64(commandsEncoded);
+        
+        this->commands.resize(commandsSize);
+        memcpy(this->commands.data(), commandsDecoded.data(), sizeof(char) * commandsSize);
+        
+        const std::string &indicesEncoded = context->getStringProperty(Keys::VM::Indices);
+        const size_t indicesSize = context->getNumberProperty(Keys::VM::IndicesSize);
+        const auto &indicesDecoded = context->decodeBase64(indicesEncoded);
+        
+        this->indices.resize(indicesSize);
+        memcpy(this->indices.data(), indicesDecoded.data(), sizeof(Index) * indicesSize);
+        
+        this->entryPoint = context->getStringProperty(Keys::VM::EntryPoint);
+        this->fullSource = context->getStringProperty(Keys::VM::FullSource);
     }
     
     inline void VMNetwork::Kernel::serialize(SerializationContext::Ptr context) const
     {
-        // TODO
+        const std::string commandsEncoded =
+        context->encodeBase64((const unsigned char *)this->commands.data(),
+                              sizeof(char) * this->commands.size());
+        
+        context->setStringProperty(commandsEncoded, Keys::VM::Commands);
+        context->setNumberProperty(this->commands.size(), Keys::VM::CommandsSize);
+        
+        const std::string indicesEncoded =
+        context->encodeBase64((const unsigned char *)this->indices.data(),
+                              sizeof(Index) * this->indices.size());
+        
+        context->setStringProperty(indicesEncoded, Keys::VM::Indices);
+        context->setNumberProperty(this->indices.size(), Keys::VM::IndicesSize);
+        
+        context->setStringProperty(this->entryPoint, Keys::VM::EntryPoint);
+        context->setStringProperty(this->fullSource, Keys::VM::FullSource);
     }
 } // namespace TinyRNN
 

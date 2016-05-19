@@ -62,7 +62,7 @@ namespace TinyRNN
         
     public:
         
-        HardcodedNeuron();
+        HardcodedNeuron() = default;
         
         static HardcodedNeuron::Ptr buildFrom(HardcodedTrainingContext::Ptr context,
                                               Neuron::Ptr target,
@@ -141,8 +141,6 @@ namespace TinyRNN
     //===------------------------------------------------------------------===//
     // HardcodedNeuron implementation
     //===------------------------------------------------------------------===//
-    
-    inline HardcodedNeuron::HardcodedNeuron() = default;
     
     inline HardcodedNeuron::Ptr HardcodedNeuron::buildFrom(HardcodedTrainingContext::Ptr context,
                                                            Neuron::Ptr target,

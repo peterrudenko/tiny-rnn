@@ -627,24 +627,26 @@ namespace TinyRNN
         this->feedKernels.clear();
         this->trainKernels.clear();
         
-        SerializationContext::Ptr feedKernelsNode(context->getChildContext(Keys::Hardcoded::FeedKernels));
-        
-        for (size_t i = 0; i < feedKernelsNode->getNumChildrenContexts(); ++i)
+        if (auto feedKernelsNode = context->getChildContext(Keys::Hardcoded::FeedKernels))
         {
-            SerializationContext::Ptr kernelNode(feedKernelsNode->getChildContext(i));
-            Kernel::Ptr kernel(new Kernel());
-            kernel->deserialize(kernelNode);
-            this->feedKernels.push_back(kernel);
+            for (size_t i = 0; i < feedKernelsNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr kernelNode(feedKernelsNode->getChildContext(i));
+                Kernel::Ptr kernel(new Kernel());
+                kernel->deserialize(kernelNode);
+                this->feedKernels.push_back(kernel);
+            }
         }
         
-        SerializationContext::Ptr trainKernelsNode(context->getChildContext(Keys::Hardcoded::TrainKernels));
-        
-        for (size_t i = 0; i < trainKernelsNode->getNumChildrenContexts(); ++i)
+        if (auto trainKernelsNode = context->getChildContext(Keys::Hardcoded::TrainKernels))
         {
-            SerializationContext::Ptr kernelNode(trainKernelsNode->getChildContext(i));
-            Kernel::Ptr kernel(new Kernel());
-            kernel->deserialize(kernelNode);
-            this->trainKernels.push_back(kernel);
+            for (size_t i = 0; i < trainKernelsNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr kernelNode(trainKernelsNode->getChildContext(i));
+                Kernel::Ptr kernel(new Kernel());
+                kernel->deserialize(kernelNode);
+                this->trainKernels.push_back(kernel);
+            }
         }
     }
     
@@ -665,28 +667,6 @@ namespace TinyRNN
             SerializationContext::Ptr kernelNode(trainKernelsNode->addChildContext(Keys::Hardcoded::TrainKernel));
             kernel->serialize(kernelNode);
         }
-        
-        // TODO(peterrudenko): also save the compiled program binaries, if any
-//        context->setNumberProperty(this->isBuilt(), Keys::Hardcoded::IsBuilt);
-//        
-//        if (this->isBuilt())
-//        {
-//            SerializationContext::Ptr binariesNode(context->createChildContext(Keys::Hardcoded::KernelBinaries));
-//            const std::vector<size_t> sizes = this->clProgram.getInfo<CL_PROGRAM_BINARY_SIZES>();
-//            const std::vector<char *> binaries = this->clProgram.getInfo<CL_PROGRAM_BINARIES>();
-//            
-//            for (size_t i = 0; i < binaries.size(); ++i)
-//            {
-//                SerializationContext::Ptr binaryNode(binariesNode->createChildContext(Keys::Hardcoded::KernelBinary));
-//                const size_t size = sizes[i];
-//                const std::string binary(context->encodeBase64((unsigned const char *)binaries[i], size));
-//                
-//                //std::cout << binary << std::endl;
-//                // todo base64encode?
-//                
-//                //binaryNode->setStringProperty(binary, Keys::Hardcoded::Content);
-//            }
-//        }
     }
     
     inline void HardcodedNetwork::Kernel::deserialize(SerializationContext::Ptr context)

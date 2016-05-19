@@ -30,19 +30,17 @@
 
 namespace TinyRNN
 {
-    class VMProgram final
+    struct VMProgram final
     {
-    public:
-        
         VMProgram() = default;
         
         enum Operation
         {
-            // A - Assignment
+            // A  - Assignment
             // AA - Addition Assignment
-            // P - Product
-            // S - Sum
-            // D - Difference
+            // P  - Product
+            // S  - Sum
+            // D  - Difference
             
             Zero = 0,           // x[1] = 0
             Activation = 1,     // x[1] = (1.0 / (1.0 + exp(-x[2])));
@@ -65,13 +63,9 @@ namespace TinyRNN
         friend VMProgram &operator << (VMProgram &i, Index index);
         friend VMProgram &operator << (VMProgram &i, Operation operation);
         
-    private:
-        
         std::vector<char> commands;
         std::vector<Index> indices;
-        
-        friend class VMNetwork;
-        
+
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(VMProgram);
     };
     
@@ -84,7 +78,7 @@ namespace TinyRNN
         
     public:
         
-        VMNeuron();
+        VMNeuron() = default;
         
         static VMNeuron::Ptr buildFrom(HardcodedTrainingContext::Ptr context,
                                        Neuron::Ptr target,
@@ -124,8 +118,6 @@ namespace TinyRNN
     //===------------------------------------------------------------------===//
     // HardcodedNeuron implementation
     //===------------------------------------------------------------------===//
-    
-    inline VMNeuron::VMNeuron() = default;
     
     inline VMNeuron::Ptr VMNeuron::buildFrom(HardcodedTrainingContext::Ptr context,
                                              Neuron::Ptr target,

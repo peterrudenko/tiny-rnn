@@ -77,13 +77,14 @@ namespace TinyRNN
         RawData memory;                         // the actual data passed to the kernel
         Mapping mapping;                        // variable name connected to its index in memory
         
-    private: // temporary stuff, never serialized:
-        
-        RawData outputs;                        // holds the most recent output
         Indices inputVariables;                 // indices of input variables
         Indices outputVariables;                // indices of output variables
         Indices targetVariables;                // indices of target variables
         Index rateVariable;
+        
+    private: // temporary stuff, never serialized:
+        
+        RawData outputs;                        // holds the most recent output
         
     private:
         
@@ -302,35 +303,95 @@ namespace TinyRNN
         const std::vector<unsigned char> &memoryDecoded = context->decodeBase64(memoryEncoded);
         memcpy(this->memory.data(), memoryDecoded.data(), sizeof(Value) * memorySize);
         
-        const size_t outputsSize = context->getNumberProperty(Keys::Hardcoded::OutputsSize);
-        this->outputs.resize(outputsSize);
-        
-        SerializationContext::Ptr mappingNode(context->getChildContext(Keys::Hardcoded::VariablesMapping));
-        
-        for (size_t i = 0; i < mappingNode->getNumChildrenContexts(); ++i)
+        if (auto mappingNode = context->getChildContext(Keys::Hardcoded::VariablesMapping))
         {
-            SerializationContext::Ptr variableNode(mappingNode->getChildContext(i));
-            const std::string &key = variableNode->getStringProperty(Keys::Hardcoded::Key);
-            const size_t index = variableNode->getNumberProperty(Keys::Hardcoded::Index);
-            this->mapping[key] = index;
+            for (size_t i = 0; i < mappingNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr variableNode(mappingNode->getChildContext(i));
+                const std::string &key = variableNode->getStringProperty(Keys::Hardcoded::Key);
+                const size_t index = variableNode->getNumberProperty(Keys::Hardcoded::Index);
+                this->mapping[key] = index;
+            }
+        }
+        
+        if (auto inputsNode = context->getChildContext(Keys::Hardcoded::InputsMapping))
+        {
+            for (size_t i = 0; i < inputsNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr variableNode(inputsNode->getChildContext(i));
+                const size_t index = variableNode->getNumberProperty(Keys::Hardcoded::Index);
+                this->inputVariables.push_back(index);
+            }
+        }
+        
+        if (auto outputsNode = context->getChildContext(Keys::Hardcoded::OutputsMapping))
+        {
+            for (size_t i = 0; i < outputsNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr variableNode(outputsNode->getChildContext(i));
+                const size_t index = variableNode->getNumberProperty(Keys::Hardcoded::Index);
+                this->outputVariables.push_back(index);
+            }
+            
+            this->outputs.resize(this->outputVariables.size());
+        }
+        
+        if (auto targetsNode = context->getChildContext(Keys::Hardcoded::TargetsMapping))
+        {
+            for (size_t i = 0; i < targetsNode->getNumChildrenContexts(); ++i)
+            {
+                SerializationContext::Ptr variableNode(targetsNode->getChildContext(i));
+                const size_t index = variableNode->getNumberProperty(Keys::Hardcoded::Index);
+                this->targetVariables.push_back(index);
+            }
+        }
+        
+        if (auto rateNode = context->getChildContext(Keys::Hardcoded::RateMapping))
+        {
+            this->rateVariable = rateNode->getNumberProperty(Keys::Hardcoded::Index);
         }
     }
     
     inline void HardcodedTrainingContext::serialize(SerializationContext::Ptr context) const
     {
-        const std::string memoryEncoded = context->encodeBase64((const unsigned char *)this->memory.data(), sizeof(Value) * this->memory.size());
+        const std::string memoryEncoded =
+        context->encodeBase64((const unsigned char *)this->memory.data(),
+                              sizeof(Value) * this->memory.size());
+        
         context->setStringProperty(memoryEncoded, Keys::Hardcoded::RawMemory);
         context->setNumberProperty(this->memory.size(), Keys::Hardcoded::MemorySize);
-        context->setNumberProperty(this->outputs.size(), Keys::Hardcoded::OutputsSize);
         
         SerializationContext::Ptr mappingNode(context->addChildContext(Keys::Hardcoded::VariablesMapping));
-        
         for (const auto &i : this->mapping)
         {
             SerializationContext::Ptr variableNode(mappingNode->addChildContextUnordered(Keys::Hardcoded::Variable));
             variableNode->setStringProperty(i.first, Keys::Hardcoded::Key);
             variableNode->setNumberProperty(i.second, Keys::Hardcoded::Index);
         }
+        
+        SerializationContext::Ptr inputsNode(context->addChildContext(Keys::Hardcoded::InputsMapping));
+        for (const auto &i : this->inputVariables)
+        {
+            SerializationContext::Ptr variableNode(inputsNode->addChildContext(Keys::Hardcoded::Variable));
+            variableNode->setNumberProperty(i, Keys::Hardcoded::Index);
+        }
+        
+        SerializationContext::Ptr outputsNode(context->addChildContext(Keys::Hardcoded::OutputsMapping));
+        for (const auto &i : this->outputVariables)
+        {
+            SerializationContext::Ptr variableNode(outputsNode->addChildContext(Keys::Hardcoded::Variable));
+            variableNode->setNumberProperty(i, Keys::Hardcoded::Index);
+        }
+        
+        SerializationContext::Ptr targetsNode(context->addChildContext(Keys::Hardcoded::TargetsMapping));
+        for (const auto &i : this->targetVariables)
+        {
+            SerializationContext::Ptr variableNode(targetsNode->addChildContext(Keys::Hardcoded::Variable));
+            variableNode->setNumberProperty(i, Keys::Hardcoded::Index);
+        }
+        
+        SerializationContext::Ptr rateNode(context->addChildContext(Keys::Hardcoded::RateMapping));
+        rateNode->setNumberProperty(this->rateVariable, Keys::Hardcoded::Index);
     }
 }  // namespace TinyRNN
 
