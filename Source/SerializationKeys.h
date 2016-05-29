@@ -76,7 +76,7 @@ namespace TinyRNN
             
             static const std::string ErrorAccumulator = "ErrorAccumulator";
             static const std::string Gradient = "Gradient";
-        }
+        } // namespace Core
         
         namespace Mapping
         {
@@ -125,7 +125,7 @@ namespace TinyRNN
             
             static const Id ErrorAccumulator = 38;
             static const Id Gradient = 39;
-        }
+        } // namespace Mapping
         
         namespace Hardcoded
         {
@@ -156,15 +156,35 @@ namespace TinyRNN
             static const std::string TrainChunk = "TrainChunk";
             static const std::string TraceChunk = "TraceChunk";
 
-            static const std::string RawMemory = "RawMemory";
             static const std::string VariablesMapping = "VariablesMapping";
+            static const std::string InputsMapping = "InputsMapping";
+            static const std::string OutputsMapping = "OutputsMapping";
+            static const std::string TargetsMapping = "TargetsMapping";
+            static const std::string RateMapping = "RateMapping";
+            
+            static const std::string RawMemory = "RawMemory";
             static const std::string MemorySize = "MemorySize";
-            static const std::string OutputsSize = "OutputsSize";
             static const std::string Variable = "Variable";
             static const std::string Key = "Key";
             static const std::string Index = "Index";
-        }
-    }
-}
+        } // namespace Hardcoded
+        
+        namespace VM
+        {
+            static const std::string Network = "VMNetwork";
+            
+            static const std::string FeedKernel = "FeedKernel";
+            static const std::string TrainKernel = "TrainKernel";
+            
+            static const std::string Commands = "Commands";
+            static const std::string CommandsSize = "CommandsSize";
+            static const std::string Indices = "Indices";
+            static const std::string IndicesSize = "IndicesSize";
+            
+            static const std::string FullSource = "FullSource";
+            static const std::string EntryPoint = "EntryPoint";
+        } // namespace VM
+    } // namespace Keys
+}  // namespace TinyRNN
 
 #endif  // TINYRNN_SERIALIZATIONKEYS_H_INCLUDED

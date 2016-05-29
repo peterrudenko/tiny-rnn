@@ -25,8 +25,8 @@
 
 #include "SerializedObject.h"
 #include "TrainingContext.h"
-#include "SerializationKeys.h"
 #include "Id.h"
+#include "SerializationKeys.h"
 
 namespace TinyRNN
 {
@@ -151,7 +151,9 @@ namespace TinyRNN
         void learn(Value rate = 0.1);
         
         friend class Layer;
+        friend class VMNeuron;
         friend class HardcodedNeuron;
+        friend class HardcodedTrainingContext;
         
     private:
         
@@ -740,6 +742,6 @@ namespace TinyRNN
         context->setNumberProperty(this->getGateNeuron() ? this->getGateNeuron()->getUuid() : 0, Keys::Core::GateNeuronUuid);
         context->setNumberProperty(this->getOutputNeuron()->getUuid(), Keys::Core::OutputNeuronUuid);
     }
-}
+} // namespace TinyRNN
 
 #endif  // TINYRNN_NEURON_H_INCLUDED

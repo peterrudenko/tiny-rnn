@@ -33,9 +33,10 @@
 
 namespace TinyRNN
 {
-    using Id = unsigned long;
+    using Id = uint32_t;
+    using Index = uint32_t;
     using Value = float;
-}
+} // namespace TinyRNN
 
 #if TINYRNN_OPENCL_ACCELERATION
 #include "OpenCL/cl.hpp"

@@ -6,317 +6,100 @@
 	objectVersion = 46;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		5864069FFF7DA1DE0653796C /* SerializationTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9632B60FF767369214AA1A92 /* SerializationTests.cpp */; };
-		67B8C7DCBB339E0B75934FF2 /* RecentFilesMenuTemplate.nib in Resources */ = {isa = PBXBuildFile; fileRef = 91D375D0D4DADC71298CD099 /* RecentFilesMenuTemplate.nib */; };
-		6B6508CB28975F56A4623FEC /* TrainingTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C110B6697F6512695FDCE5D /* TrainingTests.cpp */; };
-		B188DE7B3B1A5775015290B1 /* NetworkTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E257FD8197AB7B3F42331FF3 /* NetworkTests.cpp */; };
-		D3D4B8A52064E85835949FCE /* Main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5438EDADAC8806D907A553B6 /* Main.cpp */; };
-		D42D818C2C497E7E1D3B10A2 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A565F4A239A4281A78B67CE6 /* OpenCL.framework */; };
-		E0BA8E740E43E5632FFD47CC /* pugixml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 422CC6B7CB0B62D817723B88 /* pugixml.cpp */; };
-/* End PBXBuildFile section */
-
-/* Begin PBXFileReference section */
-		099D9AEFE3B7A6853326116F /* Neuron.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Neuron.h; path = ../../Source/Neuron.h; sourceTree = SOURCE_ROOT; };
-		0B7696AB97F33A13E27DA70C /* Helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Helpers.h; path = ../../Tests/Helpers.h; sourceTree = SOURCE_ROOT; };
-		0F0DE9C3DC5EE56D8D0151FB /* ScopedSubscription.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedSubscription.h; path = ../../Source/ScopedSubscription.h; sourceTree = SOURCE_ROOT; };
-		18BD39736F5F8320A3E4EA6E /* SerializationKeys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializationKeys.h; path = ../../Source/SerializationKeys.h; sourceTree = SOURCE_ROOT; };
-		2E321830528E38A62D5E4518 /* SerializationContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializationContext.h; path = ../../Source/SerializationContext.h; sourceTree = SOURCE_ROOT; };
-		422CC6B7CB0B62D817723B88 /* pugixml.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = pugixml.cpp; path = ../../Tests/ThirdParty/pugixml/src/pugixml.cpp; sourceTree = SOURCE_ROOT; };
-		513169F6C3A5D7C964DEE0E5 /* ScopedMemoryBlock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedMemoryBlock.h; path = ../../Source/ScopedMemoryBlock.h; sourceTree = SOURCE_ROOT; };
-		5438EDADAC8806D907A553B6 /* Main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Main.cpp; path = ../../Tests/Main.cpp; sourceTree = SOURCE_ROOT; };
-		620BAE57F65D39ACEED058B9 /* SerializedObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializedObject.h; path = ../../Source/SerializedObject.h; sourceTree = SOURCE_ROOT; };
-		7171B814D3C72330858DE429 /* TrainingContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TrainingContext.h; path = ../../Source/TrainingContext.h; sourceTree = SOURCE_ROOT; };
-		871B6CD7E139A2E43821B9F7 /* HardcodedTrainingContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HardcodedTrainingContext.h; path = ../../Source/HardcodedTrainingContext.h; sourceTree = SOURCE_ROOT; };
-		91D375D0D4DADC71298CD099 /* RecentFilesMenuTemplate.nib */ = {isa = PBXFileReference; lastKnownFileType = file.nib; path = RecentFilesMenuTemplate.nib; sourceTree = SOURCE_ROOT; };
-		9385973BB68033C95938BAE7 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Common.h; path = ../../Source/Common.h; sourceTree = SOURCE_ROOT; };
-		93DBBE0D39CAF866DED3A2C1 /* Network.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Network.h; path = ../../Source/Network.h; sourceTree = SOURCE_ROOT; };
-		9632B60FF767369214AA1A92 /* SerializationTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SerializationTests.cpp; path = ../../Tests/SerializationTests.cpp; sourceTree = SOURCE_ROOT; };
-		9C110B6697F6512695FDCE5D /* TrainingTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = TrainingTests.cpp; path = ../../Tests/TrainingTests.cpp; sourceTree = SOURCE_ROOT; };
-		9FECCCA8BCAEBEDCC22CC3E8 /* Layer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Layer.h; path = ../../Source/Layer.h; sourceTree = SOURCE_ROOT; };
-		A565F4A239A4281A78B67CE6 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
-		CE14364C3B72206DB256BA3D /* HardcodedNeuron.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HardcodedNeuron.h; path = ../../Source/HardcodedNeuron.h; sourceTree = SOURCE_ROOT; };
-		D4088A052B661FB6908F390F /* TinyRNN.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TinyRNN.h; path = ../../Source/TinyRNN.h; sourceTree = SOURCE_ROOT; };
-		DFF0EB59EB8EE2634E78BC2B /* HardcodedNetwork.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HardcodedNetwork.h; path = ../../Source/HardcodedNetwork.h; sourceTree = SOURCE_ROOT; };
-		E257FD8197AB7B3F42331FF3 /* NetworkTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = NetworkTests.cpp; path = ../../Tests/NetworkTests.cpp; sourceTree = SOURCE_ROOT; };
-		E63C4FDEF5FFB76D19B1E25B /* AppConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AppConfig.h; path = ../Introjucer/JuceLibraryCode/AppConfig.h; sourceTree = SOURCE_ROOT; };
-		E93FC5B1E30A66158C19403D /* Serializer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Serializer.h; path = ../../Source/Serializer.h; sourceTree = SOURCE_ROOT; };
-		EEAFEFEA4CB99859C0512B81 /* JuceHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = JuceHeader.h; path = ../Introjucer/JuceLibraryCode/JuceHeader.h; sourceTree = SOURCE_ROOT; };
-		F933072AC8181C1DAC189E40 /* Id.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Id.h; path = ../../Source/Id.h; sourceTree = SOURCE_ROOT; };
-		FAC89CB49C41CD0C2CA82871 /* ScopedTimer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedTimer.h; path = ../../Source/ScopedTimer.h; sourceTree = SOURCE_ROOT; };
-		FC41298C3739DE48EB366E50 /* TinyRNN */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = TinyRNN; sourceTree = BUILT_PRODUCTS_DIR; };
-/* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		178BFE3D563E63B985438BB0 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				D42D818C2C497E7E1D3B10A2 /* OpenCL.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXGroup section */
-		2D43549350A17FDB82BFC73C /* Tests */ = {
-			isa = PBXGroup;
-			children = (
-				72AE43419573D2728EF829DC /* ThirdParty */,
-				0B7696AB97F33A13E27DA70C /* Helpers.h */,
-				5438EDADAC8806D907A553B6 /* Main.cpp */,
-				E257FD8197AB7B3F42331FF3 /* NetworkTests.cpp */,
-				9C110B6697F6512695FDCE5D /* TrainingTests.cpp */,
-				9632B60FF767369214AA1A92 /* SerializationTests.cpp */,
-			);
-			name = Tests;
-			sourceTree = "<group>";
-		};
-		442CF60FA364A112B414D91D /* Source */ = {
-			isa = PBXGroup;
-			children = (
-				5F4DE4AF3C543E8ED757063D /* TinyRNN */,
-				5D860C90D824BD171E3D3704 /* Juce Library Code */,
-				C70E98B1BFF31F35533C54EE /* Resources */,
-				ED592D1B284434EE9D6FF1A5 /* Frameworks */,
-				92AE7DFFF764CD437B4A065C /* Products */,
-			);
-			name = Source;
-			sourceTree = "<group>";
-		};
-		5D860C90D824BD171E3D3704 /* Juce Library Code */ = {
-			isa = PBXGroup;
-			children = (
-				E63C4FDEF5FFB76D19B1E25B /* AppConfig.h */,
-				EEAFEFEA4CB99859C0512B81 /* JuceHeader.h */,
-			);
-			name = "Juce Library Code";
-			sourceTree = "<group>";
-		};
-		5F4DE4AF3C543E8ED757063D /* TinyRNN */ = {
-			isa = PBXGroup;
-			children = (
-				EA77962A551859D2C0A91ACE /* Source */,
-				2D43549350A17FDB82BFC73C /* Tests */,
-			);
-			name = TinyRNN;
-			sourceTree = "<group>";
-		};
-		5F9536C3033376E5FE89122A /* Helpers */ = {
-			isa = PBXGroup;
-			children = (
-				513169F6C3A5D7C964DEE0E5 /* ScopedMemoryBlock.h */,
-				0F0DE9C3DC5EE56D8D0151FB /* ScopedSubscription.h */,
-				FAC89CB49C41CD0C2CA82871 /* ScopedTimer.h */,
-				F933072AC8181C1DAC189E40 /* Id.h */,
-			);
-			name = Helpers;
-			sourceTree = "<group>";
-		};
-		72AE43419573D2728EF829DC /* ThirdParty */ = {
-			isa = PBXGroup;
-			children = (
-				422CC6B7CB0B62D817723B88 /* pugixml.cpp */,
-			);
-			name = ThirdParty;
-			sourceTree = "<group>";
-		};
-		87FB19D6B8DD0D9115CB583D /* Serialization */ = {
-			isa = PBXGroup;
-			children = (
-				620BAE57F65D39ACEED058B9 /* SerializedObject.h */,
-				2E321830528E38A62D5E4518 /* SerializationContext.h */,
-				18BD39736F5F8320A3E4EA6E /* SerializationKeys.h */,
-				E93FC5B1E30A66158C19403D /* Serializer.h */,
-			);
-			name = Serialization;
-			sourceTree = "<group>";
-		};
-		92AE7DFFF764CD437B4A065C /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				FC41298C3739DE48EB366E50 /* TinyRNN */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		BAFACB7291BBBDEDAE3AF99D /* OpenCL */ = {
-			isa = PBXGroup;
-			children = (
-				871B6CD7E139A2E43821B9F7 /* HardcodedTrainingContext.h */,
-				DFF0EB59EB8EE2634E78BC2B /* HardcodedNetwork.h */,
-				CE14364C3B72206DB256BA3D /* HardcodedNeuron.h */,
-			);
-			name = OpenCL;
-			sourceTree = "<group>";
-		};
-		BB896A6B4FADF1C8E2A8A78E /* Network */ = {
-			isa = PBXGroup;
-			children = (
-				93DBBE0D39CAF866DED3A2C1 /* Network.h */,
-				9FECCCA8BCAEBEDCC22CC3E8 /* Layer.h */,
-				099D9AEFE3B7A6853326116F /* Neuron.h */,
-				7171B814D3C72330858DE429 /* TrainingContext.h */,
-			);
-			name = Network;
-			sourceTree = "<group>";
-		};
-		C70E98B1BFF31F35533C54EE /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				91D375D0D4DADC71298CD099 /* RecentFilesMenuTemplate.nib */,
-			);
-			name = Resources;
-			sourceTree = "<group>";
-		};
-		EA77962A551859D2C0A91ACE /* Source */ = {
-			isa = PBXGroup;
-			children = (
-				BAFACB7291BBBDEDAE3AF99D /* OpenCL */,
-				BB896A6B4FADF1C8E2A8A78E /* Network */,
-				87FB19D6B8DD0D9115CB583D /* Serialization */,
-				5F9536C3033376E5FE89122A /* Helpers */,
-				D4088A052B661FB6908F390F /* TinyRNN.h */,
-				9385973BB68033C95938BAE7 /* Common.h */,
-			);
-			name = Source;
-			sourceTree = "<group>";
-		};
-		ED592D1B284434EE9D6FF1A5 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				A565F4A239A4281A78B67CE6 /* OpenCL.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
-/* End PBXGroup section */
-
-/* Begin PBXNativeTarget section */
-		5439141A0B4765861A78AEBD /* TinyRNN */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 6BF360F8FB25A4B2A69653C4 /* Build configuration list for PBXNativeTarget "TinyRNN" */;
-			buildPhases = (
-				9152243487172197EA5DC9B6 /* Resources */,
-				E56E0982C3F9E13A3B420B6A /* Sources */,
-				178BFE3D563E63B985438BB0 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = TinyRNN;
-			productInstallPath = /usr/bin;
-			productName = TinyRNN;
-			productReference = FC41298C3739DE48EB366E50 /* TinyRNN */;
-			productType = "com.apple.product-type.tool";
-		};
-/* End PBXNativeTarget section */
-
-/* Begin PBXProject section */
-		6C4E250F3AEF077487D1BA63 /* Project object */ = {
-			isa = PBXProject;
-			attributes = {
-				LastUpgradeCheck = 0440;
-			};
-			buildConfigurationList = 61A648CB5417D56A1FF3B00B /* Build configuration list for PBXProject "TinyRNN" */;
-			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
-			hasScannedForEncodings = 0;
-			knownRegions = (
-				en,
-			);
-			mainGroup = 442CF60FA364A112B414D91D /* Source */;
-			projectDirPath = "";
-			projectRoot = "";
-			targets = (
-				5439141A0B4765861A78AEBD /* TinyRNN */,
-			);
-		};
-/* End PBXProject section */
-
-/* Begin PBXResourcesBuildPhase section */
-		9152243487172197EA5DC9B6 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				67B8C7DCBB339E0B75934FF2 /* RecentFilesMenuTemplate.nib in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
-
-/* Begin PBXSourcesBuildPhase section */
-		E56E0982C3F9E13A3B420B6A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				E0BA8E740E43E5632FFD47CC /* pugixml.cpp in Sources */,
-				D3D4B8A52064E85835949FCE /* Main.cpp in Sources */,
-				B188DE7B3B1A5775015290B1 /* NetworkTests.cpp in Sources */,
-				6B6508CB28975F56A4623FEC /* TrainingTests.cpp in Sources */,
-				5864069FFF7DA1DE0653796C /* SerializationTests.cpp in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXSourcesBuildPhase section */
-
-/* Begin XCBuildConfiguration section */
-		1A20CEA399940FC86CCC431C /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_C_LANGUAGE_STANDARD = c99;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES;
-				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
-				GCC_WARN_MISSING_PARENTHESES = YES;
-				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
-				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				PRODUCT_NAME = TinyRNN;
-				WARNING_CFLAGS = "-Wreorder";
-				ZERO_LINK = NO;
-			};
-			name = Release;
-		};
-		525F346E2DC0DCA895614132 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
-				CLANG_LINK_OBJC_RUNTIME = NO;
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
-				DEAD_CODE_STRIPPING = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"_NDEBUG=1",
-					"NDEBUG=1",
-					"TINYRNN_OPENCL_ACCELERATION=1",
-					"JUCER_XCODE_MAC_8DF12694=1",
-					"JUCE_APP_VERSION=0.1.0",
-					"JUCE_APP_VERSION_HEX=0x100",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
-				HEADER_SEARCH_PATHS = (
-					../Introjucer/JuceLibraryCode,
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = /usr/bin;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
-				MACOSX_DEPLOYMENT_TARGET_ppc = 10.4;
-				SDKROOT_ppc = macosx10.5;
-			};
-			name = Release;
-		};
-		7908C763ED3F4997CB87C5E0 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
+		AF2511986E0C730F1E573372 = {isa = PBXBuildFile; fileRef = 16438FD0EBF6AA3AE199E084; };
+		D42D818C2C497E7E1D3B10A2 = {isa = PBXBuildFile; fileRef = A565F4A239A4281A78B67CE6; };
+		67B8C7DCBB339E0B75934FF2 = {isa = PBXBuildFile; fileRef = 91D375D0D4DADC71298CD099; };
+		E0BA8E740E43E5632FFD47CC = {isa = PBXBuildFile; fileRef = 422CC6B7CB0B62D817723B88; };
+		D3D4B8A52064E85835949FCE = {isa = PBXBuildFile; fileRef = 5438EDADAC8806D907A553B6; };
+		B188DE7B3B1A5775015290B1 = {isa = PBXBuildFile; fileRef = E257FD8197AB7B3F42331FF3; };
+		6B6508CB28975F56A4623FEC = {isa = PBXBuildFile; fileRef = 9C110B6697F6512695FDCE5D; };
+		5864069FFF7DA1DE0653796C = {isa = PBXBuildFile; fileRef = 9632B60FF767369214AA1A92; };
+		099D9AEFE3B7A6853326116F = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Neuron.h; path = ../../Source/Neuron.h; sourceTree = "SOURCE_ROOT"; };
+		0B7696AB97F33A13E27DA70C = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Helpers.h; path = ../../Tests/Helpers.h; sourceTree = "SOURCE_ROOT"; };
+		0F0DE9C3DC5EE56D8D0151FB = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedSubscription.h; path = ../../Source/ScopedSubscription.h; sourceTree = "SOURCE_ROOT"; };
+		16438FD0EBF6AA3AE199E084 = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = TinyRNN; sourceTree = "BUILT_PRODUCTS_DIR"; };
+		18BD39736F5F8320A3E4EA6E = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializationKeys.h; path = ../../Source/SerializationKeys.h; sourceTree = "SOURCE_ROOT"; };
+		2E321830528E38A62D5E4518 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializationContext.h; path = ../../Source/SerializationContext.h; sourceTree = "SOURCE_ROOT"; };
+		422CC6B7CB0B62D817723B88 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = pugixml.cpp; path = ../../Tests/ThirdParty/pugixml/src/pugixml.cpp; sourceTree = "SOURCE_ROOT"; };
+		513169F6C3A5D7C964DEE0E5 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedMemoryBlock.h; path = ../../Source/ScopedMemoryBlock.h; sourceTree = "SOURCE_ROOT"; };
+		5438EDADAC8806D907A553B6 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Main.cpp; path = ../../Tests/Main.cpp; sourceTree = "SOURCE_ROOT"; };
+		620BAE57F65D39ACEED058B9 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializedObject.h; path = ../../Source/SerializedObject.h; sourceTree = "SOURCE_ROOT"; };
+		7090225245D2EDC44EB6A8FF = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VMNeuron.h; path = ../../Source/VMNeuron.h; sourceTree = "SOURCE_ROOT"; };
+		7171B814D3C72330858DE429 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TrainingContext.h; path = ../../Source/TrainingContext.h; sourceTree = "SOURCE_ROOT"; };
+		871B6CD7E139A2E43821B9F7 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HardcodedTrainingContext.h; path = ../../Source/HardcodedTrainingContext.h; sourceTree = "SOURCE_ROOT"; };
+		91D375D0D4DADC71298CD099 = {isa = PBXFileReference; lastKnownFileType = file.nib; name = RecentFilesMenuTemplate.nib; path = RecentFilesMenuTemplate.nib; sourceTree = "SOURCE_ROOT"; };
+		9385973BB68033C95938BAE7 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Common.h; path = ../../Source/Common.h; sourceTree = "SOURCE_ROOT"; };
+		93DBBE0D39CAF866DED3A2C1 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Network.h; path = ../../Source/Network.h; sourceTree = "SOURCE_ROOT"; };
+		9632B60FF767369214AA1A92 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SerializationTests.cpp; path = ../../Tests/SerializationTests.cpp; sourceTree = "SOURCE_ROOT"; };
+		9C110B6697F6512695FDCE5D = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = TrainingTests.cpp; path = ../../Tests/TrainingTests.cpp; sourceTree = "SOURCE_ROOT"; };
+		9FECCCA8BCAEBEDCC22CC3E8 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Layer.h; path = ../../Source/Layer.h; sourceTree = "SOURCE_ROOT"; };
+		A565F4A239A4281A78B67CE6 = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
+		BC7E4700D9FFBAC2434F41C5 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VMNetwork.h; path = ../../Source/VMNetwork.h; sourceTree = "SOURCE_ROOT"; };
+		CE14364C3B72206DB256BA3D = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HardcodedNeuron.h; path = ../../Source/HardcodedNeuron.h; sourceTree = "SOURCE_ROOT"; };
+		D4088A052B661FB6908F390F = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TinyRNN.h; path = ../../Source/TinyRNN.h; sourceTree = "SOURCE_ROOT"; };
+		DFF0EB59EB8EE2634E78BC2B = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HardcodedNetwork.h; path = ../../Source/HardcodedNetwork.h; sourceTree = "SOURCE_ROOT"; };
+		E257FD8197AB7B3F42331FF3 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = NetworkTests.cpp; path = ../../Tests/NetworkTests.cpp; sourceTree = "SOURCE_ROOT"; };
+		E63C4FDEF5FFB76D19B1E25B = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AppConfig.h; path = ../Introjucer/JuceLibraryCode/AppConfig.h; sourceTree = "SOURCE_ROOT"; };
+		E93FC5B1E30A66158C19403D = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Serializer.h; path = ../../Source/Serializer.h; sourceTree = "SOURCE_ROOT"; };
+		EEAFEFEA4CB99859C0512B81 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = JuceHeader.h; path = ../Introjucer/JuceLibraryCode/JuceHeader.h; sourceTree = "SOURCE_ROOT"; };
+		F933072AC8181C1DAC189E40 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Id.h; path = ../../Source/Id.h; sourceTree = "SOURCE_ROOT"; };
+		FAC89CB49C41CD0C2CA82871 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedTimer.h; path = ../../Source/ScopedTimer.h; sourceTree = "SOURCE_ROOT"; };
+		BAFACB7291BBBDEDAE3AF99D = {isa = PBXGroup; children = (
+					871B6CD7E139A2E43821B9F7,
+					DFF0EB59EB8EE2634E78BC2B,
+					CE14364C3B72206DB256BA3D,
+					BC7E4700D9FFBAC2434F41C5,
+					7090225245D2EDC44EB6A8FF, ); name = OpenCL; sourceTree = "<group>"; };
+		BB896A6B4FADF1C8E2A8A78E = {isa = PBXGroup; children = (
+					93DBBE0D39CAF866DED3A2C1,
+					9FECCCA8BCAEBEDCC22CC3E8,
+					099D9AEFE3B7A6853326116F,
+					7171B814D3C72330858DE429, ); name = Network; sourceTree = "<group>"; };
+		87FB19D6B8DD0D9115CB583D = {isa = PBXGroup; children = (
+					620BAE57F65D39ACEED058B9,
+					2E321830528E38A62D5E4518,
+					18BD39736F5F8320A3E4EA6E,
+					E93FC5B1E30A66158C19403D, ); name = Serialization; sourceTree = "<group>"; };
+		5F9536C3033376E5FE89122A = {isa = PBXGroup; children = (
+					513169F6C3A5D7C964DEE0E5,
+					0F0DE9C3DC5EE56D8D0151FB,
+					FAC89CB49C41CD0C2CA82871,
+					F933072AC8181C1DAC189E40, ); name = Helpers; sourceTree = "<group>"; };
+		EA77962A551859D2C0A91ACE = {isa = PBXGroup; children = (
+					BAFACB7291BBBDEDAE3AF99D,
+					BB896A6B4FADF1C8E2A8A78E,
+					87FB19D6B8DD0D9115CB583D,
+					5F9536C3033376E5FE89122A,
+					D4088A052B661FB6908F390F,
+					9385973BB68033C95938BAE7, ); name = Source; sourceTree = "<group>"; };
+		72AE43419573D2728EF829DC = {isa = PBXGroup; children = (
+					422CC6B7CB0B62D817723B88, ); name = ThirdParty; sourceTree = "<group>"; };
+		2D43549350A17FDB82BFC73C = {isa = PBXGroup; children = (
+					72AE43419573D2728EF829DC,
+					0B7696AB97F33A13E27DA70C,
+					5438EDADAC8806D907A553B6,
+					E257FD8197AB7B3F42331FF3,
+					9C110B6697F6512695FDCE5D,
+					9632B60FF767369214AA1A92, ); name = Tests; sourceTree = "<group>"; };
+		5F4DE4AF3C543E8ED757063D = {isa = PBXGroup; children = (
+					EA77962A551859D2C0A91ACE,
+					2D43549350A17FDB82BFC73C, ); name = TinyRNN; sourceTree = "<group>"; };
+		5D860C90D824BD171E3D3704 = {isa = PBXGroup; children = (
+					E63C4FDEF5FFB76D19B1E25B,
+					EEAFEFEA4CB99859C0512B81, ); name = "Juce Library Code"; sourceTree = "<group>"; };
+		C70E98B1BFF31F35533C54EE = {isa = PBXGroup; children = (
+					91D375D0D4DADC71298CD099, ); name = Resources; sourceTree = "<group>"; };
+		ED592D1B284434EE9D6FF1A5 = {isa = PBXGroup; children = (
+					A565F4A239A4281A78B67CE6, ); name = Frameworks; sourceTree = "<group>"; };
+		92AE7DFFF764CD437B4A065C = {isa = PBXGroup; children = (
+					16438FD0EBF6AA3AE199E084, ); name = Products; sourceTree = "<group>"; };
+		442CF60FA364A112B414D91D = {isa = PBXGroup; children = (
+					5F4DE4AF3C543E8ED757063D,
+					5D860C90D824BD171E3D3704,
+					C70E98B1BFF31F35533C54EE,
+					ED592D1B284434EE9D6FF1A5,
+					92AE7DFFF764CD437B4A065C, ); name = Source; sourceTree = "<group>"; };
+		13A2AC9045C7FF478284A787 = {isa = XCBuildConfiguration; buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_LINK_OBJC_RUNTIME = NO;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -330,26 +113,41 @@
 					"TINYRNN_OPENCL_ACCELERATION=1",
 					"JUCER_XCODE_MAC_8DF12694=1",
 					"JUCE_APP_VERSION=0.1.0",
-					"JUCE_APP_VERSION_HEX=0x100",
-				);
+					"JUCE_APP_VERSION_HEX=0x100", );
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
-				HEADER_SEARCH_PATHS = (
-					../Introjucer/JuceLibraryCode,
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = /usr/bin;
+				HEADER_SEARCH_PATHS = ("../Introjucer/JuceLibraryCode", "$(inherited)");
+				INSTALL_PATH = "/usr/bin";
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MACOSX_DEPLOYMENT_TARGET_ppc = 10.4;
-				SDKROOT_ppc = macosx10.5;
-			};
-			name = Debug;
-		};
-		8BF5EDE6B18634D230E08E47 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
+				PRODUCT_BUNDLE_IDENTIFIER = com.peterrudenko.tinyrnn;
+				SDKROOT_ppc = macosx10.5; }; name = Debug; };
+		7B290C05543F1D405A02833E = {isa = XCBuildConfiguration; buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_LINK_OBJC_RUNTIME = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
+				DEAD_CODE_STRIPPING = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"_NDEBUG=1",
+					"NDEBUG=1",
+					"TINYRNN_OPENCL_ACCELERATION=1",
+					"JUCER_XCODE_MAC_8DF12694=1",
+					"JUCE_APP_VERSION=0.1.0",
+					"JUCE_APP_VERSION_HEX=0x100", );
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				HEADER_SEARCH_PATHS = ("../Introjucer/JuceLibraryCode", "$(inherited)");
+				INSTALL_PATH = "/usr/bin";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET_ppc = 10.4;
+				PRODUCT_BUNDLE_IDENTIFIER = com.peterrudenko.tinyrnn;
+				SDKROOT_ppc = macosx10.5; }; name = Release; };
+		8BF5EDE6B18634D230E08E47 = {isa = XCBuildConfiguration; buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEBUG_INFORMATION_FORMAT = "dwarf";
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_MODEL_TUNING = G5;
@@ -360,34 +158,46 @@
 				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_NAME = TinyRNN;
-				WARNING_CFLAGS = "-Wreorder";
-				ZERO_LINK = NO;
-			};
-			name = Debug;
-		};
-/* End XCBuildConfiguration section */
-
-/* Begin XCConfigurationList section */
-		61A648CB5417D56A1FF3B00B /* Build configuration list for PBXProject "TinyRNN" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				8BF5EDE6B18634D230E08E47 /* Debug */,
-				1A20CEA399940FC86CCC431C /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		6BF360F8FB25A4B2A69653C4 /* Build configuration list for PBXNativeTarget "TinyRNN" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				7908C763ED3F4997CB87C5E0 /* Debug */,
-				525F346E2DC0DCA895614132 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-/* End XCConfigurationList section */
+				PRODUCT_NAME = "TinyRNN";
+				WARNING_CFLAGS = -Wreorder;
+				ZERO_LINK = NO; }; name = Debug; };
+		1A20CEA399940FC86CCC431C = {isa = XCBuildConfiguration; buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PRODUCT_NAME = "TinyRNN";
+				WARNING_CFLAGS = -Wreorder;
+				ZERO_LINK = NO; }; name = Release; };
+		052F9469CBAAB0FADCCDDEA9 = {isa = PBXTargetDependency; target = 3104756C2ABDFF8E0E22B37E; };
+		61A648CB5417D56A1FF3B00B = {isa = XCConfigurationList; buildConfigurations = (
+					8BF5EDE6B18634D230E08E47,
+					1A20CEA399940FC86CCC431C, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
+		610C524CD57D47C6C9D7856F = {isa = XCConfigurationList; buildConfigurations = (
+					13A2AC9045C7FF478284A787,
+					7B290C05543F1D405A02833E, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
+		82A4577C48DC2886AA8522A5 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (
+					67B8C7DCBB339E0B75934FF2, ); runOnlyForDeploymentPostprocessing = 0; };
+		B3C708C0E643FB0AC532BFBD = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
+					E0BA8E740E43E5632FFD47CC,
+					D3D4B8A52064E85835949FCE,
+					B188DE7B3B1A5775015290B1,
+					6B6508CB28975F56A4623FEC,
+					5864069FFF7DA1DE0653796C, ); runOnlyForDeploymentPostprocessing = 0; };
+		0C2FDE38B10F25E1612D6F28 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (
+					D42D818C2C497E7E1D3B10A2, ); runOnlyForDeploymentPostprocessing = 0; };
+		3104756C2ABDFF8E0E22B37E = {isa = PBXNativeTarget; buildConfigurationList = 610C524CD57D47C6C9D7856F; buildPhases = (
+					82A4577C48DC2886AA8522A5,
+					B3C708C0E643FB0AC532BFBD,
+					0C2FDE38B10F25E1612D6F28, ); buildRules = ( ); dependencies = (  ); name = "TinyRNN (ConsoleApp)"; productName = TinyRNN; productReference = 16438FD0EBF6AA3AE199E084; productInstallPath = /usr/bin; productType = "com.apple.product-type.tool"; };
+		6C4E250F3AEF077487D1BA63 = {isa = PBXProject; buildConfigurationList = 61A648CB5417D56A1FF3B00B; attributes = { LastUpgradeCheck = 0440; }; compatibilityVersion = "Xcode 3.2"; hasScannedForEncodings = 0; mainGroup = 442CF60FA364A112B414D91D; projectDirPath = ""; projectRoot = ""; targets = (3104756C2ABDFF8E0E22B37E); };
 	};
-	rootObject = 6C4E250F3AEF077487D1BA63 /* Project object */;
+	rootObject = 6C4E250F3AEF077487D1BA63;
 }

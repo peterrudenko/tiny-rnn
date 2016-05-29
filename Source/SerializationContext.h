@@ -35,7 +35,7 @@ namespace TinyRNN
         
     public:
         
-        virtual ~SerializationContext() {}
+        virtual ~SerializationContext() = default;
         
         virtual void setRealProperty(Value value, const std::string &key) = 0;
         virtual Value getRealProperty(const std::string &key) const = 0;
@@ -54,7 +54,7 @@ namespace TinyRNN
         virtual SerializationContext::Ptr addChildContextUnordered(const std::string &key) = 0;
         
         static inline std::string encodeBase64(unsigned char const *bytesToEncode, size_t inLen);
-        static inline std::string encodeBase64(const std::string &sourceString);
+        static inline std::string encodeBase64(const std::string &s);
         static inline std::vector<unsigned char> decodeBase64(const std::string &encodedString);
     };
     
@@ -80,7 +80,7 @@ namespace TinyRNN
         unsigned char char_array_3[3];
         unsigned char char_array_4[4];
         
-        while (inLen--)
+        while ((inLen--) != 0u)
         {
             char_array_3[i++] = *(bytesToEncode++);
             
@@ -100,7 +100,7 @@ namespace TinyRNN
             }
         }
         
-        if (i)
+        if (i != 0)
         {
             for (j = i; j < 3; j++)
             {
@@ -189,6 +189,6 @@ namespace TinyRNN
         
         return ret;
     }
-}
+} // namespace TinyRNN
 
 #endif // TINYRNN_SERIALIZATIONCONTEXT_H_INCLUDED

@@ -51,6 +51,6 @@ namespace TinyRNN
         
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(ScopedTimer);
     };
-}
+}  // namespace TinyRNN
 
 #endif  // SCOPEDTIMER_H_INCLUDED

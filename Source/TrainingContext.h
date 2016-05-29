@@ -24,9 +24,8 @@
 #define TINYRNN_LEARNINGCONTEXT_H_INCLUDED
 
 #include <random>
-#include "SerializedObject.h"
 #include "SerializationKeys.h"
-#include "HardcodedTrainingContext.h"
+#include "SerializedObject.h"
 
 namespace TinyRNN
 {
@@ -75,9 +74,11 @@ namespace TinyRNN
             void feedWithRandomBias(Value signal);
             void setRandomBias();
             
-            friend class Neuron;
             friend class Layer;
+            friend class Neuron;
+            friend class VMNeuron;
             friend class HardcodedNeuron;
+            friend class HardcodedTrainingContext;
             friend class Connection;
             
             TINYRNN_DISALLOW_COPY_AND_ASSIGN(NeuronData);
@@ -111,7 +112,9 @@ namespace TinyRNN
             Id connectionUuid;
             
             friend class Neuron;
+            friend class VMNeuron;
             friend class HardcodedNeuron;
+            friend class HardcodedTrainingContext;
             friend class Connection;
             
             void setRandomWeight();
@@ -121,7 +124,7 @@ namespace TinyRNN
         
     public:
         
-        explicit TrainingContext(const std::string &name);
+        explicit TrainingContext(const std::string &contextName);
         
         std::string getName() const noexcept;
         NeuronData::Ptr getNeuronContext(const Id &uuid);
@@ -349,6 +352,6 @@ namespace TinyRNN
         context->setRealProperty(this->weight, Keys::Core::Weight);
         context->setRealProperty(this->gain, Keys::Core::Gain);
     }
-}
+}  // namespace TinyRNN
 
 #endif // TINYRNN_LEARNINGCONTEXT_H_INCLUDED

@@ -40,10 +40,10 @@ namespace TinyRNN
             
             unsigned char uuid[uuidLength];
             
-            for (size_t i = 0; i < uuidLength; ++i)
+            for (unsigned char & i : uuid)
             {
                 const unsigned char a = distribution(mt19937);
-                uuid[i] = a;
+                i = a;
             }
             
             // ISO/IEC 9834-8:
@@ -67,7 +67,7 @@ namespace TinyRNN
             static Id kRecentId = 0;
             return ++kRecentId;
         }
-    };
-}
+    } // namespace Uuid;
+}  // namespace TinyRNN
 
 #endif // TINYRNN_ID_H_INCLUDED

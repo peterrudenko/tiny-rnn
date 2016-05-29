@@ -20,8 +20,8 @@
     OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef TINYRNN_SERIALIZABLE_H_INCLUDED
-#define TINYRNN_SERIALIZABLE_H_INCLUDED
+#ifndef TINYRNN_SERIALIZABLEOBJECT_H_INCLUDED
+#define TINYRNN_SERIALIZABLEOBJECT_H_INCLUDED
 
 #include "SerializationContext.h"
 
@@ -35,13 +35,13 @@ namespace TinyRNN
         
     public:
         
-        virtual ~SerializedObject() {}
+        virtual ~SerializedObject() = default;
         
         virtual void deserialize(SerializationContext::Ptr context) = 0;
         
         virtual void serialize(SerializationContext::Ptr context) const = 0;
         
     };
-}
+}  // namespace TinyRNN
 
-#endif // TINYRNN_SERIALIZABLE_H_INCLUDED
+#endif // TINYRNN_SERIALIZABLEOBJECT_H_INCLUDED
