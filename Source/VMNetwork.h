@@ -300,11 +300,11 @@ namespace TinyRNN
                     i += 1;
                     break;
                 case VMProgram::Activation:
-                    X(0) = (1.0 / (1.0 + exp(-X(1))));
+                    X(0) = X(1) > 0.0 ? X(1) : (0.01 * X(1));
                     i += 2;
                     break;
                 case VMProgram::Derivative:
-                    X(0) = X(1) * (1.0 - X(1));
+                    X(0) = X(1) > 0.0 ? 1.0 : 0.01;
                     i += 2;
                     break;
                 case VMProgram::AAP:
@@ -377,12 +377,12 @@ namespace TinyRNN
                 break;\
             }\
             case 1: {\
-                x[id[i+0]] = (1.0 / (1.0 + exp(-x[id[i+1]])));\
+                x[id[i+0]] = x[id[i+1]] > 0.0 ? x[id[i+1]] : (0.01 * x[id[i+1]]);\
                 i += 2;\
                 break;\
             }\
             case 2: {\
-                x[id[i+0]] = x[id[i+1]] * (1.0 - x[id[i+1]]);\
+                x[id[i+0]] = x[id[i+1]] > 0.0 ? 1.0 : 0.01;\
                 i += 2;\
                 break;\
             }\

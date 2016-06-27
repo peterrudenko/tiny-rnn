@@ -43,8 +43,8 @@ namespace TinyRNN
             // D  - Difference
             
             Zero = 0,           // x[1] = 0
-            Activation = 1,     // x[1] = (1.0 / (1.0 + exp(-x[2])));
-            Derivative = 2,     // x[1] = x[2] * (1.0 - x[2]);
+            Activation = 1,     // x[1] = x[2] > 0.0 ? x[2] : (0.01 * x[2]);
+            Derivative = 2,     // x[1] = x[2] > 0.0 ? 1.0 : 0.01;
             AAP = 3,            // x[1] += x[2] * x[3];
             AAPP = 4,           // x[1] += x[2] * x[3] * x[4];
             A = 5,              // x[1] = x[2]

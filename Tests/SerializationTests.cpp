@@ -30,6 +30,8 @@
 
 using namespace TinyRNN;
 
+static const Value kTrainingRate = 0.05;
+
 class XMLSerializationContext final : public SerializationContext
 {
 public:
@@ -157,11 +159,14 @@ SCENARIO("Networks can be serialized and deserialized correctly", "[serializatio
         const auto network = Network::Prefabs::longShortTermMemory(networkName, 3, {layerSize}, 3);
         REQUIRE(network->getName() == networkName);
         
-        const int numTrainingIterations = RANDOM(100, 200);
+        const int numTrainingIterations = RANDOM(100, 1000);
+        const Value r1 = RANDOM(0.0, 1.0);
+        const Value r2 = RANDOM(0.0, 1.0);
+        const Value r3 = RANDOM(0.0, 1.0);
         for (int i = 0; i < numTrainingIterations; ++i)
         {
-            network->feed({ RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
-            network->train(0.5, { RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
+            network->feed({ RANDOM(0.0, 1.0), RANDOM(0.0, 1.0), RANDOM(0.0, 1.0) });
+            network->train(kTrainingRate, { r1, r2, r3 });
         }
         
         XMLSerializer serializer;
@@ -184,12 +189,17 @@ SCENARIO("Networks can be serialized and deserialized correctly", "[serializatio
                 
                 for (int i = 0; i < numTrainingIterations; ++i)
                 {
-                    const Value r1 = RANDOM(0.0, 10000.0);
-                    const Value r2 = RANDOM(0.0, 10000.0);
-                    const Value r3 = RANDOM(0.0, 10000.0);
+                    const Value r1 = RANDOM(0.0, 1.0);
+                    const Value r2 = RANDOM(0.0, 1.0);
+                    const Value r3 = RANDOM(0.0, 1.0);
                     Neuron::Values result1 = network->feed({r1, r2, r3});
                     Neuron::Values result2 = recreatedNetwork->feed({r1, r2, r3});
-                    REQUIRE(result1 == result2);
+                    
+                    for (size_t j = 0; j < result1.size(); ++j)
+                    {
+                        const Value error = fabs(result1[j] - result2[j]);
+                        REQUIRE(error < 0.01);
+                    }
                 }
             }
         }
@@ -203,11 +213,14 @@ SCENARIO("Networks can be serialized and deserialized correctly", "[serializatio
         const auto network = Network::Prefabs::feedForward(networkName, 3, {layerSize}, 3);
         REQUIRE(network->getName() == networkName);
         
-        const int numTrainingIterations = RANDOM(100, 200);
+        const int numTrainingIterations = RANDOM(100, 1000);
+        const Value r1 = RANDOM(0.0, 1.0);
+        const Value r2 = RANDOM(0.0, 1.0);
+        const Value r3 = RANDOM(0.0, 1.0);
         for (int i = 0; i < numTrainingIterations; ++i)
         {
-            network->feed({ RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
-            network->train(0.5, { RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
+            network->feed({ RANDOM(0.0, 1.0), RANDOM(0.0, 1.0), RANDOM(0.0, 1.0) });
+            network->train(kTrainingRate, { r1, r2, r3 });
         }
         
         XMLSerializer serializer;
@@ -242,11 +255,14 @@ SCENARIO("Hardcoded network can be serialized and deserialized correctly", "[ser
         HardcodedNetwork::Ptr clNetwork = network->hardcode();
         clNetwork->compile();
         
-        const int numTrainingIterations = RANDOM(100, 200);
+        const int numTrainingIterations = RANDOM(100, 1000);
+        const Value r1 = RANDOM(0.0, 1.0);
+        const Value r2 = RANDOM(0.0, 1.0);
+        const Value r3 = RANDOM(0.0, 1.0);
         for (int i = 0; i < numTrainingIterations; ++i)
         {
-            clNetwork->feed({ RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
-            clNetwork->train(0.5, { RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
+            clNetwork->feed({ RANDOM(0.0, 1.0), RANDOM(0.0, 1.0), RANDOM(0.0, 1.0) });
+            clNetwork->train(kTrainingRate, { r1, r2, r3 });
         }
         
         XMLSerializer serializer;
@@ -271,12 +287,17 @@ SCENARIO("Hardcoded network can be serialized and deserialized correctly", "[ser
                 
                 for (int i = 0; i < numTrainingIterations; ++i)
                 {
-                    const Value r1 = RANDOM(0.0, 10000.0);
-                    const Value r2 = RANDOM(0.0, 10000.0);
-                    const Value r3 = RANDOM(0.0, 10000.0);
+                    const Value r1 = RANDOM(0.0, 1.0);
+                    const Value r2 = RANDOM(0.0, 1.0);
+                    const Value r3 = RANDOM(0.0, 1.0);
                     Neuron::Values result1 = clNetwork->feed({r1, r2, r3});
                     Neuron::Values result2 = clRecreatedNetwork->feed({r1, r2, r3});
-                    REQUIRE(result1 == result2);
+                    
+                    for (size_t j = 0; j < result1.size(); ++j)
+                    {
+                        const Value error = fabs(result1[j] - result2[j]);
+                        REQUIRE(error < 0.01);
+                    }
                 }
             }
         }
@@ -293,11 +314,14 @@ SCENARIO("Hardcoded network can be serialized and deserialized correctly", "[ser
         HardcodedNetwork::Ptr clNetwork = network->hardcode();
         clNetwork->compile();
         
-        const int numTrainingIterations = RANDOM(100, 200);
+        const int numTrainingIterations = RANDOM(100, 1000);
+        const Value r1 = RANDOM(0.0, 1.0);
+        const Value r2 = RANDOM(0.0, 1.0);
+        const Value r3 = RANDOM(0.0, 1.0);
         for (int i = 0; i < numTrainingIterations; ++i)
         {
-            clNetwork->feed({ RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
-            clNetwork->train(0.5, { RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
+            clNetwork->feed({ RANDOM(0.0, 1.0), RANDOM(0.0, 1.0), RANDOM(0.0, 1.0) });
+            clNetwork->train(kTrainingRate, { r1, r2, r3 });
         }
         
         XMLSerializer serializer;
@@ -332,11 +356,14 @@ SCENARIO("VM network can be serialized and deserialized correctly", "[serializat
         VMNetwork::Ptr vmNetwork = network->toVM();
         vmNetwork->compile();
         
-        const int numTrainingIterations = RANDOM(100, 200);
+        const int numTrainingIterations = RANDOM(100, 1000);
+        const Value r1 = RANDOM(0.0, 1.0);
+        const Value r2 = RANDOM(0.0, 1.0);
+        const Value r3 = RANDOM(0.0, 1.0);
         for (int i = 0; i < numTrainingIterations; ++i)
         {
-            vmNetwork->feed({ RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
-            vmNetwork->train(0.5, { RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0), RANDOM(0.0, 10000.0) });
+            vmNetwork->feed({ RANDOM(0.0, 1.0), RANDOM(0.0, 1.0), RANDOM(0.0, 1.0) });
+            vmNetwork->train(kTrainingRate, { r1, r2, r3 });
         }
         
         XMLSerializer serializer;
@@ -361,12 +388,17 @@ SCENARIO("VM network can be serialized and deserialized correctly", "[serializat
                 
                 for (int i = 0; i < numTrainingIterations; ++i)
                 {
-                    const Value r1 = RANDOM(0.0, 10000.0);
-                    const Value r2 = RANDOM(0.0, 10000.0);
-                    const Value r3 = RANDOM(0.0, 10000.0);
+                    const Value r1 = RANDOM(0.0, 1.0);
+                    const Value r2 = RANDOM(0.0, 1.0);
+                    const Value r3 = RANDOM(0.0, 1.0);
                     Neuron::Values result1 = vmNetwork->feed({r1, r2, r3});
                     Neuron::Values result2 = vmRecreatedNetwork->feed({r1, r2, r3});
-                    REQUIRE(result1 == result2);
+                    
+                    for (size_t j = 0; j < result1.size(); ++j)
+                    {
+                        const Value error = fabs(result1[j] - result2[j]);
+                        REQUIRE(error < 0.01);
+                    }
                 }
             }
         }

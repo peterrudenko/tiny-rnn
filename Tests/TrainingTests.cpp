@@ -27,6 +27,8 @@
 
 using namespace TinyRNN;
 
+static const Value kTrainingRate = 0.05;
+
 SCENARIO("A perceptron can be trained with a xor function", "[training]")
 {
     GIVEN("A single-layer perceptron")
@@ -57,21 +59,20 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
         {
             {
                 const ScopedTimer timer("Training usual network");
-                Value rate = 0.5;
                 
                 for (int i = 0; i < numIterations; ++i)
                 {
                     network->feed({0.0, 1.0});
-                    network->train(rate, {1.0});
+                    network->train(kTrainingRate, {1.0});
                     
                     network->feed({1.0, 0.0});
-                    network->train(rate, {1.0});
+                    network->train(kTrainingRate, {1.0});
                     
                     network->feed({0.0, 0.0});
-                    network->train(rate, {0.0});
+                    network->train(kTrainingRate, {0.0});
                     
                     network->feed({1.0, 1.0});
-                    network->train(rate, {0.0});
+                    network->train(kTrainingRate, {0.0});
                 }
             }
             
@@ -110,21 +111,20 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
             
             {
                 const ScopedTimer timer("Training hardcoded network");
-                Value rate = 0.5;
                 
                 for (int i = 0; i < numIterations; ++i)
                 {
                     clNetwork->feed({0.0, 1.0});
-                    clNetwork->train(rate, {1.0});
+                    clNetwork->train(kTrainingRate, {1.0});
                     
                     clNetwork->feed({1.0, 0.0});
-                    clNetwork->train(rate, {1.0});
+                    clNetwork->train(kTrainingRate, {1.0});
                     
                     clNetwork->feed({0.0, 0.0});
-                    clNetwork->train(rate, {0.0});
+                    clNetwork->train(kTrainingRate, {0.0});
                     
                     clNetwork->feed({1.0, 1.0});
-                    clNetwork->train(rate, {0.0});
+                    clNetwork->train(kTrainingRate, {0.0});
                 }
             }
             
@@ -161,21 +161,20 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
             
             {
                 const ScopedTimer timer("Training VM network");
-                Value rate = 0.5;
                 
                 for (int i = 0; i < numIterations; ++i)
                 {
                     vmNetwork->feed({0.0, 1.0});
-                    vmNetwork->train(rate, {1.0});
+                    vmNetwork->train(kTrainingRate, {1.0});
                     
                     vmNetwork->feed({1.0, 0.0});
-                    vmNetwork->train(rate, {1.0});
+                    vmNetwork->train(kTrainingRate, {1.0});
                     
                     vmNetwork->feed({0.0, 0.0});
-                    vmNetwork->train(rate, {0.0});
+                    vmNetwork->train(kTrainingRate, {0.0});
                     
                     vmNetwork->feed({1.0, 1.0});
-                    vmNetwork->train(rate, {0.0});
+                    vmNetwork->train(kTrainingRate, {0.0});
                 }
             }
             
@@ -252,7 +251,7 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
             {
                 const Value x = RANDOM(-10.0, 10.0);
                 network->feed({x});
-                network->train(0.5, {f(x, fxSeed)});
+                network->train(kTrainingRate, {f(x, fxSeed)});
             }
             
             THEN("It gives a reasonable output")
@@ -286,7 +285,7 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
             {
                 const Value x = RANDOM(-10.0, 10.0);
                 clNetwork->feed({x});
-                clNetwork->train(0.5, {f(x, fxSeed)});
+                clNetwork->train(kTrainingRate, {f(x, fxSeed)});
             }
             
             THEN("It gives a reasonable output")
@@ -318,7 +317,7 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
             {
                 const Value x = RANDOM(-10.0, 10.0);
                 vmNetwork->feed({x});
-                vmNetwork->train(0.5, {f(x, fxSeed)});
+                vmNetwork->train(kTrainingRate, {f(x, fxSeed)});
             }
             
             THEN("It gives a reasonable output")
@@ -355,22 +354,21 @@ SCENARIO("Network can be recovered back from the trained hardcoded version", "[t
         {
             {
                 const ScopedTimer timer("Training hardcoded network");
-                Value rate = 0.5;
                 const int numIterations = RANDOM(500, 1000);
                 
                 for (int i = 0; i < numIterations; ++i)
                 {
                     clNetwork->feed({0.0, 1.0});
-                    clNetwork->train(rate, {1.0});
+                    clNetwork->train(kTrainingRate, {1.0});
                     
                     clNetwork->feed({1.0, 0.0});
-                    clNetwork->train(rate, {1.0});
+                    clNetwork->train(kTrainingRate, {1.0});
                     
                     clNetwork->feed({0.0, 0.0});
-                    clNetwork->train(rate, {0.0});
+                    clNetwork->train(kTrainingRate, {0.0});
                     
                     clNetwork->feed({1.0, 1.0});
-                    clNetwork->train(rate, {0.0});
+                    clNetwork->train(kTrainingRate, {0.0});
                 }
             }
             

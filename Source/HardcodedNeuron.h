@@ -262,10 +262,10 @@ namespace TinyRNN
             }
             
             // eq. 16
-            hardcoded->feedProgram << activationVar << " = (1.0 / (1.0 + exp(-" << stateVar << ")))" << std::endl;
+            hardcoded->feedProgram << activationVar << " = (" << stateVar << " > 0.0 ? " << stateVar << " : (0.01 * " << stateVar << "))" << std::endl;
             
             // f'(s)
-            hardcoded->feedProgram << derivativeVar << " = " << activationVar << " * (1.0 - " << activationVar << ")" << std::endl;
+            hardcoded->feedProgram << derivativeVar << " = (" << activationVar << " > 0.0 ? 1.0 : 0.01)" << std::endl;
             
             if (! asConst)
             {

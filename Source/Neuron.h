@@ -523,15 +523,15 @@ namespace TinyRNN
         myData->bias += rate * myData->errorResponsibility;
     }
     
+    // Leaky ReLU ^_^
     inline Value Neuron::activation(Value x)
     {
-        return 1.0 / (1.0 + exp(-x));
+        return x > 0.0 ? x : (0.01 * x);
     }
     
     inline Value Neuron::derivative(Value x)
     {
-        const Value fx = Neuron::activation(x);
-        return fx * (1.0 - fx);
+        return x > 0.0 ? 1.0 : 0.01;
     }
     
     //===------------------------------------------------------------------===//
