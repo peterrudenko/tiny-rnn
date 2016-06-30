@@ -29,7 +29,10 @@
 #include "SerializedObject.h"
 
 #include <random>
+#include <iostream>
 #include <sstream>
+#include <iterator>
+#include <numeric>
 
 namespace TinyRNN
 {   
