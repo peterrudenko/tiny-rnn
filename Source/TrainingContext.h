@@ -284,7 +284,7 @@ namespace TinyRNN
     {
         std::random_device randomDevice;
         std::mt19937 mt19937(randomDevice());
-        std::uniform_real_distribution<Value> distribution(-0.1, 0.1);
+        std::uniform_real_distribution<Value> distribution(-0.001, 0.001);
         this->bias = distribution(mt19937);
     }
     
@@ -335,7 +335,7 @@ namespace TinyRNN
     {
         std::random_device randomDevice;
         std::mt19937 mt19937(randomDevice());
-        std::uniform_real_distribution<Value> distribution(-0.1, 0.1);
+        std::uniform_real_distribution<Value> distribution(-0.001, 0.001);
         this->weight = distribution(mt19937);
     }
     
