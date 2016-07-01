@@ -496,6 +496,11 @@ namespace TinyRNN
         }
     }
     
+    static float clip(float n, float lower, float upper)
+    {
+        return std::max(lower, std::min(n, upper));
+    }
+    
     inline void Neuron::learn(Value rate)
     {
         auto myData = this->getTrainingData();
@@ -515,8 +520,9 @@ namespace TinyRNN
                 gradient += neuronData->errorResponsibility * this->extended[neuronUuid][inputConnectionUuid];
             }
             
+            const auto clippedGradient = clip(gradient, -1.f, 1.f);
             auto inputConnectionData = inputConnection->getTrainingData();
-            inputConnectionData->weight += rate * gradient; // adjust weights - aka learn
+            inputConnectionData->weight += rate * clippedGradient; // adjust weights - aka learn
         }
         
         // adjust bias

@@ -299,6 +299,10 @@ namespace TinyRNN
                     X(0) = 0;
                     i += 1;
                     break;
+                case VMProgram::Clip:
+                    X(0) = std::max(-1.f, std::min(X(0), 1.f));
+                    i += 1;
+                    break;
                 case VMProgram::Activation:
                     X(0) = X(1) > 0.0 ? X(1) : (0.01 * X(1));
                     i += 2;
@@ -367,7 +371,7 @@ namespace TinyRNN
     uint i = 0;\
     char command = 0;\
     \
-    while (command != 15)\
+    while (command != 16)\
     {\
         switch (command = commands[c++])\
         {\
@@ -377,71 +381,76 @@ namespace TinyRNN
                 break;\
             }\
             case 1: {\
+                x[id[i+0]] = x[id[i+0]] < 0.0 ? 0.0 : (x[id[i+0]] > 1.0 ? 1.0 : x[id[i+0]]);\
+                i += 1;\
+                break;\
+            }\
+            case 2: {\
                 x[id[i+0]] = x[id[i+1]] > 0.0 ? x[id[i+1]] : (0.01 * x[id[i+1]]);\
                 i += 2;\
                 break;\
             }\
-            case 2: {\
+            case 3: {\
                 x[id[i+0]] = x[id[i+1]] > 0.0 ? 1.0 : 0.01;\
                 i += 2;\
                 break;\
             }\
-            case 3: {\
+            case 4: {\
                 x[id[i+0]] += x[id[i+1]] * x[id[i+2]];\
                 i += 3;\
                 break;\
             }\
-            case 4: {\
+            case 5: {\
                 x[id[i+0]] += x[id[i+1]] * x[id[i+2]] * x[id[i+3]];\
                 i += 4;\
                 break;\
             }\
-            case 5: {\
+            case 6: {\
                 x[id[i+0]] = x[id[i+1]];\
                 i += 2;\
                 break;\
             }\
-            case 6: {\
+            case 7: {\
                 x[id[i+0]] = x[id[i+1]] + x[id[i+2]];\
                 i += 3;\
                 break;\
             }\
-            case 7: {\
+            case 8: {\
                 x[id[i+0]] = x[id[i+1]] - x[id[i+2]];\
                 i += 3;\
                 break;\
             }\
-            case 8: {\
+            case 9: {\
                 x[id[i+0]] = x[id[i+1]] * x[id[i+2]];\
                 i += 3;\
                 break;\
             }\
-            case 9: {\
+            case 10: {\
                 x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]];\
                 i += 4;\
                 break;\
             }\
-            case 10: {\
+            case 11: {\
                 x[id[i+0]] = x[id[i+1]] * x[id[i+2]] + x[id[i+3]];\
                 i += 4;\
                 break;\
             }\
-            case 11: {\
+            case 12: {\
                 x[id[i+0]] = x[id[i+1]] * x[id[i+2]] + x[id[i+3]] * x[id[i+4]];\
                 i += 5;\
                 break;\
             }\
-            case 12: {\
+            case 13: {\
                 x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]] + x[id[i+4]];\
                 i += 5;\
                 break;\
             }\
-            case 13: {\
+            case 14: {\
                 x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]] + x[id[i+4]] * x[id[i+5]];\
                 i += 6;\
                 break;\
             }\
-            case 14: {\
+            case 15: {\
                 x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]] + x[id[i+4]] * x[id[i+5]] * x[id[i+6]];\
                 i += 7;\
                 break;\

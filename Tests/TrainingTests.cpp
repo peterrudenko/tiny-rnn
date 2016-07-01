@@ -27,7 +27,7 @@
 
 using namespace TinyRNN;
 
-static const Value kTrainingRate = 0.05;
+static const Value kTrainingRate = 0.05f;
 
 SCENARIO("A perceptron can be trained with a xor function", "[training]")
 {
@@ -55,7 +55,7 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
         REQUIRE(network->getName() == networkName);
         REQUIRE(network->getContext() == context);
         
-        WHEN("The network is trained with some random number of iterations (from 1500 to 2000)")
+        WHEN("The network is trained with some random number of iterations")
         {
             {
                 const ScopedTimer timer("Training usual network");
@@ -99,7 +99,7 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
                 REQUIRE(result4.front() < 0.1);
             }
         }
-        
+    
 #if TINYRNN_OPENCL_ACCELERATION
         
         WHEN("The hardcoded network is trained with some random number of iterations")
@@ -354,7 +354,7 @@ SCENARIO("Network can be recovered back from the trained hardcoded version", "[t
         {
             {
                 const ScopedTimer timer("Training hardcoded network");
-                const int numIterations = RANDOM(500, 1000);
+                const int numIterations = RANDOM(1500, 2000);
                 
                 for (int i = 0; i < numIterations; ++i)
                 {

@@ -43,21 +43,22 @@ namespace TinyRNN
             // D  - Difference
             
             Zero = 0,           // x[1] = 0
-            Activation = 1,     // x[1] = x[2] > 0.0 ? x[2] : (0.01 * x[2]);
-            Derivative = 2,     // x[1] = x[2] > 0.0 ? 1.0 : 0.01;
-            AAP = 3,            // x[1] += x[2] * x[3];
-            AAPP = 4,           // x[1] += x[2] * x[3] * x[4];
-            A = 5,              // x[1] = x[2]
-            AS = 6,             // x[1] = x[2] + x[3];
-            AD = 7,             // x[1] = x[2] - x[3];
-            AP = 8,             // x[1] = x[2] * x[3];
-            APP = 9,            // x[1] = x[2] * x[3] * x[4];
-            APS = 10,           // x[1] = x[2] * x[3] + x[4];
-            APSP = 11,          // x[1] = x[2] * x[3] + x[4] * x[5];
-            APPS = 12,          // x[1] = x[2] * x[3] * x[4] + x[5];
-            APPSP = 13,         // x[1] = x[2] * x[3] * x[4] + x[5] * x[6];
-            APPSPP = 14,        // x[1] = x[2] * x[3] * x[4] + x[5] * x[6] * x[7];
-            End = 15
+            Clip = 1,           // x[1] = clip(x[1], -1.0, 1.0)
+            Activation = 2,     // x[1] = x[2] > 0.0 ? x[2] : (0.01 * x[2]);
+            Derivative = 3,     // x[1] = x[2] > 0.0 ? 1.0 : 0.01;
+            AAP = 4,            // x[1] += x[2] * x[3];
+            AAPP = 5,           // x[1] += x[2] * x[3] * x[4];
+            A = 6,              // x[1] = x[2]
+            AS = 7,             // x[1] = x[2] + x[3];
+            AD = 8,             // x[1] = x[2] - x[3];
+            AP = 9,             // x[1] = x[2] * x[3];
+            APP = 10,           // x[1] = x[2] * x[3] * x[4];
+            APS = 11,           // x[1] = x[2] * x[3] + x[4];
+            APSP = 12,          // x[1] = x[2] * x[3] + x[4] * x[5];
+            APPS = 13,          // x[1] = x[2] * x[3] * x[4] + x[5];
+            APPSP = 14,         // x[1] = x[2] * x[3] * x[4] + x[5] * x[6];
+            APPSPP = 15,        // x[1] = x[2] * x[3] * x[4] + x[5] * x[6] * x[7];
+            End = 16
         };
         
         friend VMProgram &operator << (VMProgram &i, Index index);
@@ -631,6 +632,7 @@ namespace TinyRNN
                         context->allocateOrReuseVariable(inputConnectionData->weight,
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
+                        vm->trainProgram << VMProgram::Clip << gradientTempVar;
                         vm->trainProgram << VMProgram::AAP << inputWeightVar << rateVar << gradientTempVar;
                     }
                 }
@@ -684,7 +686,12 @@ namespace TinyRNN
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         // learn
-                        vm->trainProgram << VMProgram::AAPP << inputWeightVar << rateVar << responsibilityVar << eligibilityVar;
+                        const Index gradientTempVar =
+                        context->allocateOrReuseVariable(0.0, {Keys::Mapping::Gradient});
+                        vm->trainProgram << VMProgram::AP << gradientTempVar << responsibilityVar << eligibilityVar;
+
+                        vm->trainProgram << VMProgram::Clip << gradientTempVar;
+                        vm->trainProgram << VMProgram::AAP << inputWeightVar << rateVar << gradientTempVar;
                     }
                 }
                 else if (noOutgoingConnections)
@@ -786,6 +793,7 @@ namespace TinyRNN
                         context->allocateOrReuseVariable(inputConnectionData->weight,
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
+                        vm->trainProgram << VMProgram::Clip << gradientTempVar;
                         vm->trainProgram << VMProgram::AAP << inputWeightVar << rateVar << gradientTempVar;
                     }
                 }
