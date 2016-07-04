@@ -30,10 +30,8 @@
 #include "ScopedTimer.h"
 #include "SerializedObject.h"
 #include "TrainingContext.h"
-
-#include "VMNetwork.h"
-#include "HardcodedNetwork.h"
-#include "HardcodedTrainingContext.h"
+#include "UnrolledNetwork.h"
+#include "UnrolledTrainingContext.h"
 
 namespace TinyRNN
 {
@@ -94,26 +92,9 @@ namespace TinyRNN
         virtual void deserialize(SerializationContext::Ptr context) override;
         virtual void serialize(SerializationContext::Ptr context) const override;
         
-        /**
-         *  Will generate a network that is able to be trained.
-         *
-         *  @return An implementation of the network in C.
-         */
-        HardcodedNetwork::StandaloneSources hardcodeAsStandalone() const;
-        
-        /**
-         *  Will generate a network that is only able to produce output.
-         *  However it is much smaller then a trainable network.
-         *
-         *  @return An implementation of the feed-only network in C.
-         */
-        HardcodedNetwork::StandaloneSources hardcodeAsStandaloneFeedOnly() const;
-        
-        VMNetwork::Ptr toVM() const;
-        VMNetwork::Ptr toFeedOnlyVM() const;
-        
-        HardcodedNetwork::Ptr hardcode() const;
-        void restore(HardcodedTrainingContext::Ptr context);
+        UnrolledNetwork::Ptr toVM() const;
+        UnrolledNetwork::Ptr toStaticVM() const;
+        void restore(UnrolledTrainingContext::Ptr context);
         
     private:
         
@@ -360,17 +341,13 @@ namespace TinyRNN
     }
     
     //===------------------------------------------------------------------===//
-    // Hardcoding into OpenCL kernels
+    // Unrolled networks
     //===------------------------------------------------------------------===//
     
-#if not defined TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL
-#define TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL 10000
-#endif
-    
-    inline VMNetwork::Ptr Network::toVM() const
+    inline UnrolledNetwork::Ptr Network::toVM() const
     {
-        HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());
-        VMNetwork::VMLayers vmLayers;
+        UnrolledTrainingContext::Ptr context(new UnrolledTrainingContext());
+        UnrolledNetwork::VMLayers vmLayers;
         
         {
             const ScopedTimer timer("Network::toVM");
@@ -384,16 +361,16 @@ namespace TinyRNN
             vmLayers.push_back(this->outputLayer->toVM(context, false, true, false));
         }
         
-        VMNetwork::Ptr vmNetwork(new VMNetwork(context, vmLayers));
+        UnrolledNetwork::Ptr vmNetwork(new UnrolledNetwork(context, vmLayers));
         
         std::cout << "Hardcoded context memory size: " << context->getMemory().size() << std::endl;
         return vmNetwork;
     }
     
-    inline VMNetwork::Ptr Network::toFeedOnlyVM() const
+    inline UnrolledNetwork::Ptr Network::toStaticVM() const
     {
-        HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());
-        VMNetwork::VMLayers vmLayers;
+        UnrolledTrainingContext::Ptr context(new UnrolledTrainingContext());
+        UnrolledNetwork::VMLayers vmLayers;
         
         {
             const ScopedTimer timer("Network::toFeedOnlyVM");
@@ -407,37 +384,13 @@ namespace TinyRNN
             vmLayers.push_back(this->outputLayer->toVM(context, false, true, true));
         }
         
-        VMNetwork::Ptr vmNetwork(new VMNetwork(context, vmLayers));
+        UnrolledNetwork::Ptr vmNetwork(new UnrolledNetwork(context, vmLayers));
         
         std::cout << "Hardcoded context memory size: " << context->getMemory().size() << std::endl;
         return vmNetwork;
     }
     
-    inline HardcodedNetwork::Ptr Network::hardcode() const
-    {
-        HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());
-        HardcodedNetwork::HardcodedLayers hardcodedLayers;
-        
-        {
-            const ScopedTimer timer("Network::hardcode");
-            hardcodedLayers.push_back(this->inputLayer->hardcode(context, true, false, false));
-            
-            for (auto &hiddenLayer : this->hiddenLayers)
-            {
-                hardcodedLayers.push_back(hiddenLayer->hardcode(context, false, false, false));
-            }
-            
-            hardcodedLayers.push_back(this->outputLayer->hardcode(context, false, true, false));
-        }
-            
-        HardcodedNetwork::Ptr hardcodedNetwork(new HardcodedNetwork(context, hardcodedLayers,
-                                                                    TINYRNN_MAX_NUMBER_OF_EXPRESSIONS_PER_KERNEL));
-        
-        std::cout << "Hardcoded context memory size: " << context->getMemory().size() << std::endl;
-        return hardcodedNetwork;
-    }
-    
-    inline void Network::restore(HardcodedTrainingContext::Ptr context)
+    inline void Network::restore(UnrolledTrainingContext::Ptr context)
     {
         const ScopedTimer timer("Network::restore");
         
@@ -449,52 +402,6 @@ namespace TinyRNN
         }
         
         this->outputLayer->restore(context);
-    }
-    
-    //===------------------------------------------------------------------===//
-    // Stadalone network code-generation
-    //===------------------------------------------------------------------===//
-    
-    inline HardcodedNetwork::StandaloneSources Network::hardcodeAsStandalone() const
-    {
-        HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());
-        HardcodedNetwork::HardcodedLayers hardcodedLayers;
-        
-        {
-            const ScopedTimer timer("Network::hardcodeAsStandalone");
-            hardcodedLayers.push_back(this->inputLayer->hardcode(context, true, false, false));
-            
-            for (auto &hiddenLayer : this->hiddenLayers)
-            {
-                hardcodedLayers.push_back(hiddenLayer->hardcode(context, false, false, false));
-            }
-            
-            hardcodedLayers.push_back(this->outputLayer->hardcode(context, false, true, false));
-        }
-        
-        HardcodedNetwork::Ptr hardcodedNetwork(new HardcodedNetwork(context, hardcodedLayers, LONG_MAX));
-        return hardcodedNetwork->asStandalone(this->name, false);
-    }
-    
-    inline HardcodedNetwork::StandaloneSources Network::hardcodeAsStandaloneFeedOnly() const
-    {
-        HardcodedTrainingContext::Ptr context(new HardcodedTrainingContext());
-        HardcodedNetwork::HardcodedLayers hardcodedLayers;
-        
-        {
-            const ScopedTimer timer("Network::hardcodeAsStandaloneFeedOnly");
-            hardcodedLayers.push_back(this->inputLayer->hardcode(context, true, false, true));
-            
-            for (auto &hiddenLayer : this->hiddenLayers)
-            {
-                hardcodedLayers.push_back(hiddenLayer->hardcode(context, false, false, true));
-            }
-            
-            hardcodedLayers.push_back(this->outputLayer->hardcode(context, false, true, true));
-        }
-        
-        HardcodedNetwork::Ptr hardcodedNetwork(new HardcodedNetwork(context, hardcodedLayers, LONG_MAX));
-        return hardcodedNetwork->asStandalone(this->name, true);
     }
     
     //===------------------------------------------------------------------===//

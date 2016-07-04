@@ -24,32 +24,28 @@
 		513169F6C3A5D7C964DEE0E5 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedMemoryBlock.h; path = ../../Source/ScopedMemoryBlock.h; sourceTree = "SOURCE_ROOT"; };
 		5438EDADAC8806D907A553B6 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Main.cpp; path = ../../Tests/Main.cpp; sourceTree = "SOURCE_ROOT"; };
 		620BAE57F65D39ACEED058B9 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializedObject.h; path = ../../Source/SerializedObject.h; sourceTree = "SOURCE_ROOT"; };
-		7090225245D2EDC44EB6A8FF = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VMNeuron.h; path = ../../Source/VMNeuron.h; sourceTree = "SOURCE_ROOT"; };
 		7171B814D3C72330858DE429 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TrainingContext.h; path = ../../Source/TrainingContext.h; sourceTree = "SOURCE_ROOT"; };
-		871B6CD7E139A2E43821B9F7 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HardcodedTrainingContext.h; path = ../../Source/HardcodedTrainingContext.h; sourceTree = "SOURCE_ROOT"; };
+		79DEF98F340D54F48A676F28 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UnrolledNetwork.h; path = ../../Source/UnrolledNetwork.h; sourceTree = "SOURCE_ROOT"; };
 		91D375D0D4DADC71298CD099 = {isa = PBXFileReference; lastKnownFileType = file.nib; name = RecentFilesMenuTemplate.nib; path = RecentFilesMenuTemplate.nib; sourceTree = "SOURCE_ROOT"; };
 		9385973BB68033C95938BAE7 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Common.h; path = ../../Source/Common.h; sourceTree = "SOURCE_ROOT"; };
 		93DBBE0D39CAF866DED3A2C1 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Network.h; path = ../../Source/Network.h; sourceTree = "SOURCE_ROOT"; };
 		9632B60FF767369214AA1A92 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SerializationTests.cpp; path = ../../Tests/SerializationTests.cpp; sourceTree = "SOURCE_ROOT"; };
 		9C110B6697F6512695FDCE5D = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = TrainingTests.cpp; path = ../../Tests/TrainingTests.cpp; sourceTree = "SOURCE_ROOT"; };
 		9FECCCA8BCAEBEDCC22CC3E8 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Layer.h; path = ../../Source/Layer.h; sourceTree = "SOURCE_ROOT"; };
+		A0639491A6265B7D52026978 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UnrolledNeuron.h; path = ../../Source/UnrolledNeuron.h; sourceTree = "SOURCE_ROOT"; };
 		A565F4A239A4281A78B67CE6 = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
-		BC7E4700D9FFBAC2434F41C5 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VMNetwork.h; path = ../../Source/VMNetwork.h; sourceTree = "SOURCE_ROOT"; };
-		CE14364C3B72206DB256BA3D = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HardcodedNeuron.h; path = ../../Source/HardcodedNeuron.h; sourceTree = "SOURCE_ROOT"; };
 		D4088A052B661FB6908F390F = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TinyRNN.h; path = ../../Source/TinyRNN.h; sourceTree = "SOURCE_ROOT"; };
-		DFF0EB59EB8EE2634E78BC2B = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HardcodedNetwork.h; path = ../../Source/HardcodedNetwork.h; sourceTree = "SOURCE_ROOT"; };
 		E257FD8197AB7B3F42331FF3 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = NetworkTests.cpp; path = ../../Tests/NetworkTests.cpp; sourceTree = "SOURCE_ROOT"; };
+		E35C8CB683C43A71CCA42D3F = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UnrolledTrainingContext.h; path = ../../Source/UnrolledTrainingContext.h; sourceTree = "SOURCE_ROOT"; };
 		E63C4FDEF5FFB76D19B1E25B = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AppConfig.h; path = ../Introjucer/JuceLibraryCode/AppConfig.h; sourceTree = "SOURCE_ROOT"; };
 		E93FC5B1E30A66158C19403D = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Serializer.h; path = ../../Source/Serializer.h; sourceTree = "SOURCE_ROOT"; };
 		EEAFEFEA4CB99859C0512B81 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = JuceHeader.h; path = ../Introjucer/JuceLibraryCode/JuceHeader.h; sourceTree = "SOURCE_ROOT"; };
 		F933072AC8181C1DAC189E40 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Id.h; path = ../../Source/Id.h; sourceTree = "SOURCE_ROOT"; };
 		FAC89CB49C41CD0C2CA82871 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedTimer.h; path = ../../Source/ScopedTimer.h; sourceTree = "SOURCE_ROOT"; };
 		BAFACB7291BBBDEDAE3AF99D = {isa = PBXGroup; children = (
-					871B6CD7E139A2E43821B9F7,
-					DFF0EB59EB8EE2634E78BC2B,
-					CE14364C3B72206DB256BA3D,
-					BC7E4700D9FFBAC2434F41C5,
-					7090225245D2EDC44EB6A8FF, ); name = OpenCL; sourceTree = "<group>"; };
+					E35C8CB683C43A71CCA42D3F,
+					79DEF98F340D54F48A676F28,
+					A0639491A6265B7D52026978, ); name = "Unrolled VM"; sourceTree = "<group>"; };
 		BB896A6B4FADF1C8E2A8A78E = {isa = PBXGroup; children = (
 					93DBBE0D39CAF866DED3A2C1,
 					9FECCCA8BCAEBEDCC22CC3E8,
@@ -196,7 +192,7 @@
 		3104756C2ABDFF8E0E22B37E = {isa = PBXNativeTarget; buildConfigurationList = 610C524CD57D47C6C9D7856F; buildPhases = (
 					82A4577C48DC2886AA8522A5,
 					B3C708C0E643FB0AC532BFBD,
-					0C2FDE38B10F25E1612D6F28, ); buildRules = ( ); dependencies = (  ); name = "TinyRNN (ConsoleApp)"; productName = TinyRNN; productReference = 16438FD0EBF6AA3AE199E084; productInstallPath = /usr/bin; productType = "com.apple.product-type.tool"; };
+					0C2FDE38B10F25E1612D6F28, ); buildRules = ( ); dependencies = (  ); name = "TinyRNN (ConsoleApp)"; productName = TinyRNN; productReference = 16438FD0EBF6AA3AE199E084; productType = "com.apple.product-type.tool"; };
 		6C4E250F3AEF077487D1BA63 = {isa = PBXProject; buildConfigurationList = 61A648CB5417D56A1FF3B00B; attributes = { LastUpgradeCheck = 0440; }; compatibilityVersion = "Xcode 3.2"; hasScannedForEncodings = 0; mainGroup = 442CF60FA364A112B414D91D; projectDirPath = ""; projectRoot = ""; targets = (3104756C2ABDFF8E0E22B37E); };
 	};
 	rootObject = 6C4E250F3AEF077487D1BA63;

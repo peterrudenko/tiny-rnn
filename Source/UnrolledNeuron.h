@@ -24,7 +24,7 @@
 #define TINYRNN_VMNEURON_H_INCLUDED
 
 #include "Common.h"
-#include "HardcodedTrainingContext.h"
+#include "UnrolledTrainingContext.h"
 #include "Id.h"
 #include "Neuron.h"
 
@@ -43,21 +43,22 @@ namespace TinyRNN
             // D  - Difference
             
             Zero = 0,           // x[1] = 0
-            Activation = 1,     // x[1] = (1.0 / (1.0 + exp(-x[2])));
-            Derivative = 2,     // x[1] = x[2] * (1.0 - x[2]);
-            AAP = 3,            // x[1] += x[2] * x[3];
-            AAPP = 4,           // x[1] += x[2] * x[3] * x[4];
-            A = 5,              // x[1] = x[2]
-            AS = 6,             // x[1] = x[2] + x[3];
-            AD = 7,             // x[1] = x[2] - x[3];
-            AP = 8,             // x[1] = x[2] * x[3];
-            APP = 9,            // x[1] = x[2] * x[3] * x[4];
-            APS = 10,           // x[1] = x[2] * x[3] + x[4];
-            APSP = 11,          // x[1] = x[2] * x[3] + x[4] * x[5];
-            APPS = 12,          // x[1] = x[2] * x[3] * x[4] + x[5];
-            APPSP = 13,         // x[1] = x[2] * x[3] * x[4] + x[5] * x[6];
-            APPSPP = 14,        // x[1] = x[2] * x[3] * x[4] + x[5] * x[6] * x[7];
-            End = 15
+            Clip = 1,           // x[1] = clip(x[1], -1.0, 1.0)
+            Activation = 2,     // x[1] = x[2] > 0.0 ? x[2] : (0.01 * x[2]);
+            Derivative = 3,     // x[1] = x[2] > 0.0 ? 1.0 : 0.01;
+            AAP = 4,            // x[1] += x[2] * x[3];
+            AAPP = 5,           // x[1] += x[2] * x[3] * x[4];
+            A = 6,              // x[1] = x[2]
+            AS = 7,             // x[1] = x[2] + x[3];
+            AD = 8,             // x[1] = x[2] - x[3];
+            AP = 9,             // x[1] = x[2] * x[3];
+            APP = 10,           // x[1] = x[2] * x[3] * x[4];
+            APS = 11,           // x[1] = x[2] * x[3] + x[4];
+            APSP = 12,          // x[1] = x[2] * x[3] + x[4] * x[5];
+            APPS = 13,          // x[1] = x[2] * x[3] * x[4] + x[5];
+            APPSP = 14,         // x[1] = x[2] * x[3] * x[4] + x[5] * x[6];
+            APPSPP = 15,        // x[1] = x[2] * x[3] * x[4] + x[5] * x[6] * x[7];
+            End = 16
         };
         
         friend VMProgram &operator << (VMProgram &i, Index index);
@@ -69,18 +70,18 @@ namespace TinyRNN
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(VMProgram);
     };
     
-    class VMNeuron final
+    class UnrolledNeuron final
     {
     public:
         
-        using Ptr = std::shared_ptr<VMNeuron>;
-        using Vector = std::vector<VMNeuron::Ptr>;
+        using Ptr = std::shared_ptr<UnrolledNeuron>;
+        using Vector = std::vector<UnrolledNeuron::Ptr>;
         
     public:
         
-        VMNeuron() = default;
+        UnrolledNeuron() = default;
         
-        static VMNeuron::Ptr buildFrom(HardcodedTrainingContext::Ptr context,
+        static UnrolledNeuron::Ptr buildFrom(UnrolledTrainingContext::Ptr context,
                                        Neuron::Ptr target,
                                        bool asInput,
                                        bool asOutput,
@@ -96,7 +97,7 @@ namespace TinyRNN
         VMProgram traceProgram;
         VMProgram trainProgram;
         
-        TINYRNN_DISALLOW_COPY_AND_ASSIGN(VMNeuron);
+        TINYRNN_DISALLOW_COPY_AND_ASSIGN(UnrolledNeuron);
     };
     
     //===------------------------------------------------------------------===//
@@ -116,16 +117,16 @@ namespace TinyRNN
     }
     
     //===------------------------------------------------------------------===//
-    // VMNeuron implementation
+    // UnrolledNeuron implementation
     //===------------------------------------------------------------------===//
     
-    inline VMNeuron::Ptr VMNeuron::buildFrom(HardcodedTrainingContext::Ptr context,
+    inline UnrolledNeuron::Ptr UnrolledNeuron::buildFrom(UnrolledTrainingContext::Ptr context,
                                              Neuron::Ptr target,
                                              bool asInput,
                                              bool asOutput,
                                              bool asConst)
     {
-        VMNeuron::Ptr vm(new VMNeuron());
+        UnrolledNeuron::Ptr vm(new UnrolledNeuron());
         
         auto targetData = target->getTrainingData();
         
@@ -631,6 +632,7 @@ namespace TinyRNN
                         context->allocateOrReuseVariable(inputConnectionData->weight,
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
+                        vm->trainProgram << VMProgram::Clip << gradientTempVar;
                         vm->trainProgram << VMProgram::AAP << inputWeightVar << rateVar << gradientTempVar;
                     }
                 }
@@ -684,7 +686,12 @@ namespace TinyRNN
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         // learn
-                        vm->trainProgram << VMProgram::AAPP << inputWeightVar << rateVar << responsibilityVar << eligibilityVar;
+                        const Index gradientTempVar =
+                        context->allocateOrReuseVariable(0.0, {Keys::Mapping::Gradient});
+                        vm->trainProgram << VMProgram::AP << gradientTempVar << responsibilityVar << eligibilityVar;
+
+                        vm->trainProgram << VMProgram::Clip << gradientTempVar;
+                        vm->trainProgram << VMProgram::AAP << inputWeightVar << rateVar << gradientTempVar;
                     }
                 }
                 else if (noOutgoingConnections)
@@ -786,6 +793,7 @@ namespace TinyRNN
                         context->allocateOrReuseVariable(inputConnectionData->weight,
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
+                        vm->trainProgram << VMProgram::Clip << gradientTempVar;
                         vm->trainProgram << VMProgram::AAP << inputWeightVar << rateVar << gradientTempVar;
                     }
                 }
@@ -802,17 +810,17 @@ namespace TinyRNN
         return vm;
     }
     
-    inline const VMProgram &VMNeuron::getFeedChunk() const noexcept
+    inline const VMProgram &UnrolledNeuron::getFeedChunk() const noexcept
     {
         return this->feedProgram;
     }
     
-    inline const VMProgram &VMNeuron::getTraceChunk() const noexcept
+    inline const VMProgram &UnrolledNeuron::getTraceChunk() const noexcept
     {
         return this->traceProgram;
     }
     
-    inline const VMProgram &VMNeuron::getTrainChunk() const noexcept
+    inline const VMProgram &UnrolledNeuron::getTrainChunk() const noexcept
     {
         return this->trainProgram;
     }

@@ -151,9 +151,8 @@ namespace TinyRNN
         void learn(Value rate = 0.1);
         
         friend class Layer;
-        friend class VMNeuron;
-        friend class HardcodedNeuron;
-        friend class HardcodedTrainingContext;
+        friend class UnrolledNeuron;
+        friend class UnrolledTrainingContext;
         
     private:
         
@@ -496,6 +495,11 @@ namespace TinyRNN
         }
     }
     
+    static float clip(float n, float lower, float upper)
+    {
+        return std::max(lower, std::min(n, upper));
+    }
+    
     inline void Neuron::learn(Value rate)
     {
         auto myData = this->getTrainingData();
@@ -515,23 +519,24 @@ namespace TinyRNN
                 gradient += neuronData->errorResponsibility * this->extended[neuronUuid][inputConnectionUuid];
             }
             
+            const auto clippedGradient = clip(gradient, -1.f, 1.f);
             auto inputConnectionData = inputConnection->getTrainingData();
-            inputConnectionData->weight += rate * gradient; // adjust weights - aka learn
+            inputConnectionData->weight += rate * clippedGradient; // adjust weights - aka learn
         }
         
         // adjust bias
         myData->bias += rate * myData->errorResponsibility;
     }
     
+    // Leaky ReLU ^_^
     inline Value Neuron::activation(Value x)
     {
-        return 1.0 / (1.0 + exp(-x));
+        return x > 0.0 ? x : (0.01 * x);
     }
     
     inline Value Neuron::derivative(Value x)
     {
-        const Value fx = Neuron::activation(x);
-        return fx * (1.0 - fx);
+        return x > 0.0 ? 1.0 : 0.01;
     }
     
     //===------------------------------------------------------------------===//

@@ -127,51 +127,10 @@ namespace TinyRNN
             static const Id Gradient = 39;
         } // namespace Mapping
         
-        namespace Hardcoded
+        namespace Unrolled
         {
-            static const std::string Network = "HardcodedNetwork";
-            static const std::string Layer = "HardcodedLayer";
-            static const std::string Layers = "HardcodedLayers";
-            static const std::string Neuron = "HardcodedNeuron";
-            
-            static const std::string TrainingContext = "HardcodedTrainingContext";
-            
-            static const std::string FeedKernels = "FeedKernels";
-            static const std::string FeedKernel = "FeedKernel";
-            static const std::string TrainKernels = "TrainKernels";
-            static const std::string TrainKernel = "TrainKernel";
-            
-            static const std::string NumExpressions = "NumExpressions";
-            static const std::string FullSource = "FullSource";
-            static const std::string EntryPoint = "EntryPoint";
-            
-            static const std::string IsBuilt = "IsBuilt";
-            static const std::string KernelBinaries = "KernelBinaries";
-            static const std::string KernelBinary = "KernelBinary";
-            static const std::string KernelSentence = "KernelSentence";
-            static const std::string KernelLine = "KernelLine";
-            static const std::string Content = "Content";
-            
-            static const std::string FeedChunk = "FeedChunk";
-            static const std::string TrainChunk = "TrainChunk";
-            static const std::string TraceChunk = "TraceChunk";
-
-            static const std::string VariablesMapping = "VariablesMapping";
-            static const std::string InputsMapping = "InputsMapping";
-            static const std::string OutputsMapping = "OutputsMapping";
-            static const std::string TargetsMapping = "TargetsMapping";
-            static const std::string RateMapping = "RateMapping";
-            
-            static const std::string RawMemory = "RawMemory";
-            static const std::string MemorySize = "MemorySize";
-            static const std::string Variable = "Variable";
-            static const std::string Key = "Key";
-            static const std::string Index = "Index";
-        } // namespace Hardcoded
-        
-        namespace VM
-        {
-            static const std::string Network = "VMNetwork";
+            static const std::string TrainingContext = "UnrolledTrainingContext";
+            static const std::string Network = "UnrolledNetwork";
             
             static const std::string FeedKernel = "FeedKernel";
             static const std::string TrainKernel = "TrainKernel";
@@ -183,7 +142,19 @@ namespace TinyRNN
             
             static const std::string FullSource = "FullSource";
             static const std::string EntryPoint = "EntryPoint";
-        } // namespace VM
+            
+            static const std::string VariablesMapping = "VariablesMapping";
+            static const std::string InputsMapping = "InputsMapping";
+            static const std::string OutputsMapping = "OutputsMapping";
+            static const std::string TargetsMapping = "TargetsMapping";
+            static const std::string RateMapping = "RateMapping";
+            
+            static const std::string RawMemory = "RawMemory";
+            static const std::string MemorySize = "MemorySize";
+            static const std::string Variable = "Variable";
+            static const std::string Key = "Key";
+            static const std::string Index = "Index";
+        } // namespace Unrolled
     } // namespace Keys
 }  // namespace TinyRNN
 

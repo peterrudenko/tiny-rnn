@@ -76,9 +76,8 @@ namespace TinyRNN
             
             friend class Layer;
             friend class Neuron;
-            friend class VMNeuron;
-            friend class HardcodedNeuron;
-            friend class HardcodedTrainingContext;
+            friend class UnrolledNeuron;
+            friend class UnrolledTrainingContext;
             friend class Connection;
             
             TINYRNN_DISALLOW_COPY_AND_ASSIGN(NeuronData);
@@ -112,9 +111,8 @@ namespace TinyRNN
             Id connectionUuid;
             
             friend class Neuron;
-            friend class VMNeuron;
-            friend class HardcodedNeuron;
-            friend class HardcodedTrainingContext;
+            friend class UnrolledNeuron;
+            friend class UnrolledTrainingContext;
             friend class Connection;
             
             void setRandomWeight();
@@ -284,7 +282,7 @@ namespace TinyRNN
     {
         std::random_device randomDevice;
         std::mt19937 mt19937(randomDevice());
-        std::uniform_real_distribution<Value> distribution(-0.1, 0.1);
+        std::uniform_real_distribution<Value> distribution(-0.001, 0.001);
         this->bias = distribution(mt19937);
     }
     
@@ -335,7 +333,7 @@ namespace TinyRNN
     {
         std::random_device randomDevice;
         std::mt19937 mt19937(randomDevice());
-        std::uniform_real_distribution<Value> distribution(-0.1, 0.1);
+        std::uniform_real_distribution<Value> distribution(-0.001, 0.001);
         this->weight = distribution(mt19937);
     }
     
