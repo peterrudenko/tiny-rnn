@@ -76,9 +76,8 @@ namespace TinyRNN
             
             friend class Layer;
             friend class Neuron;
-            friend class VMNeuron;
-            friend class HardcodedNeuron;
-            friend class HardcodedTrainingContext;
+            friend class UnrolledNeuron;
+            friend class UnrolledTrainingContext;
             friend class Connection;
             
             TINYRNN_DISALLOW_COPY_AND_ASSIGN(NeuronData);
@@ -112,9 +111,8 @@ namespace TinyRNN
             Id connectionUuid;
             
             friend class Neuron;
-            friend class VMNeuron;
-            friend class HardcodedNeuron;
-            friend class HardcodedTrainingContext;
+            friend class UnrolledNeuron;
+            friend class UnrolledTrainingContext;
             friend class Connection;
             
             void setRandomWeight();

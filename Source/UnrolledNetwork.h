@@ -24,8 +24,8 @@
 #define TINYRNN_VMNETWORK_H_INCLUDED
 
 #include "Common.h"
-#include "VMNeuron.h"
-#include "HardcodedTrainingContext.h"
+#include "UnrolledNeuron.h"
+#include "UnrolledTrainingContext.h"
 #include "Id.h"
 #include "ScopedMemoryBlock.h"
 #include "ScopedTimer.h"
@@ -33,24 +33,24 @@
 
 namespace TinyRNN
 {
-    class VMNetwork final : public SerializedObject
+    class UnrolledNetwork final : public SerializedObject
     {
     public:
         
-        using Ptr = std::shared_ptr<VMNetwork>;
-        using VMLayers = std::vector<VMNeuron::Vector>;
+        using Ptr = std::shared_ptr<UnrolledNetwork>;
+        using VMLayers = std::vector<UnrolledNeuron::Vector>;
         
     public:
         
-        explicit VMNetwork(HardcodedTrainingContext::Ptr targetContext);
-        VMNetwork(HardcodedTrainingContext::Ptr targetContext, VMLayers targetLayers);
+        explicit UnrolledNetwork(UnrolledTrainingContext::Ptr targetContext);
+        UnrolledNetwork(UnrolledTrainingContext::Ptr targetContext, VMLayers targetLayers);
         
         bool compile();
         
-        HardcodedTrainingContext::Ptr getContext() const noexcept;
+        UnrolledTrainingContext::Ptr getContext() const noexcept;
         
-        HardcodedTrainingContext::RawData feed(const HardcodedTrainingContext::RawData &values);
-        void train(Value rate, const HardcodedTrainingContext::RawData &target);
+        UnrolledTrainingContext::RawData feed(const UnrolledTrainingContext::RawData &values);
+        void train(Value rate, const UnrolledTrainingContext::RawData &target);
         
     public:
         
@@ -59,7 +59,7 @@ namespace TinyRNN
         
     private:
         
-        HardcodedTrainingContext::Ptr trainingContext;
+        UnrolledTrainingContext::Ptr trainingContext;
         
     private:
         
@@ -123,28 +123,28 @@ namespace TinyRNN
         bool initialize(const VMLayers &targetLayers);
         bool isBuilt() const;
         
-        TINYRNN_DISALLOW_COPY_AND_ASSIGN(VMNetwork);
+        TINYRNN_DISALLOW_COPY_AND_ASSIGN(UnrolledNetwork);
     };
     
     //===------------------------------------------------------------------===//
     // HardcodedNetwork implementation
     //===------------------------------------------------------------------===//
     
-    inline VMNetwork::VMNetwork(HardcodedTrainingContext::Ptr targetContext) :
+    inline UnrolledNetwork::UnrolledNetwork(UnrolledTrainingContext::Ptr targetContext) :
     trainingContext(targetContext)
     {
         VMLayers empty;
         this->initialize(empty);
     }
     
-    inline VMNetwork::VMNetwork(HardcodedTrainingContext::Ptr targetContext,
+    inline UnrolledNetwork::UnrolledNetwork(UnrolledTrainingContext::Ptr targetContext,
                                 VMLayers targetLayers) :
     trainingContext(targetContext)
     {
         this->initialize(targetLayers);
     }
     
-    inline HardcodedTrainingContext::Ptr VMNetwork::getContext() const noexcept
+    inline UnrolledTrainingContext::Ptr UnrolledNetwork::getContext() const noexcept
     {
         return this->trainingContext;
     }
@@ -153,9 +153,9 @@ namespace TinyRNN
     // Compiling
     //===------------------------------------------------------------------===//
     
-    inline bool VMNetwork::initialize(const VMLayers &targetLayers)
+    inline bool UnrolledNetwork::initialize(const VMLayers &targetLayers)
     {
-        const ScopedTimer timer("VMNetwork::initialize");
+        const ScopedTimer timer("UnrolledNetwork::initialize");
         
 #if TINYRNN_OPENCL_ACCELERATION
         
@@ -193,9 +193,9 @@ namespace TinyRNN
         return true;
     }
     
-    inline bool VMNetwork::compile()
+    inline bool UnrolledNetwork::compile()
     {
-        const ScopedTimer timer("VMNetwork::compile");
+        const ScopedTimer timer("UnrolledNetwork::compile");
         
 #if TINYRNN_OPENCL_ACCELERATION
         
@@ -272,7 +272,7 @@ namespace TinyRNN
     
 #define VALUE_STRING std::string((sizeof(Value) == sizeof(double)) ? "double" : "float")
     
-    inline bool VMNetwork::isBuilt() const
+    inline bool UnrolledNetwork::isBuilt() const
     {
         return (!this->feedKernel->isBuilt && !this->trainKernel->isBuilt);
     }
@@ -459,8 +459,8 @@ namespace TinyRNN
     }\
     ";
     
-    inline VMNetwork::Kernel::Ptr
-    VMNetwork::compileFeedKernel(const VMLayers &targetLayers) const
+    inline UnrolledNetwork::Kernel::Ptr
+    UnrolledNetwork::compileFeedKernel(const VMLayers &targetLayers) const
     {
         Kernel::Ptr kernel(new Kernel());
         kernel->entryPoint = "feed";
@@ -501,8 +501,8 @@ namespace TinyRNN
         return kernel;
     }
     
-    inline VMNetwork::Kernel::Ptr
-    VMNetwork::compileTrainKernel(const VMLayers &targetLayers) const
+    inline UnrolledNetwork::Kernel::Ptr
+    UnrolledNetwork::compileTrainKernel(const VMLayers &targetLayers) const
     {
         Kernel::Ptr kernel(new Kernel());
         kernel->entryPoint = ("train");
@@ -541,57 +541,57 @@ namespace TinyRNN
         return kernel;
     }
     
-    inline std::string VMNetwork::buildInputsExpressions() const
+    inline std::string UnrolledNetwork::buildInputsExpressions() const
     {
-        KernelSentence sentence;
+        std::stringstream sentence;
         const auto &inputVariables = this->trainingContext->getInputVariables();
         
         for (size_t i = 0; i < inputVariables.size(); ++i)
         {
-            sentence << inputVariables[i] << " = input[" << std::to_string(i) << "]"<< std::endl;
+            sentence << "x[" << inputVariables[i]  << "] = input[" << std::to_string(i) << "];"<< std::endl;
         }
         
-        return sentence.build();
+        return sentence.str();
     }
     
-    inline std::string VMNetwork::buildOutputsExpressions() const
+    inline std::string UnrolledNetwork::buildOutputsExpressions() const
     {
-        KernelSentence sentence;
+        std::stringstream sentence;
         const auto &outputVariables = this->trainingContext->getOutputVariables();
         
         for (size_t i = 0; i < outputVariables.size(); ++i)
         {
-            sentence << "output[" << std::to_string(i) << "] = " << outputVariables[i] << std::endl;
+            sentence << "output[" << std::to_string(i) << "] = x[" << outputVariables[i] << "];" << std::endl;
         }
         
-        return sentence.build();
+        return sentence.str();
     }
     
-    inline std::string VMNetwork::buildTargetsExpressions() const
+    inline std::string UnrolledNetwork::buildTargetsExpressions() const
     {
-        KernelSentence sentence;
+        std::stringstream sentence;
         const auto &targetVariables = this->trainingContext->getTargetVariables();
         
         for (size_t i = 0; i < targetVariables.size(); ++i)
         {
-            sentence << targetVariables[i] << " = target[" << std::to_string(i) << "]"<< std::endl;
+            sentence << "x[" << targetVariables[i] << "] = target[" << std::to_string(i) << "];"<< std::endl;
         }
         
-        return sentence.build();
+        return sentence.str();
     }
     
-    inline std::string VMNetwork::buildRateExpression() const
+    inline std::string UnrolledNetwork::buildRateExpression() const
     {
-        KernelSentence sentence;
-        sentence << this->trainingContext->getRateVariable() << " = rate[0]" << std::endl;
-        return sentence.build();
+        std::stringstream sentence;
+        sentence << "x[" << this->trainingContext->getRateVariable() << "] = rate[0];" << std::endl;
+        return sentence.str();
     }
     
     //===------------------------------------------------------------------===//
     // Core
     //===------------------------------------------------------------------===//
     
-    inline HardcodedTrainingContext::RawData VMNetwork::feed(const HardcodedTrainingContext::RawData &inputs)
+    inline UnrolledTrainingContext::RawData UnrolledNetwork::feed(const UnrolledTrainingContext::RawData &inputs)
     {
         std::fill(this->trainingContext->getOutputs().begin(),
                   this->trainingContext->getOutputs().end(),
@@ -640,7 +640,7 @@ namespace TinyRNN
         return this->trainingContext->getOutputs();
     }
     
-    inline void VMNetwork::train(Value rate, const HardcodedTrainingContext::RawData &targets)
+    inline void UnrolledNetwork::train(Value rate, const UnrolledTrainingContext::RawData &targets)
     {
 #if TINYRNN_OPENCL_ACCELERATION
         
@@ -684,18 +684,18 @@ namespace TinyRNN
     // Serialization
     //===------------------------------------------------------------------===//
     
-    inline void VMNetwork::deserialize(SerializationContext::Ptr context)
+    inline void UnrolledNetwork::deserialize(SerializationContext::Ptr context)
     {
         this->feedKernel = nullptr;
         this->trainKernel = nullptr;
         
-        if (auto feedKernelNode = context->getChildContext(Keys::VM::FeedKernel))
+        if (auto feedKernelNode = context->getChildContext(Keys::Unrolled::FeedKernel))
         {
             this->feedKernel = Kernel::Ptr(new Kernel());
             this->feedKernel->deserialize(feedKernelNode);
         }
         
-        if (auto trainKernelNode = context->getChildContext(Keys::VM::TrainKernel))
+        if (auto trainKernelNode = context->getChildContext(Keys::Unrolled::TrainKernel))
         {
             this->trainKernel = Kernel::Ptr(new Kernel());
             this->trainKernel->deserialize(trainKernelNode);
@@ -704,53 +704,53 @@ namespace TinyRNN
         this->compile();
     }
     
-    inline void VMNetwork::serialize(SerializationContext::Ptr context) const
+    inline void UnrolledNetwork::serialize(SerializationContext::Ptr context) const
     {
-        SerializationContext::Ptr feedKernelNode(context->addChildContext(Keys::VM::FeedKernel));
+        SerializationContext::Ptr feedKernelNode(context->addChildContext(Keys::Unrolled::FeedKernel));
         this->feedKernel->serialize(feedKernelNode);
         
-        SerializationContext::Ptr trainKernelNode(context->addChildContext(Keys::VM::TrainKernel));
+        SerializationContext::Ptr trainKernelNode(context->addChildContext(Keys::Unrolled::TrainKernel));
         this->trainKernel->serialize(trainKernelNode);
     }
     
-    inline void VMNetwork::Kernel::deserialize(SerializationContext::Ptr context)
+    inline void UnrolledNetwork::Kernel::deserialize(SerializationContext::Ptr context)
     {
-        const std::string &commandsEncoded = context->getStringProperty(Keys::VM::Commands);
-        const size_t commandsSize = context->getNumberProperty(Keys::VM::CommandsSize);
+        const std::string &commandsEncoded = context->getStringProperty(Keys::Unrolled::Commands);
+        const size_t commandsSize = context->getNumberProperty(Keys::Unrolled::CommandsSize);
         const auto &commandsDecoded = context->decodeBase64(commandsEncoded);
         
         this->commands.resize(commandsSize);
         memcpy(this->commands.data(), commandsDecoded.data(), sizeof(char) * commandsSize);
         
-        const std::string &indicesEncoded = context->getStringProperty(Keys::VM::Indices);
-        const size_t indicesSize = context->getNumberProperty(Keys::VM::IndicesSize);
+        const std::string &indicesEncoded = context->getStringProperty(Keys::Unrolled::Indices);
+        const size_t indicesSize = context->getNumberProperty(Keys::Unrolled::IndicesSize);
         const auto &indicesDecoded = context->decodeBase64(indicesEncoded);
         
         this->indices.resize(indicesSize);
         memcpy(this->indices.data(), indicesDecoded.data(), sizeof(Index) * indicesSize);
         
-        this->entryPoint = context->getStringProperty(Keys::VM::EntryPoint);
-        this->fullSource = context->getStringProperty(Keys::VM::FullSource);
+        this->entryPoint = context->getStringProperty(Keys::Unrolled::EntryPoint);
+        this->fullSource = context->getStringProperty(Keys::Unrolled::FullSource);
     }
     
-    inline void VMNetwork::Kernel::serialize(SerializationContext::Ptr context) const
+    inline void UnrolledNetwork::Kernel::serialize(SerializationContext::Ptr context) const
     {
         const std::string commandsEncoded =
         context->encodeBase64((const unsigned char *)this->commands.data(),
                               sizeof(char) * this->commands.size());
         
-        context->setStringProperty(commandsEncoded, Keys::VM::Commands);
-        context->setNumberProperty(this->commands.size(), Keys::VM::CommandsSize);
+        context->setStringProperty(commandsEncoded, Keys::Unrolled::Commands);
+        context->setNumberProperty(this->commands.size(), Keys::Unrolled::CommandsSize);
         
         const std::string indicesEncoded =
         context->encodeBase64((const unsigned char *)this->indices.data(),
                               sizeof(Index) * this->indices.size());
         
-        context->setStringProperty(indicesEncoded, Keys::VM::Indices);
-        context->setNumberProperty(this->indices.size(), Keys::VM::IndicesSize);
+        context->setStringProperty(indicesEncoded, Keys::Unrolled::Indices);
+        context->setNumberProperty(this->indices.size(), Keys::Unrolled::IndicesSize);
         
-        context->setStringProperty(this->entryPoint, Keys::VM::EntryPoint);
-        context->setStringProperty(this->fullSource, Keys::VM::FullSource);
+        context->setStringProperty(this->entryPoint, Keys::Unrolled::EntryPoint);
+        context->setStringProperty(this->fullSource, Keys::Unrolled::FullSource);
     }
 } // namespace TinyRNN
 

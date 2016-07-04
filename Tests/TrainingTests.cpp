@@ -99,64 +99,12 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
                 REQUIRE(result4.front() < 0.1);
             }
         }
-    
-#if TINYRNN_OPENCL_ACCELERATION
         
-        WHEN("The hardcoded network is trained with some random number of iterations")
+        WHEN("The unrolled network is trained with some random number of iterations")
         {
             network->getContext()->clear();
             
-            HardcodedNetwork::Ptr clNetwork = network->hardcode();
-            clNetwork->compile();
-            
-            {
-                const ScopedTimer timer("Training hardcoded network");
-                
-                for (int i = 0; i < numIterations; ++i)
-                {
-                    clNetwork->feed({0.0, 1.0});
-                    clNetwork->train(kTrainingRate, {1.0});
-                    
-                    clNetwork->feed({1.0, 0.0});
-                    clNetwork->train(kTrainingRate, {1.0});
-                    
-                    clNetwork->feed({0.0, 0.0});
-                    clNetwork->train(kTrainingRate, {0.0});
-                    
-                    clNetwork->feed({1.0, 1.0});
-                    clNetwork->train(kTrainingRate, {0.0});
-                }
-            }
-            
-            THEN("It gives a reasonable output")
-            {
-                const auto result1 = clNetwork->feed({0.0, 1.0});
-                REQUIRE(result1.size() == 1);
-                INFO(result1.front());
-                REQUIRE(result1.front() > 0.9);
-                
-                const auto result2 = clNetwork->feed({1.0, 0.0});
-                REQUIRE(result2.size() == 1);
-                INFO(result2.front());
-                REQUIRE(result2.front() > 0.9);
-                
-                const auto result3 = clNetwork->feed({0.0, 0.0});
-                REQUIRE(result3.size() == 1);
-                INFO(result3.front());
-                REQUIRE(result3.front() < 0.1);
-                
-                const auto result4 = clNetwork->feed({1.0, 1.0});
-                REQUIRE(result4.size() == 1);
-                INFO(result4.front());
-                REQUIRE(result4.front() < 0.1);
-            }
-        }
-        
-        WHEN("The VM network is trained with some random number of iterations")
-        {
-            network->getContext()->clear();
-            
-            VMNetwork::Ptr vmNetwork = network->toVM();
+            UnrolledNetwork::Ptr vmNetwork = network->toVM();
             vmNetwork->compile();
             
             {
@@ -201,9 +149,6 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
                 REQUIRE(result4.front() < 0.1);
             }
         }
-        
-#endif
-        
     }
 }
 
@@ -269,46 +214,12 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
         }
     }
     
-#if TINYRNN_OPENCL_ACCELERATION
-    
-    GIVEN("A hardcoded deep belief network")
+    GIVEN("An unrolled deep belief network")
     {
         const int fxSeed = RANDOM(-1.0, 1.0);
         const int numIterations = RANDOM(2000, 3000);
         Network::Ptr network = Network::Prefabs::feedForward(RANDOMNAME(), 1, { 32, 16, 8, 4, 2 }, 1);
-        HardcodedNetwork::Ptr clNetwork = network->hardcode();
-        clNetwork->compile();
-        
-        WHEN("The network is trained with some random number of iterations")
-        {
-            for (int i = 0; i < numIterations; ++i)
-            {
-                const Value x = RANDOM(-10.0, 10.0);
-                clNetwork->feed({x});
-                clNetwork->train(kTrainingRate, {f(x, fxSeed)});
-            }
-            
-            THEN("It gives a reasonable output")
-            {
-                const int numChecks = RANDOM(50, 100);
-                
-                for (int i = 0; i < numChecks; ++i)
-                {
-                    const Value x = RANDOM(-10.0, 10.0);
-                    const auto result = clNetwork->feed({x});
-                    const Value error = meanSquaredErrorCost({f(x, fxSeed)}, result);
-                    REQUIRE(error < 0.1);
-                }
-            }
-        }
-    }
-    
-    GIVEN("A VM deep belief network")
-    {
-        const int fxSeed = RANDOM(-1.0, 1.0);
-        const int numIterations = RANDOM(2000, 3000);
-        Network::Ptr network = Network::Prefabs::feedForward(RANDOMNAME(), 1, { 32, 16, 8, 4, 2 }, 1);
-        VMNetwork::Ptr vmNetwork = network->toVM();
+        UnrolledNetwork::Ptr vmNetwork = network->toVM();
         vmNetwork->compile();
         
         WHEN("The network is trained with some random number of iterations")
@@ -334,58 +245,54 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
             }
         }
     }
-    
-#endif
 }
 
-#if TINYRNN_OPENCL_ACCELERATION
-
-SCENARIO("Network can be recovered back from the trained hardcoded version", "[training]")
+SCENARIO("Network can be recovered back from the trained unrolled version", "[training]")
 {
-    GIVEN("LSTM network and its hardcoded version")
+    GIVEN("LSTM network and its unrolled version")
     {
         const auto networkName = RANDOMNAME();
         Network::Ptr network = Network::Prefabs::longShortTermMemory(networkName, 2, {3, 3}, 1);
         
-        HardcodedNetwork::Ptr clNetwork = network->hardcode();
-        clNetwork->compile();
+        UnrolledNetwork::Ptr vmNetwork = network->toVM();
+        vmNetwork->compile();
         
-        WHEN("The hardcoded network is trained and the usual network context is restored from the hardcoded one")
+        WHEN("The unrolled network is trained and the usual network context is restored from the unrolled one")
         {
             {
-                const ScopedTimer timer("Training hardcoded network");
+                const ScopedTimer timer("Training unrolled network");
                 const int numIterations = RANDOM(1500, 2000);
                 
                 for (int i = 0; i < numIterations; ++i)
                 {
-                    clNetwork->feed({0.0, 1.0});
-                    clNetwork->train(kTrainingRate, {1.0});
+                    vmNetwork->feed({0.0, 1.0});
+                    vmNetwork->train(kTrainingRate, {1.0});
                     
-                    clNetwork->feed({1.0, 0.0});
-                    clNetwork->train(kTrainingRate, {1.0});
+                    vmNetwork->feed({1.0, 0.0});
+                    vmNetwork->train(kTrainingRate, {1.0});
                     
-                    clNetwork->feed({0.0, 0.0});
-                    clNetwork->train(kTrainingRate, {0.0});
+                    vmNetwork->feed({0.0, 0.0});
+                    vmNetwork->train(kTrainingRate, {0.0});
                     
-                    clNetwork->feed({1.0, 1.0});
-                    clNetwork->train(kTrainingRate, {0.0});
+                    vmNetwork->feed({1.0, 1.0});
+                    vmNetwork->train(kTrainingRate, {0.0});
                 }
             }
             
-            network->restore(clNetwork->getContext());
+            network->restore(vmNetwork->getContext());
             
             THEN("The trained network should output sane results")
             {
-                const auto result1 = clNetwork->feed({0.0, 1.0});
+                const auto result1 = vmNetwork->feed({0.0, 1.0});
                 REQUIRE(result1.front() > 0.9);
                 
-                const auto result2 = clNetwork->feed({1.0, 0.0});
+                const auto result2 = vmNetwork->feed({1.0, 0.0});
                 REQUIRE(result2.front() > 0.9);
                 
-                const auto result3 = clNetwork->feed({0.0, 0.0});
+                const auto result3 = vmNetwork->feed({0.0, 0.0});
                 REQUIRE(result3.front() < 0.1);
                 
-                const auto result4 = clNetwork->feed({1.0, 1.0});
+                const auto result4 = vmNetwork->feed({1.0, 1.0});
                 REQUIRE(result4.front() < 0.1);
             }
             
@@ -406,5 +313,3 @@ SCENARIO("Network can be recovered back from the trained hardcoded version", "[t
         }
     }
 }
-
-#endif

@@ -240,110 +240,7 @@ SCENARIO("Networks can be serialized and deserialized correctly", "[serializatio
     }
 }
 
-#if TINYRNN_OPENCL_ACCELERATION
-
-SCENARIO("Hardcoded network can be serialized and deserialized correctly", "[serialization]")
-{
-    GIVEN("Serialized kernel chunks of a randomly trained hardcoded network")
-    {
-        const int layerSize = RANDOM(5, 10);
-        const auto networkName = RANDOMNAME();
-        
-        const auto network = Network::Prefabs::longShortTermMemory(networkName, 3, {layerSize}, 3);
-        REQUIRE(network->getName() == networkName);
-        
-        HardcodedNetwork::Ptr clNetwork = network->hardcode();
-        clNetwork->compile();
-        
-        const int numTrainingIterations = RANDOM(100, 1000);
-        const Value r1 = RANDOM(0.0, 1.0);
-        const Value r2 = RANDOM(0.0, 1.0);
-        const Value r3 = RANDOM(0.0, 1.0);
-        for (int i = 0; i < numTrainingIterations; ++i)
-        {
-            clNetwork->feed({ RANDOM(0.0, 1.0), RANDOM(0.0, 1.0), RANDOM(0.0, 1.0) });
-            clNetwork->train(kTrainingRate, { r1, r2, r3 });
-        }
-        
-        XMLSerializer serializer;
-        const std::string &serializedTopology = serializer.serialize(clNetwork, Keys::Hardcoded::Network);
-        //std::cout << serializedTopology;
-        
-        WHEN("A new network with the same context is deserialized from that data and serialized back")
-        {
-            HardcodedNetwork::Ptr clRecreatedNetwork(new HardcodedNetwork(clNetwork->getContext()));
-            serializer.deserialize(clRecreatedNetwork, serializedTopology);
-            clRecreatedNetwork->compile();
-            const std::string &reserializedTopology = serializer.serialize(clRecreatedNetwork, Keys::Hardcoded::Network);
-            
-            THEN("The serialization results should be equal")
-            {
-                REQUIRE(serializedTopology == reserializedTopology);
-            }
-            
-            THEN("Both networks should produce the same output")
-            {
-                const int numChecks = RANDOM(5, 10);
-                
-                for (int i = 0; i < numTrainingIterations; ++i)
-                {
-                    const Value r1 = RANDOM(0.0, 1.0);
-                    const Value r2 = RANDOM(0.0, 1.0);
-                    const Value r3 = RANDOM(0.0, 1.0);
-                    Neuron::Values result1 = clNetwork->feed({r1, r2, r3});
-                    Neuron::Values result2 = clRecreatedNetwork->feed({r1, r2, r3});
-                    
-                    for (size_t j = 0; j < result1.size(); ++j)
-                    {
-                        const Value error = fabs(result1[j] - result2[j]);
-                        REQUIRE(error < 0.01);
-                    }
-                }
-            }
-        }
-    }
-    
-    GIVEN("Serialized memory state of a randomly trained hardcoded network")
-    {
-        const int layerSize = RANDOM(5, 15);
-        const auto networkName = RANDOMNAME();
-        
-        const auto network = Network::Prefabs::longShortTermMemory(networkName, 3, {layerSize}, 3);
-        REQUIRE(network->getName() == networkName);
-        
-        HardcodedNetwork::Ptr clNetwork = network->hardcode();
-        clNetwork->compile();
-        
-        const int numTrainingIterations = RANDOM(100, 1000);
-        const Value r1 = RANDOM(0.0, 1.0);
-        const Value r2 = RANDOM(0.0, 1.0);
-        const Value r3 = RANDOM(0.0, 1.0);
-        for (int i = 0; i < numTrainingIterations; ++i)
-        {
-            clNetwork->feed({ RANDOM(0.0, 1.0), RANDOM(0.0, 1.0), RANDOM(0.0, 1.0) });
-            clNetwork->train(kTrainingRate, { r1, r2, r3 });
-        }
-        
-        XMLSerializer serializer;
-        const std::string &serializedMemory = serializer.serialize(clNetwork->getContext(), Keys::Hardcoded::TrainingContext);
-        //std::cout << serializedMemory;
-        
-        WHEN("A new state is deserialized from that data and serialized back")
-        {
-            HardcodedTrainingContext::Ptr recreatedContext(new HardcodedTrainingContext());
-            serializer.deserialize(recreatedContext, serializedMemory);
-            const std::string &reserializedMemory = serializer.serialize(recreatedContext, Keys::Hardcoded::TrainingContext);
-            //std::cout << reserializedMemory;
-            
-            THEN("The serialization results should be equal")
-            {
-                REQUIRE(serializedMemory == reserializedMemory);
-            }
-        }
-    }
-}
-
-SCENARIO("VM network can be serialized and deserialized correctly", "[serialization]")
+SCENARIO("Unrolled network can be serialized and deserialized correctly", "[serialization]")
 {
     GIVEN("Serialized kernel chunks of a randomly trained VM network")
     {
@@ -353,7 +250,7 @@ SCENARIO("VM network can be serialized and deserialized correctly", "[serializat
         const auto network = Network::Prefabs::longShortTermMemory(networkName, 3, {layerSize}, 3);
         REQUIRE(network->getName() == networkName);
         
-        VMNetwork::Ptr vmNetwork = network->toVM();
+        UnrolledNetwork::Ptr vmNetwork = network->toVM();
         vmNetwork->compile();
         
         const int numTrainingIterations = RANDOM(100, 1000);
@@ -367,15 +264,15 @@ SCENARIO("VM network can be serialized and deserialized correctly", "[serializat
         }
         
         XMLSerializer serializer;
-        const std::string &serializedTopology = serializer.serialize(vmNetwork, Keys::VM::Network);
+        const std::string &serializedTopology = serializer.serialize(vmNetwork, Keys::Unrolled::Network);
         //std::cout << serializedTopology;
         
         WHEN("A new network with the same context is deserialized from that data and serialized back")
         {
-            VMNetwork::Ptr vmRecreatedNetwork(new VMNetwork(vmNetwork->getContext()));
+            UnrolledNetwork::Ptr vmRecreatedNetwork(new UnrolledNetwork(vmNetwork->getContext()));
             serializer.deserialize(vmRecreatedNetwork, serializedTopology);
             vmRecreatedNetwork->compile();
-            const std::string &reserializedTopology = serializer.serialize(vmRecreatedNetwork, Keys::VM::Network);
+            const std::string &reserializedTopology = serializer.serialize(vmRecreatedNetwork, Keys::Unrolled::Network);
             
             THEN("The serialization results should be equal")
             {
@@ -404,5 +301,3 @@ SCENARIO("VM network can be serialized and deserialized correctly", "[serializat
         }
     }
 }
-
-#endif

@@ -27,6 +27,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <sstream>
 #include <map>
 #include <unordered_map>
 #include <math.h>

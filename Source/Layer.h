@@ -25,13 +25,11 @@
 
 #include "Neuron.h"
 #include "SerializedObject.h"
-#include "HardcodedTrainingContext.h"
+#include "UnrolledTrainingContext.h"
 #include "Id.h"
 #include "SerializationKeys.h"
 #include "TrainingContext.h"
-
-#include "VMNeuron.h"
-#include "HardcodedNeuron.h"
+#include "UnrolledNeuron.h"
 
 namespace TinyRNN
 {
@@ -83,19 +81,12 @@ namespace TinyRNN
         virtual void deserialize(SerializationContext::Ptr context) override;
         virtual void serialize(SerializationContext::Ptr context) const override;
         
-// Needed to create standalone networks:
-//#if TINYRNN_OPENCL_ACCELERATION
-        VMNeuron::Vector toVM(HardcodedTrainingContext::Ptr context,
+        UnrolledNeuron::Vector toVM(UnrolledTrainingContext::Ptr context,
                               bool asInput, bool asOutput,
                               bool asConst) const;
-        
-        HardcodedNeuron::Vector hardcode(HardcodedTrainingContext::Ptr context,
-                                         bool asInput, bool asOutput,
-                                         bool asConst) const;
-        
-        void restore(HardcodedTrainingContext::Ptr context);
-//#endif
-        
+
+        void restore(UnrolledTrainingContext::Ptr context);
+
     private:
         
         Id uuid;
@@ -445,36 +436,21 @@ namespace TinyRNN
     // Batch hardcoding stuff
     //===------------------------------------------------------------------===//
     
-    inline VMNeuron::Vector Layer::toVM(HardcodedTrainingContext::Ptr context,
+    inline UnrolledNeuron::Vector Layer::toVM(UnrolledTrainingContext::Ptr context,
                                         bool asInput, bool asOutput,
                                         bool asConst) const
     {
-        VMNeuron::Vector result;
+        UnrolledNeuron::Vector result;
         
         for (auto &neuron : this->neurons)
         {
-            result.push_back(VMNeuron::buildFrom(context, neuron, asInput, asOutput, asConst));
+            result.push_back(UnrolledNeuron::buildFrom(context, neuron, asInput, asOutput, asConst));
         }
         
         return result;
     }
-    
-    inline HardcodedNeuron::Vector
-    Layer::hardcode(HardcodedTrainingContext::Ptr context,
-                    bool asInput, bool asOutput,
-                    bool asConst) const
-    {
-        HardcodedNeuron::Vector result;
         
-        for (auto &neuron : this->neurons)
-        {
-            result.push_back(HardcodedNeuron::buildFrom(context, neuron, asInput, asOutput, asConst));
-        }
-        
-        return result;
-    }
-    
-    inline void Layer::restore(HardcodedTrainingContext::Ptr context)
+    inline void Layer::restore(UnrolledTrainingContext::Ptr context)
     {
         for (auto &neuron : this->neurons)
         {
