@@ -20,6 +20,8 @@
     OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#define TINYRNN_OPENCL_ACCELERATION 1
+
 #include "ThirdParty/Catch/include/catch.hpp"
 #include "Helpers.h"
 #include "Network.h"
@@ -33,7 +35,7 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
 {
     GIVEN("A single-layer perceptron")
     {
-        const int numIterations = RANDOM(1500, 2000);
+        const int numIterations = RANDOM(2500, 3000);
         const auto networkName = RANDOMNAME();
         const auto contextName = RANDOMNAME();
 
@@ -147,6 +149,68 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
                 REQUIRE(result4.size() == 1);
                 INFO(result4.front());
                 REQUIRE(result4.front() < 0.1);
+            }
+        }
+        
+        WHEN("The unrolled network is batch-trained with some random number of iterations")
+        {
+            network->getContext()->clear();
+            
+            UnrolledNetwork::Ptr vmNetwork = network->toVM();
+            vmNetwork->compile();
+            
+            {
+                const ScopedTimer timer("Batch-training VM network");
+                UnrolledTrainingContext::RawData inputs;
+                UnrolledTrainingContext::RawData targets;
+                
+                for (int i = 0; i < numIterations; ++i)
+                {
+                    inputs.push_back(0.0);
+                    inputs.push_back(1.0);
+                    targets.push_back(1.0);
+                    
+                    inputs.push_back(1.0);
+                    inputs.push_back(0.0);
+                    targets.push_back(1.0);
+                    
+                    inputs.push_back(0.0);
+                    inputs.push_back(0.0);
+                    targets.push_back(0.0);
+                    
+                    inputs.push_back(1.0);
+                    inputs.push_back(1.0);
+                    targets.push_back(0.0);
+                }
+                
+                vmNetwork->batchTrain(kTrainingRate, numIterations, 2, 1, inputs, targets);
+            }
+            
+            THEN("It gives a reasonable output")
+            {
+                const int numChecks = RANDOM(10, 20);
+                for (int i = 0; i < numChecks; ++i)
+                {
+                    const auto result1 = vmNetwork->feed({0.0, 1.0});
+                    REQUIRE(result1.size() == 1);
+                    INFO(result1.front());
+                    REQUIRE(result1.front() > 0.9);
+                    
+                    const auto result2 = vmNetwork->feed({1.0, 0.0});
+                    REQUIRE(result2.size() == 1);
+                    INFO(result2.front());
+                    REQUIRE(result2.front() > 0.9);
+                    
+                    const auto result3 = vmNetwork->feed({0.0, 0.0});
+                    REQUIRE(result3.size() == 1);
+                    INFO(result3.front());
+                    REQUIRE(result3.front() < 0.1);
+                    
+                    const auto result4 = vmNetwork->feed({1.0, 1.0});
+                    REQUIRE(result4.size() == 1);
+                    INFO(result4.front());
+                    REQUIRE(result4.front() < 0.1);
+                }
             }
         }
     }

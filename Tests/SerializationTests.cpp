@@ -187,7 +187,7 @@ SCENARIO("Networks can be serialized and deserialized correctly", "[serializatio
             {
                 const int numChecks = RANDOM(10, 20);
                 
-                for (int i = 0; i < numTrainingIterations; ++i)
+                for (int i = 0; i < numChecks; ++i)
                 {
                     const Value r1 = RANDOM(0.0, 1.0);
                     const Value r2 = RANDOM(0.0, 1.0);
@@ -283,7 +283,7 @@ SCENARIO("Unrolled network can be serialized and deserialized correctly", "[seri
             {
                 const int numChecks = RANDOM(5, 10);
                 
-                for (int i = 0; i < numTrainingIterations; ++i)
+                for (int i = 0; i < numChecks; ++i)
                 {
                     const Value r1 = RANDOM(0.0, 1.0);
                     const Value r2 = RANDOM(0.0, 1.0);
