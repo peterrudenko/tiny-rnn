@@ -51,10 +51,6 @@ namespace TinyRNN
         
         UnrolledTrainingContext::RawData feed(const UnrolledTrainingContext::RawData &values);
         void train(Value rate, const UnrolledTrainingContext::RawData &target);
-        void batchTrain(Value rate,
-                        size_t numBatches, size_t inputBatchSize, size_t targetBatchSize,
-                        const UnrolledTrainingContext::RawData &inputs,
-                        const UnrolledTrainingContext::RawData &targets);
         
     public:
         
@@ -79,9 +75,6 @@ namespace TinyRNN
         cl::Buffer clOutputsBuffer;
         cl::Buffer clTargetsBuffer;
         cl::Buffer clRateBuffer;
-        cl::Buffer clNumBatchesBuffer;
-        cl::Buffer clInputBatchSizeBuffer;
-        cl::Buffer clTargetBatchSizeBuffer;
         
 #endif
       
@@ -118,11 +111,9 @@ namespace TinyRNN
         
         Kernel::Ptr feedKernel;
         Kernel::Ptr trainKernel;
-        Kernel::Ptr batchTrainKernel;
         
         Kernel::Ptr compileFeedKernel(const VMLayers &targetLayers) const;
         Kernel::Ptr compileTrainKernel(const VMLayers &targetLayers) const;
-        Kernel::Ptr compileBatchTrainKernel(const VMLayers &targetLayers) const;
         
         std::string buildInputsExpressions() const;
         std::string buildOutputsExpressions() const;
@@ -198,7 +189,6 @@ namespace TinyRNN
         
         this->feedKernel = this->compileFeedKernel(targetLayers);
         this->trainKernel = this->compileTrainKernel(targetLayers);
-        this->batchTrainKernel = this->compileBatchTrainKernel(targetLayers);
         
         return true;
     }
@@ -212,7 +202,6 @@ namespace TinyRNN
         cl::Program::Sources clSources;
         clSources.push_back({this->feedKernel->fullSource.c_str(), this->feedKernel->fullSource.length()});
         clSources.push_back({this->trainKernel->fullSource.c_str(), this->trainKernel->fullSource.length()});
-        clSources.push_back({this->batchTrainKernel->fullSource.c_str(), this->batchTrainKernel->fullSource.length()});
         
         this->clProgram = cl::Program(this->clContext, clSources);
         
@@ -264,25 +253,6 @@ namespace TinyRNN
             this->trainKernel->isBuilt = true;
         }
         
-        {
-            const ScopedTimer trainTimer("Compiling batch train kernel");
-            this->batchTrainKernel->clKernel = cl::Kernel(this->clProgram, this->batchTrainKernel->entryPoint.c_str());
-            
-            this->batchTrainKernel->clCommandsBuffer =
-            cl::Buffer(this->clContext,
-                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                       sizeof(char) * this->batchTrainKernel->commands.size(),
-                       (void *)this->batchTrainKernel->commands.data());
-            
-            this->batchTrainKernel->clIndicesBuffer =
-            cl::Buffer(this->clContext,
-                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                       sizeof(Index) * this->batchTrainKernel->indices.size(),
-                       (void *)this->batchTrainKernel->indices.data());
-            
-            this->batchTrainKernel->isBuilt = true;
-        }
-        
         this->clQueue = cl::CommandQueue(this->clContext, this->clDevice);
         
         this->clMemoryBuffer =
@@ -304,9 +274,7 @@ namespace TinyRNN
     
     inline bool UnrolledNetwork::isBuilt() const
     {
-        return (!this->feedKernel->isBuilt &&
-                !this->trainKernel->isBuilt &&
-                !this->batchTrainKernel->isBuilt);
+        return (!this->feedKernel->isBuilt && !this->trainKernel->isBuilt);
     }
     
     //===------------------------------------------------------------------===//
@@ -397,14 +365,10 @@ namespace TinyRNN
         }
     }
     
-    static std::string kVMProcessingKernelInit =
+    static std::string kVMProcessingKernel =
     "\
     uint c = 0;\
     uint i = 0;\
-    ";
-    
-    static std::string kVMProcessingKernel =
-    "{\
     char command = 0;\
     \
     while (command != 16)\
@@ -493,7 +457,7 @@ namespace TinyRNN
             }\
         }\
     }\
-    }";
+    ";
     
     inline UnrolledNetwork::Kernel::Ptr
     UnrolledNetwork::compileFeedKernel(const VMLayers &targetLayers) const
@@ -509,7 +473,6 @@ namespace TinyRNN
         "global " + VALUE_STRING + " *x) {\n";
         
         kernel->fullSource += this->buildInputsExpressions();
-        kernel->fullSource += kVMProcessingKernelInit;
         kernel->fullSource += kVMProcessingKernel;
         kernel->fullSource += this->buildOutputsExpressions();
         kernel->fullSource += "}\n";
@@ -553,7 +516,6 @@ namespace TinyRNN
         
         kernel->fullSource += this->buildRateExpression();
         kernel->fullSource += this->buildTargetsExpressions();
-        kernel->fullSource += kVMProcessingKernelInit;
         kernel->fullSource += kVMProcessingKernel;
         kernel->fullSource += "}\n";
         
@@ -576,94 +538,6 @@ namespace TinyRNN
         }
         
         kernel->commands.push_back(VMProgram::End);
-        return kernel;
-    }
-    
-    inline UnrolledNetwork::Kernel::Ptr
-    UnrolledNetwork::compileBatchTrainKernel(const VMLayers &targetLayers) const
-    {
-        Kernel::Ptr kernel(new Kernel());
-        kernel->entryPoint = ("batch");
-        kernel->fullSource =
-        "void kernel " + kernel->entryPoint +
-        "(global const " + VALUE_STRING + " *rate, " +
-        "global const " + VALUE_STRING + " *input, " +
-        "global const " + VALUE_STRING + " *target, " +
-        "global const uint *numBatches, " +
-        "global const uint *inputBatchSize, " +
-        "global const uint *targetBatchSize, " +
-        "global const char *commands, " +
-        "global const uint *id, " +
-        "global " + VALUE_STRING + " *x) {\n";
-        
-        kernel->fullSource +=
-        "for (uint b = 0; b < numBatches[0]; ++b) {\n";
-        
-        std::stringstream inputsExpressions;
-        const auto &inputVariables = this->trainingContext->getInputVariables();
-        for (size_t i = 0; i < inputVariables.size(); ++i)
-        {
-            inputsExpressions << "x[" << inputVariables[i]  << "] = input[(b * inputBatchSize[0]) + " << std::to_string(i) << "];"<< std::endl;
-        }
-        
-        std::stringstream targetsExpressions;
-        const auto &targetVariables = this->trainingContext->getTargetVariables();
-        for (size_t i = 0; i < targetVariables.size(); ++i)
-        {
-            targetsExpressions << "x[" << targetVariables[i] << "] = target[(b * targetBatchSize[0]) + " << std::to_string(i) << "];"<< std::endl;
-        }
-        
-        kernel->fullSource += kVMProcessingKernelInit;
-        
-        kernel->fullSource += inputsExpressions.str();
-        kernel->fullSource += kVMProcessingKernel;
-        
-        kernel->fullSource += this->buildRateExpression();
-        kernel->fullSource += targetsExpressions.str();
-        kernel->fullSource += kVMProcessingKernel;
-        
-        kernel->fullSource += "}\n}\n";
-        
-        //std::cout << kernel->fullSource << std::endl;
-        
-        for (const auto &layer : targetLayers)
-        {
-            for (const auto &neuron : layer)
-            {
-                const auto &feedCommands = neuron->getFeedChunk().commands;
-                const auto &traceCommands = neuron->getTraceChunk().commands;
-                kernel->commands.reserve(kernel->commands.size() + feedCommands.size() + traceCommands.size());
-                kernel->commands.insert(kernel->commands.end(), feedCommands.begin(), feedCommands.end());
-                kernel->commands.insert(kernel->commands.end(), traceCommands.begin(), traceCommands.end());
-                
-                const auto &feedIndices = neuron->getFeedChunk().indices;
-                const auto &traceIndices = neuron->getTraceChunk().indices;
-                kernel->indices.reserve(kernel->indices.size() + feedIndices.size() + traceIndices.size());
-                kernel->indices.insert(kernel->indices.end(), feedIndices.begin(), feedIndices.end());
-                kernel->indices.insert(kernel->indices.end(), traceIndices.begin(), traceIndices.end());
-            }
-        }
-        
-        kernel->commands.push_back(VMProgram::End);
-        
-        for (size_t l = targetLayers.size(); l --> 0 ;)
-        {
-            const auto &layer = targetLayers[l];
-            
-            for (size_t n = layer.size(); n --> 0 ;)
-            {
-                const auto &neuron = layer[n];
-                const auto &trainCommands = neuron->getTrainChunk().commands;
-                const auto &trainIndices = neuron->getTrainChunk().indices;
-                kernel->commands.reserve(kernel->commands.size() + trainCommands.size());
-                kernel->commands.insert(kernel->commands.end(), trainCommands.begin(), trainCommands.end());
-                kernel->indices.reserve(kernel->indices.size() + trainIndices.size());
-                kernel->indices.insert(kernel->indices.end(), trainIndices.begin(), trainIndices.end());
-            }
-        }
-        
-        kernel->commands.push_back(VMProgram::End);
-        
         return kernel;
     }
     
@@ -716,59 +590,6 @@ namespace TinyRNN
     //===------------------------------------------------------------------===//
     // Core
     //===------------------------------------------------------------------===//
-    
-    inline void
-    UnrolledNetwork::batchTrain(Value rate,
-                                size_t numBatches, size_t inputBatchSize, size_t targetBatchSize,
-                                const UnrolledTrainingContext::RawData &inputs,
-                                const UnrolledTrainingContext::RawData &targets)
-    {
-#if TINYRNN_OPENCL_ACCELERATION
-        
-        this->clInputsBuffer = cl::Buffer(this->clContext,
-                                          CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                          sizeof(Value) * inputs.size(),
-                                          (void *)inputs.data());
-        
-        this->clTargetsBuffer = cl::Buffer(this->clContext,
-                                           CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                           sizeof(Value) * targets.size(),
-                                           (void *)targets.data());
-        
-        this->clRateBuffer = cl::Buffer(this->clContext,
-                                        CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                        sizeof(Value),
-                                        (void *)&rate);
-        
-        this->clNumBatchesBuffer = cl::Buffer(this->clContext,
-                                              CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                              sizeof(size_t),
-                                              (void *)&numBatches);
-        
-        this->clInputBatchSizeBuffer = cl::Buffer(this->clContext,
-                                                  CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                                  sizeof(size_t),
-                                                  (void *)&inputBatchSize);
-        
-        this->clTargetBatchSizeBuffer = cl::Buffer(this->clContext,
-                                                   CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                                   sizeof(size_t),
-                                                   (void *)&targetBatchSize);
-        
-        this->batchTrainKernel->clKernel.setArg(0, this->clRateBuffer);
-        this->batchTrainKernel->clKernel.setArg(1, this->clInputsBuffer);
-        this->batchTrainKernel->clKernel.setArg(2, this->clTargetsBuffer);
-        this->batchTrainKernel->clKernel.setArg(3, this->clNumBatchesBuffer);
-        this->batchTrainKernel->clKernel.setArg(4, this->clInputBatchSizeBuffer);
-        this->batchTrainKernel->clKernel.setArg(5, this->clTargetBatchSizeBuffer);
-        this->batchTrainKernel->clKernel.setArg(6, this->batchTrainKernel->clCommandsBuffer);
-        this->batchTrainKernel->clKernel.setArg(7, this->batchTrainKernel->clIndicesBuffer);
-        this->batchTrainKernel->clKernel.setArg(8, this->clMemoryBuffer);
-        this->clQueue.enqueueNDRangeKernel(this->batchTrainKernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
-        this->clQueue.finish();
-        
-#endif
-    }
     
     inline UnrolledTrainingContext::RawData UnrolledNetwork::feed(const UnrolledTrainingContext::RawData &inputs)
     {
@@ -880,12 +701,6 @@ namespace TinyRNN
             this->trainKernel->deserialize(trainKernelNode);
         }
         
-        if (auto batchTrainKernelNode = context->getChildContext(Keys::Unrolled::BatchTrainKernel))
-        {
-            this->batchTrainKernel = Kernel::Ptr(new Kernel());
-            this->batchTrainKernel->deserialize(batchTrainKernelNode);
-        }
-        
         this->compile();
     }
     
@@ -896,9 +711,6 @@ namespace TinyRNN
         
         SerializationContext::Ptr trainKernelNode(context->addChildContext(Keys::Unrolled::TrainKernel));
         this->trainKernel->serialize(trainKernelNode);
-
-        SerializationContext::Ptr batchTrainKernelNode(context->addChildContext(Keys::Unrolled::BatchTrainKernel));
-        this->batchTrainKernel->serialize(batchTrainKernelNode);
     }
     
     inline void UnrolledNetwork::Kernel::deserialize(SerializationContext::Ptr context)

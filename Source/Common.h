@@ -31,7 +31,6 @@
 #include <map>
 #include <unordered_map>
 #include <math.h>
-#include <assert.h>
 
 namespace TinyRNN
 {

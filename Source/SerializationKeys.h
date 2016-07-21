@@ -134,7 +134,6 @@ namespace TinyRNN
             
             static const std::string FeedKernel = "FeedKernel";
             static const std::string TrainKernel = "TrainKernel";
-            static const std::string BatchTrainKernel = "BatchTrainKernel";
             
             static const std::string Commands = "Commands";
             static const std::string CommandsSize = "CommandsSize";
