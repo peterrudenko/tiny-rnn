@@ -66,17 +66,10 @@ namespace TinyRNN
         public:
             
             using Ptr = std::shared_ptr<Kernel>;
-            
-            Kernel() : isBuilt(false) {}
-            
-            bool isBuilt;
-            std::string fullSource;
-            std::string entryPoint;
+            Kernel() = default;
             
             std::vector<char> commands;
             std::vector<Index> indices; // Index is the same type as cl_uint
-            
-        public:
             
             virtual void deserialize(SerializationContext::Ptr context) override;
             virtual void serialize(SerializationContext::Ptr context) const override;
@@ -92,13 +85,7 @@ namespace TinyRNN
         Kernel::Ptr compileFeedKernel(const VMLayers &targetLayers) const;
         Kernel::Ptr compileTrainKernel(const VMLayers &targetLayers) const;
         
-        std::string buildInputsExpressions() const;
-        std::string buildOutputsExpressions() const;
-        std::string buildTargetsExpressions() const;
-        std::string buildRateExpression() const;
-        
         bool initialize(const VMLayers &targetLayers);
-        bool isBuilt() const;
         
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(UnrolledNetwork);
     };
@@ -141,11 +128,6 @@ namespace TinyRNN
     }
     
 #define VALUE_STRING std::string((sizeof(Value) == sizeof(double)) ? "double" : "float")
-    
-    inline bool UnrolledNetwork::isBuilt() const
-    {
-        return (!this->feedKernel->isBuilt && !this->trainKernel->isBuilt);
-    }
     
     //===------------------------------------------------------------------===//
     // Compiling all the expressions
@@ -252,131 +234,10 @@ namespace TinyRNN
         }
     }
     
-    static std::string kVMProcessingKernel =
-    "\
-    uint c = 0;\
-    uint i = 0;\
-    char command = 0;\
-    \
-    while (command != 127)\
-    {\
-        switch (command = commands[c++])\
-        {\
-            case 0: {\
-                x[id[i+0]] = 0;\
-                i += 1;\
-                break;\
-            }\
-            case 1: {\
-                x[id[i+0]] = x[id[i+0]] < 0.0 ? 0.0 : (x[id[i+0]] > 1.0 ? 1.0 : x[id[i+0]]);\
-                i += 1;\
-                break;\
-            }\
-            case 2: {\
-                x[id[i+0]] = x[id[i+1]] > 0.0 ? x[id[i+1]] : (0.01 * x[id[i+1]]);\
-                i += 2;\
-                break;\
-            }\
-            case 3: {\
-                x[id[i+0]] = x[id[i+1]] > 0.0 ? 1.0 : 0.01;\
-                i += 2;\
-                break;\
-            }\
-            case 4: {\
-                x[id[i+0]] += x[id[i+1]] * x[id[i+2]];\
-                i += 3;\
-                break;\
-            }\
-            case 5: {\
-                x[id[i+0]] += x[id[i+1]] * x[id[i+2]] * x[id[i+3]];\
-                i += 4;\
-                break;\
-            }\
-            case 6: {\
-                x[id[i+0]] = x[id[i+1]];\
-                i += 2;\
-                break;\
-            }\
-            case 7: {\
-                x[id[i+0]] = x[id[i+1]] + x[id[i+2]];\
-                i += 3;\
-                break;\
-            }\
-            case 8: {\
-                x[id[i+0]] = x[id[i+1]] - x[id[i+2]];\
-                i += 3;\
-                break;\
-            }\
-            case 9: {\
-                x[id[i+0]] = x[id[i+1]] * x[id[i+2]];\
-                i += 3;\
-                break;\
-            }\
-            case 10: {\
-                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]];\
-                i += 4;\
-                break;\
-            }\
-            case 11: {\
-                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] + x[id[i+3]];\
-                i += 4;\
-                break;\
-            }\
-            case 12: {\
-                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] + x[id[i+3]] * x[id[i+4]];\
-                i += 5;\
-                break;\
-            }\
-            case 13: {\
-                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]] + x[id[i+4]];\
-                i += 5;\
-                break;\
-            }\
-            case 14: {\
-                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]] + x[id[i+4]] * x[id[i+5]];\
-                i += 6;\
-                break;\
-            }\
-            case 15: {\
-                x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]] + x[id[i+4]] * x[id[i+5]] * x[id[i+6]];\
-                i += 7;\
-                break;\
-            }\
-            case 16:\
-            {\
-                const uint loopCount = id[i+0];\
-                const uint stateIndex = id[i+1];\
-                i += 2;\
-                for (uint loop = 0; loop < loopCount; ++loop)\
-                {\
-                    x[id[stateIndex]] = x[id[stateIndex]] + (x[id[i+0]] * x[id[i+1]] * x[id[i+2]]);\
-                    i += 3;\
-                }\
-                break;\
-            }\
-        }\
-    }\
-    ";
-    
     inline UnrolledNetwork::Kernel::Ptr
     UnrolledNetwork::compileFeedKernel(const VMLayers &targetLayers) const
     {
         Kernel::Ptr kernel(new Kernel());
-        kernel->entryPoint = "feed";
-        kernel->fullSource =
-        "void kernel " + kernel->entryPoint +
-        "(global const " + VALUE_STRING + " *input, " +
-        "global " + VALUE_STRING + " *output, " +
-        "global const char *commands, " +
-        "global const uint *id, " +
-        "global " + VALUE_STRING + " *x) {\n";
-        
-        kernel->fullSource += this->buildInputsExpressions();
-        kernel->fullSource += kVMProcessingKernel;
-        kernel->fullSource += this->buildOutputsExpressions();
-        kernel->fullSource += "}\n";
-        
-        //std::cout << kernel->fullSource << std::endl;
         
         for (const auto &layer : targetLayers)
         {
@@ -404,22 +265,7 @@ namespace TinyRNN
     UnrolledNetwork::compileTrainKernel(const VMLayers &targetLayers) const
     {
         Kernel::Ptr kernel(new Kernel());
-        kernel->entryPoint = ("train");
-        kernel->fullSource =
-        "void kernel " + kernel->entryPoint +
-        "(global const " + VALUE_STRING + " *rate, " +
-        "global const " + VALUE_STRING + " *target, " +
-        "global const char *commands, " +
-        "global const uint *id, " +
-        "global " + VALUE_STRING + " *x) {\n";
         
-        kernel->fullSource += this->buildRateExpression();
-        kernel->fullSource += this->buildTargetsExpressions();
-        kernel->fullSource += kVMProcessingKernel;
-        kernel->fullSource += "}\n";
-        
-        //std::cout << kernel->fullSource << std::endl;
-
         for (size_t l = targetLayers.size(); l --> 0 ;)
         {
             const auto &layer = targetLayers[l];
@@ -438,52 +284,6 @@ namespace TinyRNN
         
         kernel->commands.push_back(VMProgram::End);
         return kernel;
-    }
-    
-    inline std::string UnrolledNetwork::buildInputsExpressions() const
-    {
-        std::stringstream sentence;
-        const auto &inputVariables = this->trainingContext->getInputVariables();
-        
-        for (size_t i = 0; i < inputVariables.size(); ++i)
-        {
-            sentence << "x[" << inputVariables[i]  << "] = input[" << std::to_string(i) << "];"<< std::endl;
-        }
-        
-        return sentence.str();
-    }
-    
-    inline std::string UnrolledNetwork::buildOutputsExpressions() const
-    {
-        std::stringstream sentence;
-        const auto &outputVariables = this->trainingContext->getOutputVariables();
-        
-        for (size_t i = 0; i < outputVariables.size(); ++i)
-        {
-            sentence << "output[" << std::to_string(i) << "] = x[" << outputVariables[i] << "];" << std::endl;
-        }
-        
-        return sentence.str();
-    }
-    
-    inline std::string UnrolledNetwork::buildTargetsExpressions() const
-    {
-        std::stringstream sentence;
-        const auto &targetVariables = this->trainingContext->getTargetVariables();
-        
-        for (size_t i = 0; i < targetVariables.size(); ++i)
-        {
-            sentence << "x[" << targetVariables[i] << "] = target[" << std::to_string(i) << "];"<< std::endl;
-        }
-        
-        return sentence.str();
-    }
-    
-    inline std::string UnrolledNetwork::buildRateExpression() const
-    {
-        std::stringstream sentence;
-        sentence << "x[" << this->trainingContext->getRateVariable() << "] = rate[0];" << std::endl;
-        return sentence.str();
     }
     
     //===------------------------------------------------------------------===//
@@ -577,9 +377,6 @@ namespace TinyRNN
         
         this->indices.resize(indicesSize);
         std::memcpy(this->indices.data(), indicesDecoded.data(), sizeof(Index) * indicesSize);
-        
-        this->entryPoint = context->getStringProperty(Keys::Unrolled::EntryPoint);
-        this->fullSource = context->getStringProperty(Keys::Unrolled::FullSource);
     }
     
     inline void UnrolledNetwork::Kernel::serialize(SerializationContext::Ptr context) const
@@ -597,10 +394,8 @@ namespace TinyRNN
         
         context->setStringProperty(indicesEncoded, Keys::Unrolled::Indices);
         context->setNumberProperty(this->indices.size(), Keys::Unrolled::IndicesSize);
-        
-        context->setStringProperty(this->entryPoint, Keys::Unrolled::EntryPoint);
-        context->setStringProperty(this->fullSource, Keys::Unrolled::FullSource);
     }
+    
 } // namespace TinyRNN
 
 #endif // TINYRNN_VMNETWORK_H_INCLUDED
