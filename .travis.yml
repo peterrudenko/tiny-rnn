@@ -1,4 +1,4 @@
-sudo: false
+sudo: required
 dist: trusty
 
 language: cpp
@@ -19,6 +19,10 @@ install:
   - cd Build
   - make
   - cd ..
+
+before_install:
+  - sudo apt-get update -qq -y;
+  - sudo apt-get install -qq git cmake build-essential
 
 script:
   - cd Build
