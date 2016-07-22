@@ -24,7 +24,6 @@
 #define TINYRNN_NEURON_H_INCLUDED
 
 #include "SerializedObject.h"
-#include "TrainingContext.h"
 #include "Id.h"
 #include "SerializationKeys.h"
 
@@ -56,14 +55,12 @@ namespace TinyRNN
             
         public:
             
-            explicit Connection(TrainingContext::Ptr context);
+            Connection();
             
-            Connection(TrainingContext::Ptr context,
-                       Neuron::WeakPtr input,
+            Connection(Neuron::WeakPtr input,
                        Neuron::WeakPtr output);
             
             Id getUuid() const noexcept;
-            TrainingContext::ConnectionData::Ptr getTrainingData() const;
             
             Neuron::Ptr getInputNeuron() const;
             Neuron::Ptr getGateNeuron() const;
@@ -82,11 +79,18 @@ namespace TinyRNN
             
             Id uuid;
             
+            Value weight;
+            Value gain;
+            
+            void setRandomWeight();
+            
             Neuron::WeakPtr inputNeuron;
             Neuron::WeakPtr gateNeuron;
             Neuron::WeakPtr outputNeuron;
             
-            TrainingContext::Ptr context;
+            friend class Neuron;
+            friend class UnrolledNeuron;
+            friend class UnrolledTrainingContext;
             
         private:
             
@@ -95,14 +99,11 @@ namespace TinyRNN
         
     public:
         
-        explicit Neuron(TrainingContext::Ptr context);
-        Neuron(TrainingContext::Ptr context, Value defaultBias);
+        Neuron();
+        Neuron(Value defaultBias);
         
         Id getUuid() const noexcept;
-        TrainingContext::NeuronData::Ptr getTrainingData() const;
-        
         Connection::HashMap getOutgoingConnections() const;
-        
         
         bool isSelfConnected() const noexcept;
         bool isConnectedTo(Neuron::Ptr other) const;
@@ -137,15 +138,27 @@ namespace TinyRNN
         
         Id uuid;
         
-        static Value activation(Value x);
-        static Value derivative(Value x);
+        Value bias;
+        Value activation;
+        Value derivative;
+        
+        Value state;
+        Value oldState;
+        
+        Value errorResponsibility;
+        Value projectedActivity;
+        Value gatingActivity;
+        
+        void feedWithRandomBias(Value signal);
+        void setRandomBias();
+        
+        static Value activationReLU(Value x);
+        static Value derivativeReLU(Value x);
         
         Connection::HashMap incomingConnections;
         Connection::HashMap outgoingConnections;
         Connection::HashMap gatedConnections;
         Connection::Ptr selfConnection;
-        
-        TrainingContext::Ptr context;
         
         bool isOutput() const;
         void learn(Value rate = 0.1);
@@ -178,27 +191,51 @@ namespace TinyRNN
     // Neuron implementation
     //===------------------------------------------------------------------===//
     
-    inline Neuron::Neuron(TrainingContext::Ptr targetContext) :
+    inline Neuron::Neuron() :
     uuid(Uuid::generateId()),
-    context(targetContext)
+    bias(0.0),
+    activation(0.0),
+    derivative(0.0),
+    state(0.0),
+    oldState(0.0),
+    errorResponsibility(0.0),
+    projectedActivity(0.0),
+    gatingActivity(0.0)
+    {
+        this->setRandomBias();
+    }
+    
+    inline Neuron::Neuron(Value defaultBias) :
+    uuid(Uuid::generateId()),
+    bias(defaultBias),
+    activation(0.0),
+    derivative(0.0),
+    state(0.0),
+    oldState(0.0),
+    errorResponsibility(0.0),
+    projectedActivity(0.0),
+    gatingActivity(0.0)
     {
     }
     
-    inline Neuron::Neuron(TrainingContext::Ptr targetContext,
-                             Value defaultBias) :
-    uuid(Uuid::generateId()),
-    context(targetContext)
+    inline void Neuron::feedWithRandomBias(Value signal)
     {
+        this->activation = signal;
+        this->derivative = 0.0;
+        this->setRandomBias();
+    }
+    
+    inline void Neuron::setRandomBias()
+    {
+        std::random_device randomDevice;
+        std::mt19937 mt19937(randomDevice());
+        std::uniform_real_distribution<Value> distribution(-0.001, 0.001);
+        this->bias = distribution(mt19937);
     }
     
     inline Id Neuron::getUuid() const noexcept
     {
         return this->uuid;
-    }
-    
-    inline TrainingContext::NeuronData::Ptr Neuron::getTrainingData() const
-    {
-        return this->context->getNeuronContext(this->getUuid());
     }
     
     //===------------------------------------------------------------------===//
@@ -222,8 +259,7 @@ namespace TinyRNN
     {
         if (other.get() == this)
         {
-            this->selfConnection = Connection::Ptr(new Connection(this->context,
-                                                                  this->shared_from_this(),
+            this->selfConnection = Connection::Ptr(new Connection(this->shared_from_this(),
                                                                   this->shared_from_this()));
             return this->selfConnection;
         }
@@ -233,7 +269,7 @@ namespace TinyRNN
             return existingOutgoingConnection;
         }
         
-        Connection::Ptr newConnection(new Connection(this->context, this->shared_from_this(), other));
+        Connection::Ptr newConnection(new Connection(this->shared_from_this(), other));
         const Id newConnectionId = newConnection->getUuid();
         
         // reference all the connections
@@ -255,7 +291,6 @@ namespace TinyRNN
     inline void Neuron::gate(Connection::Ptr connection)
     {
         const Id connectionId = connection->getUuid();
-        auto myState = this->getTrainingData();
         
         // add connection to gated list
         this->gatedConnections[connectionId] = connection;
@@ -297,39 +332,35 @@ namespace TinyRNN
         
         if (isInputNeuron)
         {
-            this->getTrainingData()->feedWithRandomBias(signalValue);
+            this->feedWithRandomBias(signalValue);
         }
     }
     
     inline Value Neuron::process()
     {
-        auto myData = this->getTrainingData();
-        myData->oldState = myData->state;
+        this->oldState = this->state;
         
         // eq. 15
         if (this->isSelfConnected())
         {
-            auto selfConnectionData = this->selfConnection->getTrainingData();
-            myData->state = selfConnectionData->gain * selfConnectionData->weight * myData->state + myData->bias;
+            this->state = this->selfConnection->gain * this->selfConnection->weight * this->state + this->bias;
         }
         else
         {
-            myData->state = myData->bias;
+            this->state = this->bias;
         }
         
         for (auto &i : this->incomingConnections)
         {
             const Connection::Ptr inputConnection = i.second;
-            const auto inputConnectionData = inputConnection->getTrainingData();
-            const auto inputNeuronData = inputConnection->getInputNeuron()->getTrainingData();
-            myData->state += inputNeuronData->activation * inputConnectionData->weight * inputConnectionData->gain;
+            this->state += inputConnection->getInputNeuron()->activation * inputConnection->weight * inputConnection->gain;
         }
         
         // eq. 16
-        myData->activation = Neuron::activation(myData->state);
+        this->activation = Neuron::activationReLU(this->state);
         
         // f'(s)
-        myData->derivative = Neuron::derivative(myData->state);
+        this->derivative = Neuron::derivativeReLU(this->state);
         
         // update traces
         EligibilityMap influences;
@@ -345,8 +376,7 @@ namespace TinyRNN
             {
                 if (neighbourSelfconnection->getGateNeuron().get() == this)
                 {
-                    const auto neighbourData = neighbour->getTrainingData();
-                    influence = neighbourData->oldState;
+                    influence = neighbour->oldState;
                 }
             }
             
@@ -354,9 +384,7 @@ namespace TinyRNN
             for (auto &incoming : this->influences[neighbour->getUuid()])
             { // captures the effect that has an input connection to this unit, on a neuron that is gated by this unit
                 const Connection::Ptr inputConnection = incoming.second;
-                const auto inputConnectionData = inputConnection->getTrainingData();
-                const auto inputNeuronData = inputConnection->getInputNeuron()->getTrainingData();
-                influence += inputConnectionData->weight * inputNeuronData->activation;
+                influence += inputConnection->weight * inputConnection->getInputNeuron()->activation;
             }
             
             influences[neighbour->getUuid()] = influence;
@@ -368,14 +396,11 @@ namespace TinyRNN
             
             // elegibility trace - Eq. 17
             const Value oldElegibility = this->eligibility[inputConnection->getUuid()];
-            const auto inputConnectionData = inputConnection->getTrainingData();
-            const auto inputNeuronData = inputConnection->getInputNeuron()->getTrainingData();
-            this->eligibility[inputConnection->getUuid()] = inputConnectionData->gain * inputNeuronData->activation;
+            this->eligibility[inputConnection->getUuid()] = inputConnection->gain * inputConnection->getInputNeuron()->activation;
             
             if (this->isSelfConnected())
             {
-                const auto selfConnectionData = this->selfConnection->getTrainingData();
-                this->eligibility[inputConnection->getUuid()] += selfConnectionData->gain * selfConnectionData->weight * oldElegibility;
+                this->eligibility[inputConnection->getUuid()] += this->selfConnection->gain * this->selfConnection->weight * oldElegibility;
             }
             
             for (auto &i : this->extended)
@@ -386,16 +411,13 @@ namespace TinyRNN
                 EligibilityMap &xtrace = i.second;
                 Neuron::Ptr neighbour = this->neighbours[neuronId];
                 
-                const auto neighbourData = neighbour->getTrainingData();
-                
                 // eq. 18
                 const Value oldXTrace = xtrace[inputConnection->getUuid()];
-                xtrace[inputConnection->getUuid()] = myData->derivative * this->eligibility[inputConnection->getUuid()] * influence;
+                xtrace[inputConnection->getUuid()] = this->derivative * this->eligibility[inputConnection->getUuid()] * influence;
                 
                 if (Connection::Ptr neighbourSelfConnection = neighbour->getSelfConnection())
                 {
-                    const auto neighbourSelfConnectionData = neighbourSelfConnection->getTrainingData();
-                    xtrace[inputConnection->getUuid()] += neighbourSelfConnectionData->gain * neighbourSelfConnectionData->weight * oldXTrace;
+                    xtrace[inputConnection->getUuid()] += neighbourSelfConnection->gain * neighbourSelfConnection->weight * oldXTrace;
                 }
             }
         }
@@ -404,11 +426,10 @@ namespace TinyRNN
         for (auto &i : this->gatedConnections)
         {
             const Connection::Ptr connection = i.second;
-            auto connectionData = connection->getTrainingData();
-            connectionData->gain = myData->activation;
+            connection->gain = this->activation;
         }
         
-        return myData->activation;
+        return this->activation;
     }
     
     inline bool Neuron::isOutput() const
@@ -424,8 +445,7 @@ namespace TinyRNN
         // output neurons get their error from the enviroment
         if (this->isOutput())
         {
-            auto myData = this->getTrainingData();
-            myData->errorResponsibility = myData->projectedActivity = target - myData->activation; // Eq. 10
+            this->errorResponsibility = this->projectedActivity = target - this->activation; // Eq. 10
             this->learn(rate);
         }
     }
@@ -437,20 +457,16 @@ namespace TinyRNN
         // the rest of the neuron compute their error responsibilities by backpropagation
         if (! this->isOutput())
         {
-            auto myData = this->getTrainingData();
-            
             // error responsibilities from all the connections projected from this neuron
             for (auto &i : this->outgoingConnections)
             {
-                const Connection::Ptr connection = i.second;
-                const auto outputConnectionData = connection->getTrainingData();
-                const auto outputNeuronData = connection->getOutputNeuron()->getTrainingData();
+                const Connection::Ptr outputConnection = i.second;
                 // Eq. 21
-                errorAccumulator += outputNeuronData->errorResponsibility * outputConnectionData->gain * outputConnectionData->weight;
+                errorAccumulator += outputConnection->getOutputNeuron()->errorResponsibility * outputConnection->gain * outputConnection->weight;
             }
             
             // projected error responsibility
-            myData->projectedActivity = myData->derivative * errorAccumulator;
+            this->projectedActivity = this->derivative * errorAccumulator;
             
             errorAccumulator = 0.0;
             
@@ -459,7 +475,6 @@ namespace TinyRNN
             {
                 const Id gatedNeuronId = i.first;
                 const Neuron::Ptr gatedNeuron = this->neighbours[gatedNeuronId];
-                const auto gatedNeuronData = gatedNeuron->getTrainingData();
                 
                 Value influence = 0.0;
                 
@@ -468,7 +483,7 @@ namespace TinyRNN
                 {
                     if (gatedNeuronSelfConnection->getGateNeuron().get() == this)
                     {
-                        influence = gatedNeuronData->oldState;
+                        influence = gatedNeuron->oldState;
                     }
                 }
                 
@@ -476,20 +491,18 @@ namespace TinyRNN
                 for (auto &i : this->influences[gatedNeuronId])
                 { // captures the effect that the input connection of this neuron have, on a neuron which its input/s is/are gated by this neuron
                     const Connection::Ptr inputConnection = i.second;
-                    const auto inputConnectionData = inputConnection->getTrainingData();
-                    const auto inputNeuronData = inputConnection->getInputNeuron()->getTrainingData();
-                    influence += inputConnectionData->weight * inputNeuronData->activation;
+                    influence += inputConnection->weight * inputConnection->getInputNeuron()->activation;
                 }
                 
                 // eq. 22
-                errorAccumulator += gatedNeuronData->errorResponsibility * influence;
+                errorAccumulator += gatedNeuron->errorResponsibility * influence;
             }
             
             // gated error responsibility
-            myData->gatingActivity = myData->derivative * errorAccumulator;
+            this->gatingActivity = this->derivative * errorAccumulator;
             
             // error responsibility - Eq. 23
-            myData->errorResponsibility = myData->projectedActivity + myData->gatingActivity;
+            this->errorResponsibility = this->projectedActivity + this->gatingActivity;
             
             this->learn(rate);
         }
@@ -502,8 +515,6 @@ namespace TinyRNN
     
     inline void Neuron::learn(Value rate)
     {
-        auto myData = this->getTrainingData();
-        
         // adjust all the neuron's incoming connections
         for (auto &i : this->incomingConnections)
         {
@@ -511,30 +522,29 @@ namespace TinyRNN
             const Connection::Ptr inputConnection = i.second;
             
             // Eq. 24
-            Value gradient = myData->projectedActivity * this->eligibility[inputConnectionUuid];
+            Value gradient = this->projectedActivity * this->eligibility[inputConnectionUuid];
             for (auto &ext : this->extended)
             {
-                const Id neuronUuid = ext.first;
-                const auto neuronData = this->context->getNeuronContext(neuronUuid);
-                gradient += neuronData->errorResponsibility * this->extended[neuronUuid][inputConnectionUuid];
+                const Id neighbourUuid = ext.first;
+                const Neuron::Ptr neighbour = this->neighbours[neighbourUuid];
+                gradient += neighbour->errorResponsibility * this->extended[neighbourUuid][inputConnectionUuid];
             }
             
             const auto clippedGradient = clip(gradient, -TINYRNN_GRADIENT_CLIPPING_THRESHOLD, TINYRNN_GRADIENT_CLIPPING_THRESHOLD);
-            auto inputConnectionData = inputConnection->getTrainingData();
-            inputConnectionData->weight += rate * clippedGradient; // adjust weights - aka learn
+            inputConnection->weight += rate * clippedGradient; // adjust weights - aka learn
         }
         
         // adjust bias
-        myData->bias += rate * myData->errorResponsibility;
+        this->bias += rate * this->errorResponsibility;
     }
     
     // Leaky ReLU ^_^
-    inline Value Neuron::activation(Value x)
+    inline Value Neuron::activationReLU(Value x)
     {
         return x > 0.0 ? x : (0.01 * x);
     }
     
-    inline Value Neuron::derivative(Value x)
+    inline Value Neuron::derivativeReLU(Value x)
     {
         return x > 0.0 ? 1.0 : 0.01;
     }
@@ -637,36 +647,58 @@ namespace TinyRNN
     {
         this->uuid = context->getNumberProperty(Keys::Core::Uuid);
         // selfconnection will be restored in network deserialization
+        this->bias = context->getRealProperty(Keys::Core::Bias);
+        this->activation = context->getRealProperty(Keys::Core::Activation);
+        this->derivative = context->getRealProperty(Keys::Core::Derivative);
+        this->state = context->getRealProperty(Keys::Core::State);
+        this->oldState = context->getRealProperty(Keys::Core::OldState);
+        this->errorResponsibility = context->getRealProperty(Keys::Core::ErrorResponsibility);
+        this->projectedActivity = context->getRealProperty(Keys::Core::ProjectedActivity);
+        this->gatingActivity = context->getRealProperty(Keys::Core::GatingActivity);
     }
     
     inline void Neuron::serialize(SerializationContext::Ptr context) const
     {
         context->setNumberProperty(this->uuid, Keys::Core::Uuid);
+        context->setRealProperty(this->bias, Keys::Core::Bias);
+        context->setRealProperty(this->activation, Keys::Core::Activation);
+        context->setRealProperty(this->derivative, Keys::Core::Derivative);
+        context->setRealProperty(this->state, Keys::Core::State);
+        context->setRealProperty(this->oldState, Keys::Core::OldState);
+        context->setRealProperty(this->errorResponsibility, Keys::Core::ErrorResponsibility);
+        context->setRealProperty(this->projectedActivity, Keys::Core::ProjectedActivity);
+        context->setRealProperty(this->gatingActivity, Keys::Core::GatingActivity);
     }
     
     //===------------------------------------------------------------------===//
     // Neuron::Connection
     //===------------------------------------------------------------------===//
     
-    inline Neuron::Connection::Connection(TrainingContext::Ptr targetContext) :
+    inline Neuron::Connection::Connection() :
     uuid(Uuid::generateId()),
-    context(targetContext)
+    weight(0.0),
+    gain(1.0)
     {
+        this->setRandomWeight();
     }
     
-    inline Neuron::Connection::Connection(TrainingContext::Ptr targetContext,
-                                   std::weak_ptr<Neuron> input,
-                                   std::weak_ptr<Neuron> output) :
+    inline Neuron::Connection::Connection(std::weak_ptr<Neuron> input,
+                                          std::weak_ptr<Neuron> output) :
     uuid(Uuid::generateId()),
+    weight(0.0),
+    gain(1.0),
     inputNeuron(input),
-    outputNeuron(output),
-    context(targetContext)
+    outputNeuron(output)
     {
+        this->setRandomWeight();
     }
     
-    inline TrainingContext::ConnectionData::Ptr Neuron::Connection::getTrainingData() const
+    inline void Neuron::Connection::setRandomWeight()
     {
-        return this->context->getConnectionContext(this->getUuid());
+        std::random_device randomDevice;
+        std::mt19937 mt19937(randomDevice());
+        std::uniform_real_distribution<Value> distribution(-0.001, 0.001);
+        this->weight = distribution(mt19937);
     }
     
     inline Id Neuron::Connection::getUuid() const noexcept
@@ -734,6 +766,8 @@ namespace TinyRNN
     inline void Neuron::Connection::deserialize(SerializationContext::Ptr context)
     {
         this->uuid = context->getNumberProperty(Keys::Core::Uuid);
+        this->weight = context->getRealProperty(Keys::Core::Weight);
+        this->gain = context->getRealProperty(Keys::Core::Gain);
         // optimization hack: deserialized in the network
         //this->inputNeuronUuid = context->getNumberProperty(Keys::Core::InputNeuronUuid);
         //this->gateNeuronUuid = context->getNumberProperty(Keys::Core::GateNeuronUuid);
@@ -743,6 +777,8 @@ namespace TinyRNN
     inline void Neuron::Connection::serialize(SerializationContext::Ptr context) const
     {
         context->setNumberProperty(this->uuid, Keys::Core::Uuid);
+        context->setRealProperty(this->weight, Keys::Core::Weight);
+        context->setRealProperty(this->gain, Keys::Core::Gain);
         context->setNumberProperty(this->getInputNeuron()->getUuid(), Keys::Core::InputNeuronUuid);
         context->setNumberProperty(this->getGateNeuron() ? this->getGateNeuron()->getUuid() : 0, Keys::Core::GateNeuronUuid);
         context->setNumberProperty(this->getOutputNeuron()->getUuid(), Keys::Core::OutputNeuronUuid);

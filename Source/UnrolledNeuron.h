@@ -140,19 +140,17 @@ namespace TinyRNN
     {
         UnrolledNeuron::Ptr vm(new UnrolledNeuron());
         
-        auto targetData = target->getTrainingData();
-        
         const Index rateVar =
         context->allocateOrReuseVariable(0, {Keys::Mapping::Rate});
         
         context->registerRateVariable(rateVar);
         
         const Index activationVar =
-        context->allocateOrReuseVariable(targetData->activation,
+        context->allocateOrReuseVariable(target->activation,
                                          {target->getUuid(), Keys::Mapping::Activation});
         
         const Index derivativeVar =
-        context->allocateOrReuseVariable(targetData->derivative,
+        context->allocateOrReuseVariable(target->derivative,
                                          {target->getUuid(), Keys::Mapping::Derivative});
         
         if (asInput)
@@ -162,15 +160,15 @@ namespace TinyRNN
         else
         {
             const Index biasVar =
-            context->allocateOrReuseVariable(targetData->bias,
+            context->allocateOrReuseVariable(target->bias,
                                              {target->getUuid(), Keys::Mapping::Bias});
             
             const Index stateVar =
-            context->allocateOrReuseVariable(targetData->state,
+            context->allocateOrReuseVariable(target->state,
                                              {target->getUuid(), Keys::Mapping::State});
             
             const Index oldStateVar =
-            context->allocateOrReuseVariable(targetData->oldState,
+            context->allocateOrReuseVariable(target->oldState,
                                              {target->getUuid(), Keys::Mapping::OldState});
             
             Index selfConnectionGainVar = 0;
@@ -178,17 +176,15 @@ namespace TinyRNN
             
             if (target->isSelfConnected())
             {
-                const auto selfConnectionData = target->selfConnection->getTrainingData();
-                
                 selfConnectionWeightVar =
-                context->allocateOrReuseVariable(selfConnectionData->weight,
+                context->allocateOrReuseVariable(target->selfConnection->weight,
                                                  {target->selfConnection->getUuid(), Keys::Mapping::Weight});
                 
                 const bool selfConnectionHasGate = (target->selfConnection->getGateNeuron() != nullptr);
                 if (selfConnectionHasGate)
                 {
                     selfConnectionGainVar =
-                    context->allocateOrReuseVariable(selfConnectionData->gain,
+                    context->allocateOrReuseVariable(target->selfConnection->gain,
                                                      {target->selfConnection->getUuid(), Keys::Mapping::Gain});
                     
                 }
@@ -199,15 +195,14 @@ namespace TinyRNN
             // eq. 15
             if (target->isSelfConnected())
             {
-                const auto selfConnectionData = target->selfConnection->getTrainingData();
                 const Index selfWeightVar =
-                context->allocateOrReuseVariable(selfConnectionData->weight,
+                context->allocateOrReuseVariable(target->selfConnection->weight,
                                                  {target->selfConnection->getUuid(), Keys::Mapping::Weight});
                 
                 if (target->selfConnection->getGateNeuron() != nullptr)
                 {
                     const Index selfGainVar =
-                    context->allocateOrReuseVariable(selfConnectionData->gain,
+                    context->allocateOrReuseVariable(target->selfConnection->gain,
                                                      {target->selfConnection->getUuid(), Keys::Mapping::Gain});
                     
                     vm->feedProgram << VMProgram::APPS << stateVar << selfGainVar << selfWeightVar << stateVar << biasVar;
@@ -229,32 +224,17 @@ namespace TinyRNN
             {
                 const Neuron::Connection::Ptr inputConnection = i.second;
                 const Neuron::Ptr inputNeuron = inputConnection->getInputNeuron();
-                const auto inputConnectionData = inputConnection->getTrainingData();
-                const auto inputNeuronData = inputNeuron->getTrainingData();
                 
                 const Index inputActivationVar =
-                context->allocateOrReuseVariable(inputNeuronData->activation,
+                context->allocateOrReuseVariable(inputNeuron->activation,
                                                  {inputNeuron->getUuid(), Keys::Mapping::Activation});
                 
                 const Index inputWeightVar =
-                context->allocateOrReuseVariable(inputConnectionData->weight,
+                context->allocateOrReuseVariable(inputConnection->weight,
                                                  {inputConnection->getUuid(), Keys::Mapping::Weight});
                 
-//                if (inputConnection->getGateNeuron() != nullptr)
-//                {
-//                    const Index inputGainVar =
-//                    context->allocateOrReuseVariable(inputConnectionData->gain,
-//                                                     {inputConnection->getUuid(), Keys::Mapping::Gain});
-//                    
-//                    vm->feedProgram << VMProgram::AAPP << stateVar << inputActivationVar << inputWeightVar << inputGainVar;
-//                }
-//                else
-//                {
-//                    vm->feedProgram << VMProgram::AAP << stateVar << inputActivationVar << inputWeightVar;
-//                }
-                
                 const Index inputGainVar =
-                context->allocateOrReuseVariable(inputConnectionData->gain,
+                context->allocateOrReuseVariable(inputConnection->gain,
                                                  {inputConnection->getUuid(), Keys::Mapping::Gain});
                 
                 vm->feedProgram << inputActivationVar << inputWeightVar << inputGainVar;
@@ -282,9 +262,8 @@ namespace TinyRNN
                     context->allocateOrReuseVariable(influence,
                                                      {neighbour->getUuid(), Keys::Mapping::Influence});
                     
-                    auto neighbourData = neighbour->getTrainingData();
                     const Index neighbourOldStateVar =
-                    context->allocateOrReuseVariable(neighbourData->oldState,
+                    context->allocateOrReuseVariable(neighbour->oldState,
                                                      {neighbour->getUuid(), Keys::Mapping::OldState});
                     
                     bool influenceWasInitialized = false;
@@ -304,15 +283,13 @@ namespace TinyRNN
                     { // captures the effect that has an input connection to this unit, on a neuron that is gated by this unit
                         const Neuron::Connection::Ptr inputConnection = incoming.second;
                         const Neuron::Ptr inputNeuron = inputConnection->getInputNeuron();
-                        const auto inputConnectionData = inputConnection->getTrainingData();
-                        const auto inputNeuronData = inputNeuron->getTrainingData();
                         
                         const Index incomingWeightVar =
-                        context->allocateOrReuseVariable(inputConnectionData->weight,
+                        context->allocateOrReuseVariable(inputConnection->weight,
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         const Index incomingActivationVar =
-                        context->allocateOrReuseVariable(inputNeuronData->activation,
+                        context->allocateOrReuseVariable(inputNeuron->activation,
                                                          {inputNeuron->getUuid(), Keys::Mapping::Activation});
                         
                         if (influenceWasInitialized)
@@ -334,19 +311,16 @@ namespace TinyRNN
                     const bool inputConnectionHasGate = (inputConnection->getGateNeuron() != nullptr);
                     
                     // elegibility trace - Eq. 17
-                    const auto inputConnectionData = inputConnection->getTrainingData();
-                    const auto inputNeuronData = inputNeuron->getTrainingData();
-                    
                     Index inputGainVar = 0;
                     if (inputConnectionHasGate)
                     {
                         inputGainVar =
-                        context->allocateOrReuseVariable(inputConnectionData->gain,
+                        context->allocateOrReuseVariable(inputConnection->gain,
                                                          {inputConnection->getUuid(), Keys::Mapping::Gain});
                     }
                     
                     const Index inputActivationVar =
-                    context->allocateOrReuseVariable(inputNeuronData->activation,
+                    context->allocateOrReuseVariable(inputNeuron->activation,
                                                      {inputNeuron->getUuid(), Keys::Mapping::Activation});
                     
                     const Index eligibilityVar =
@@ -355,9 +329,7 @@ namespace TinyRNN
                     
                     if (target->isSelfConnected())
                     {
-                        const auto selfConnectionData = target->selfConnection->getTrainingData();
                         const bool selfConnectionHasGate = (target->selfConnection->getGateNeuron() != nullptr);
-                        
                         if (selfConnectionHasGate)
                         {
                             if (inputConnectionHasGate)
@@ -403,8 +375,6 @@ namespace TinyRNN
                         Neuron::EligibilityMap &xtrace = i.second;
                         Neuron::Ptr neighbour = target->neighbours[neighbourNeuronUuid];
                         
-                        const auto neighbourData = neighbour->getTrainingData();
-                        
                         const Index influenceVar =
                         context->allocateOrReuseVariable(influence,
                                                          {neighbour->getUuid(), Keys::Mapping::Influence});
@@ -419,8 +389,6 @@ namespace TinyRNN
                         
                         if (Neuron::Connection::Ptr neighbourSelfConnection = neighbour->getSelfConnection())
                         {
-                            const auto neighbourSelfConnectionData = neighbourSelfConnection->getTrainingData();
-                            
                             if (neighbourSelfConnection->getGateNeuron() != nullptr)
                             {
                                 vm->traceProgram << VMProgram::APPSPP << extendedTraceVar << selfConnectionGainVar << selfConnectionWeightVar << extendedTraceVar << derivativeVar << eligibilityVar << influenceVar;
@@ -442,10 +410,9 @@ namespace TinyRNN
             for (auto &i : target->gatedConnections)
             {
                 const Neuron::Connection::Ptr gatedConnection = i.second;
-                const auto gatedConnectionData = gatedConnection->getTrainingData();
                 
                 const Index gatedConnectionGainVar =
-                context->allocateOrReuseVariable(gatedConnectionData->gain,
+                context->allocateOrReuseVariable(gatedConnection->gain,
                                                  {gatedConnection->getUuid(), Keys::Mapping::Gain});
                 
                 vm->feedProgram << VMProgram::A << gatedConnectionGainVar << activationVar;
@@ -463,7 +430,7 @@ namespace TinyRNN
             !asConst)
         {
             const Index responsibilityVar =
-            context->allocateOrReuseVariable(targetData->errorResponsibility,
+            context->allocateOrReuseVariable(target->errorResponsibility,
                                              {target->getUuid(), Keys::Mapping::ErrorResponsibility});
             
             const bool noOutgoingConnections = target->outgoingConnections.empty();
@@ -483,14 +450,13 @@ namespace TinyRNN
                 for (auto &i : target->incomingConnections)
                 {
                     const Neuron::Connection::Ptr inputConnection = i.second;
-                    auto inputConnectionData = inputConnection->getTrainingData();
                     
                     const Index eligibilityVar =
                     context->allocateOrReuseVariable(target->eligibility[inputConnection->getUuid()],
                                                      {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
                     
                     const Index inputWeightVar =
-                    context->allocateOrReuseVariable(inputConnectionData->weight,
+                    context->allocateOrReuseVariable(inputConnection->weight,
                                                      {inputConnection->getUuid(), Keys::Mapping::Weight});
                     
                     vm->trainProgram << VMProgram::AAPP << inputWeightVar << rateVar << responsibilityVar << eligibilityVar;
@@ -509,21 +475,19 @@ namespace TinyRNN
                     {
                         const Neuron::Connection::Ptr outputConnection = i.second;
                         const Neuron::Ptr outputNeuron = outputConnection->getOutputNeuron();
-                        const auto outputConnectionData = outputConnection->getTrainingData();
-                        const auto outputNeuronData = outputNeuron->getTrainingData();
                         
                         const Index outputWeightVar =
-                        context->allocateOrReuseVariable(outputConnectionData->weight,
+                        context->allocateOrReuseVariable(outputConnection->weight,
                                                          {outputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         const Index outputResponsibilityVar =
-                        context->allocateOrReuseVariable(outputNeuronData->errorResponsibility,
+                        context->allocateOrReuseVariable(outputNeuron->errorResponsibility,
                                                          {outputNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
                         
                         if (outputConnection->getGateNeuron() != nullptr)
                         {
                             const Index outputGainVar =
-                            context->allocateOrReuseVariable(outputConnectionData->gain,
+                            context->allocateOrReuseVariable(outputConnection->gain,
                                                              {outputConnection->getUuid(), Keys::Mapping::Gain});
                             
                             vm->trainProgram << VMProgram::AAPP << errorAccumulatorVar << outputResponsibilityVar << outputGainVar << outputWeightVar;
@@ -535,7 +499,7 @@ namespace TinyRNN
                     }
                     
                     const Index projectedErrorVar =
-                    context->allocateOrReuseVariable(targetData->projectedActivity,
+                    context->allocateOrReuseVariable(target->projectedActivity,
                                                      {target->getUuid(), Keys::Mapping::ProjectedActivity});
                     
                     // projected error responsibility
@@ -547,14 +511,13 @@ namespace TinyRNN
                     {
                         const Id gatedNeuronId = i.first;
                         const Neuron::Ptr gatedNeuron = target->neighbours[gatedNeuronId];
-                        const auto gatedNeuronData = gatedNeuron->getTrainingData();
                         
                         const Index influenceTempVar =
                         context->allocateOrReuseVariable(0.0,
                                                          {Keys::Mapping::Influence});
                         
                         const Index gatedNeuronOldStateVar =
-                        context->allocateOrReuseVariable(gatedNeuronData->oldState,
+                        context->allocateOrReuseVariable(gatedNeuron->oldState,
                                                          {gatedNeuron->getUuid(), Keys::Mapping::OldState});
                         
                         // if gated neuron's selfconnection is gated by this neuron
@@ -577,15 +540,13 @@ namespace TinyRNN
                             { // captures the effect that the input connection of this neuron have, on a neuron which its input/s is/are gated by this neuron
                                 const Neuron::Connection::Ptr inputConnection = i.second;
                                 const Neuron::Ptr inputNeuron = inputConnection->getInputNeuron();
-                                const auto inputConnectionData = inputConnection->getTrainingData();
-                                const auto inputNeuronData = inputNeuron->getTrainingData();
                                 
                                 const Index inputActivationVar =
-                                context->allocateOrReuseVariable(inputNeuronData->activation,
+                                context->allocateOrReuseVariable(inputNeuron->activation,
                                                                  {inputNeuron->getUuid(), Keys::Mapping::Activation});
                                 
                                 const Index inputWeightVar =
-                                context->allocateOrReuseVariable(inputConnectionData->weight,
+                                context->allocateOrReuseVariable(inputConnection->weight,
                                                                  {inputConnection->getUuid(), Keys::Mapping::Weight});
                                 
                                 vm->trainProgram << VMProgram::AAP << influenceTempVar << inputWeightVar << inputActivationVar;
@@ -593,7 +554,7 @@ namespace TinyRNN
                         }
                         
                         const Index gatedResponsibilityVar =
-                        context->allocateOrReuseVariable(gatedNeuronData->errorResponsibility,
+                        context->allocateOrReuseVariable(gatedNeuron->errorResponsibility,
                                                          {gatedNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
                         
                         // eq. 22
@@ -601,7 +562,7 @@ namespace TinyRNN
                     }
                     
                     const Index gatedErrorVar =
-                    context->allocateOrReuseVariable(targetData->gatingActivity,
+                    context->allocateOrReuseVariable(target->gatingActivity,
                                                      {target->getUuid(), Keys::Mapping::GatingActivity});
                     
                     // gated error responsibility
@@ -633,10 +594,9 @@ namespace TinyRNN
                             const Id neighbourNeuronId = ext.first;
                             Neuron::EligibilityMap &xtrace = ext.second;
                             Neuron::Ptr neighbour = target->neighbours[neighbourNeuronId];
-                            const auto neighbourData = neighbour->getTrainingData();
                             
                             const Index neighbourResponsibilityVar =
-                            context->allocateOrReuseVariable(neighbourData->errorResponsibility,
+                            context->allocateOrReuseVariable(neighbour->errorResponsibility,
                                                              {neighbourNeuronId, Keys::Mapping::ErrorResponsibility});
                             
                             const Index extendedTraceVar =
@@ -647,10 +607,8 @@ namespace TinyRNN
                         }
                         
                         // adjust weights - aka learn
-                        auto inputConnectionData = inputConnection->getTrainingData();
-                        
                         const Index inputWeightVar =
-                        context->allocateOrReuseVariable(inputConnectionData->weight,
+                        context->allocateOrReuseVariable(inputConnection->weight,
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         vm->trainProgram << VMProgram::Clip << gradientTempVar;
@@ -666,21 +624,19 @@ namespace TinyRNN
                     {
                         const Neuron::Connection::Ptr outputConnection = i.second;
                         const Neuron::Ptr outputNeuron = outputConnection->getOutputNeuron();
-                        const auto outputConnectionData = outputConnection->getTrainingData();
-                        const auto outputNeuronData = outputNeuron->getTrainingData();
                         
                         const Index outputWeightVar =
-                        context->allocateOrReuseVariable(outputConnectionData->weight,
+                        context->allocateOrReuseVariable(outputConnection->weight,
                                                          {outputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         const Index outputResponsibilityVar =
-                        context->allocateOrReuseVariable(outputNeuronData->errorResponsibility,
+                        context->allocateOrReuseVariable(outputNeuron->errorResponsibility,
                                                          {outputNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
                         
                         if (outputConnection->getGateNeuron() != nullptr)
                         {
                             const Index outputGainVar =
-                            context->allocateOrReuseVariable(outputConnectionData->gain,
+                            context->allocateOrReuseVariable(outputConnection->gain,
                                                              {outputConnection->getUuid(), Keys::Mapping::Gain});
                             
                             vm->trainProgram << VMProgram::AAPP << responsibilityVar << outputResponsibilityVar << outputGainVar << outputWeightVar;
@@ -696,14 +652,13 @@ namespace TinyRNN
                     for (auto &i : target->incomingConnections)
                     {
                         const Neuron::Connection::Ptr inputConnection = i.second;
-                        auto inputConnectionData = inputConnection->getTrainingData();
                         
                         const Index eligibilityVar =
                         context->allocateOrReuseVariable(target->eligibility[inputConnection->getUuid()],
                                                          {target->getUuid(), inputConnection->getUuid(), Keys::Mapping::Eligibility});
                         
                         const Index inputWeightVar =
-                        context->allocateOrReuseVariable(inputConnectionData->weight,
+                        context->allocateOrReuseVariable(inputConnection->weight,
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         // learn
@@ -724,14 +679,13 @@ namespace TinyRNN
                     {
                         const Id gatedNeuronId = i.first;
                         const Neuron::Ptr gatedNeuron = target->neighbours[gatedNeuronId];
-                        const auto gatedNeuronData = gatedNeuron->getTrainingData();
                         
                         const Index influenceTempVar =
                         context->allocateOrReuseVariable(0.0,
                                                          {Keys::Mapping::Influence});
                         
                         const Index gatedNeuronOldStateVar =
-                        context->allocateOrReuseVariable(gatedNeuronData->oldState,
+                        context->allocateOrReuseVariable(gatedNeuron->oldState,
                                                          {gatedNeuron->getUuid(), Keys::Mapping::OldState});
                         
                         // if gated neuron's selfconnection is gated by this neuron
@@ -752,22 +706,20 @@ namespace TinyRNN
                         { // captures the effect that the input connection of this neuron have, on a neuron which its input/s is/are gated by this neuron
                             const Neuron::Connection::Ptr inputConnection = i.second;
                             const Neuron::Ptr inputNeuron = inputConnection->getInputNeuron();
-                            const auto inputConnectionData = inputConnection->getTrainingData();
-                            const auto inputNeuronData = inputNeuron->getTrainingData();
                             
                             const Index inputActivationVar =
-                            context->allocateOrReuseVariable(inputNeuronData->activation,
+                            context->allocateOrReuseVariable(inputNeuron->activation,
                                                              {inputNeuron->getUuid(), Keys::Mapping::Activation});
                             
                             const Index inputWeightVar =
-                            context->allocateOrReuseVariable(inputConnectionData->weight,
+                            context->allocateOrReuseVariable(inputConnection->weight,
                                                              {inputConnection->getUuid(), Keys::Mapping::Weight});
                             
                             vm->trainProgram << VMProgram::AAP << influenceTempVar << inputWeightVar << inputActivationVar;
                         }
                         
                         const Index gatedResponsibilityVar =
-                        context->allocateOrReuseVariable(gatedNeuronData->errorResponsibility,
+                        context->allocateOrReuseVariable(gatedNeuron->errorResponsibility,
                                                          {gatedNeuron->getUuid(), Keys::Mapping::ErrorResponsibility});
                         
                         // eq. 22
@@ -794,10 +746,9 @@ namespace TinyRNN
                             const Id neighbourNeuronId = ext.first;
                             Neuron::EligibilityMap &xtrace = ext.second;
                             Neuron::Ptr neighbour = target->neighbours[neighbourNeuronId];
-                            const auto neighbourData = neighbour->getTrainingData();
                             
                             const Index neighbourResponsibilityVar =
-                            context->allocateOrReuseVariable(neighbourData->errorResponsibility,
+                            context->allocateOrReuseVariable(neighbour->errorResponsibility,
                                                              {neighbourNeuronId, Keys::Mapping::ErrorResponsibility});
                             
                             const Index extendedTraceVar =
@@ -808,10 +759,8 @@ namespace TinyRNN
                         }
                         
                         // adjust weights - aka learn
-                        auto inputConnectionData = inputConnection->getTrainingData();
-                        
                         const Index inputWeightVar =
-                        context->allocateOrReuseVariable(inputConnectionData->weight,
+                        context->allocateOrReuseVariable(inputConnection->weight,
                                                          {inputConnection->getUuid(), Keys::Mapping::Weight});
                         
                         vm->trainProgram << VMProgram::Clip << gradientTempVar;
@@ -822,7 +771,7 @@ namespace TinyRNN
             
             // adjust bias
             const Index biasVar =
-            context->allocateOrReuseVariable(targetData->bias,
+            context->allocateOrReuseVariable(target->bias,
                                              {target->getUuid(), Keys::Mapping::Bias});
             
             vm->trainProgram << VMProgram::AAP << biasVar << rateVar << responsibilityVar;

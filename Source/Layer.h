@@ -28,7 +28,6 @@
 #include "UnrolledTrainingContext.h"
 #include "Id.h"
 #include "SerializationKeys.h"
-#include "TrainingContext.h"
 #include "UnrolledNeuron.h"
 
 namespace TinyRNN
@@ -43,8 +42,8 @@ namespace TinyRNN
         
     public:
         
-        Layer(TrainingContext::Ptr context, int numNeurons);
-        Layer(TrainingContext::Ptr context, int numNeurons, Value bias);
+        explicit Layer(int numNeurons);
+        Layer(int numNeurons, Value bias);
         
         std::string getName() const noexcept;
         Id getUuid() const noexcept;
@@ -94,8 +93,6 @@ namespace TinyRNN
         
         Neuron::Vector neurons;
         
-        TrainingContext::Ptr context;
-        
     private:
         
         TINYRNN_DISALLOW_COPY_AND_ASSIGN(Layer);
@@ -105,25 +102,22 @@ namespace TinyRNN
     // Layer implementation
     //===------------------------------------------------------------------===//
     
-    inline Layer::Layer(TrainingContext::Ptr targetContext, int numNeurons) :
-    uuid(Uuid::generateId()),
-    context(targetContext)
+    inline Layer::Layer(int numNeurons) :
+    uuid(Uuid::generateId())
     {
         for (int i = 0; i < numNeurons; ++i)
         {
-            Neuron::Ptr neuron(new Neuron(targetContext));
+            Neuron::Ptr neuron(new Neuron());
             this->neurons.push_back(neuron);
         }
     }
     
-    inline Layer::Layer(TrainingContext::Ptr targetContext, int numNeurons, Value bias) :
-    uuid(Uuid::generateId()),
-    context(targetContext)
+    inline Layer::Layer(int numNeurons, Value bias) :
+    uuid(Uuid::generateId())
     {
         for (int i = 0; i < numNeurons; ++i)
         {
-            Neuron::Ptr neuron(new Neuron(targetContext));
-            neuron->getTrainingData()->bias = bias;
+            Neuron::Ptr neuron(new Neuron(bias));
             this->neurons.push_back(neuron);
         }
     }
@@ -411,7 +405,7 @@ namespace TinyRNN
         for (size_t i = 0; i < neuronsNode->getNumChildrenContexts(); ++i)
         {
             SerializationContext::Ptr neuronNode(neuronsNode->getChildContext(i));
-            Neuron::Ptr neuron(new Neuron(this->context));
+            Neuron::Ptr neuron(new Neuron());
             neuron->deserialize(neuronNode);
             this->neurons.push_back(neuron);
         }

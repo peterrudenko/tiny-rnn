@@ -36,13 +36,10 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
         const int numIterations = RANDOM(1500, 2000);
         const auto networkName = RANDOMNAME();
         const auto contextName = RANDOMNAME();
-
-        TrainingContext::Ptr context(new TrainingContext(contextName));
-        REQUIRE(context->getName() == contextName);
         
-        Layer::Ptr inputLayer(new Layer(context, 2));
-        Layer::Ptr hiddenLayer(new Layer(context, 10));
-        Layer::Ptr outputLayer(new Layer(context, 1));
+        Layer::Ptr inputLayer(new Layer(2));
+        Layer::Ptr hiddenLayer(new Layer(10));
+        Layer::Ptr outputLayer(new Layer(1));
         
         REQUIRE(inputLayer->getUuid() != hiddenLayer->getUuid());
         REQUIRE(hiddenLayer->getUuid() != outputLayer->getUuid());
@@ -51,9 +48,8 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
         inputLayer->connectAllToAll(hiddenLayer);
         hiddenLayer->connectAllToAll(outputLayer);
         
-        Network::Ptr network(new Network(networkName, context, inputLayer, {hiddenLayer}, outputLayer));
+        Network::Ptr network(new Network(networkName, inputLayer, {hiddenLayer}, outputLayer));
         REQUIRE(network->getName() == networkName);
-        REQUIRE(network->getContext() == context);
         
         WHEN("The network is trained with some random number of iterations")
         {
@@ -102,8 +98,6 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
         
         WHEN("The unrolled network is trained with some random number of iterations")
         {
-            network->getContext()->clear();
-            
             UnrolledNetwork::Ptr vmNetwork = network->toVM();
             
             {

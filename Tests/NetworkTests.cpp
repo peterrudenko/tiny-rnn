@@ -30,9 +30,8 @@ SCENARIO("Neurons can be connected with each other", "[neuron]")
 {
     GIVEN("Two neurons")
     {
-        TrainingContext::Ptr context(new TrainingContext("test"));
-        Neuron::Ptr neuron1(new Neuron(context));
-        Neuron::Ptr neuron2(new Neuron(context));
+        Neuron::Ptr neuron1(new Neuron());
+        Neuron::Ptr neuron2(new Neuron());
         
         REQUIRE(neuron1->getUuid() != neuron2->getUuid());
         
@@ -59,9 +58,8 @@ SCENARIO("Layers can be connected all-to-all", "[layer]")
         const int numNeurons1 = RANDOM(10, 100);
         const int numNeurons2 = RANDOM(10, 100);
         
-        TrainingContext::Ptr context(new TrainingContext("test"));
-        Layer::Ptr layer1(new Layer(context, numNeurons1));
-        Layer::Ptr layer2(new Layer(context, numNeurons2));
+        Layer::Ptr layer1(new Layer(numNeurons1));
+        Layer::Ptr layer2(new Layer(numNeurons2));
         
         REQUIRE(layer1->getSize() == numNeurons1);
         REQUIRE(layer1->getSelfConnections().empty());
@@ -89,9 +87,8 @@ SCENARIO("Layers can be connected one to one", "[layer]")
         const int numNeurons1 = RANDOM(10, 100);
         const int numNeurons2 = numNeurons1 * 2;
         
-        TrainingContext::Ptr context(new TrainingContext("test"));
-        Layer::Ptr layer1(new Layer(context, numNeurons1));
-        Layer::Ptr layer2(new Layer(context, numNeurons2));
+        Layer::Ptr layer1(new Layer(numNeurons1));
+        Layer::Ptr layer2(new Layer(numNeurons2));
         
         REQUIRE(layer1->getSize() == numNeurons1);
         REQUIRE(layer1->getSelfConnections().empty());
@@ -114,9 +111,8 @@ SCENARIO("Layers can be connected one to one", "[layer]")
     {
         const int numNeurons = RANDOM(10, 100);
         
-        TrainingContext::Ptr context(new TrainingContext("test"));
-        Layer::Ptr layer1(new Layer(context, numNeurons));
-        Layer::Ptr layer2(new Layer(context, numNeurons));
+        Layer::Ptr layer1(new Layer(numNeurons));
+        Layer::Ptr layer2(new Layer(numNeurons));
         
         REQUIRE(layer1->getSize() == numNeurons);
         REQUIRE(layer1->getSelfConnections().empty());
@@ -142,10 +138,9 @@ SCENARIO("Layer can gate a connection between two other layers", "[layer]")
     {
         const int numNeurons = RANDOM(10, 100);
         
-        TrainingContext::Ptr context(new TrainingContext("test"));
-        Layer::Ptr layer1(new Layer(context, numNeurons));
-        Layer::Ptr layer2(new Layer(context, numNeurons));
-        Layer::Ptr layer3(new Layer(context, numNeurons));
+        Layer::Ptr layer1(new Layer(numNeurons));
+        Layer::Ptr layer2(new Layer(numNeurons));
+        Layer::Ptr layer3(new Layer(numNeurons));
         
         Neuron::Connection::HashMap connections = layer1->connectOneToOne(layer2);
         for (const auto &i : connections)
@@ -203,10 +198,9 @@ SCENARIO("Layer can gate a connection between two other layers", "[layer]")
     {
         const int numNeurons = RANDOM(10, 100);
         
-        TrainingContext::Ptr context(new TrainingContext("test"));
-        Layer::Ptr layer1(new Layer(context, numNeurons));
-        Layer::Ptr layer2(new Layer(context, numNeurons + 10));
-        Layer::Ptr layer3(new Layer(context, numNeurons + 20));
+        Layer::Ptr layer1(new Layer(numNeurons));
+        Layer::Ptr layer2(new Layer(numNeurons + 10));
+        Layer::Ptr layer3(new Layer(numNeurons + 20));
         Neuron::Connection::HashMap connections = layer1->connectAllToAll(layer2);
         
         WHEN("We try to gate those connections")

@@ -24,7 +24,6 @@
 		513169F6C3A5D7C964DEE0E5 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ScopedMemoryBlock.h; path = ../../Source/ScopedMemoryBlock.h; sourceTree = "SOURCE_ROOT"; };
 		5438EDADAC8806D907A553B6 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Main.cpp; path = ../../Tests/Main.cpp; sourceTree = "SOURCE_ROOT"; };
 		620BAE57F65D39ACEED058B9 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SerializedObject.h; path = ../../Source/SerializedObject.h; sourceTree = "SOURCE_ROOT"; };
-		7171B814D3C72330858DE429 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TrainingContext.h; path = ../../Source/TrainingContext.h; sourceTree = "SOURCE_ROOT"; };
 		79DEF98F340D54F48A676F28 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UnrolledNetwork.h; path = ../../Source/UnrolledNetwork.h; sourceTree = "SOURCE_ROOT"; };
 		91D375D0D4DADC71298CD099 = {isa = PBXFileReference; lastKnownFileType = file.nib; name = RecentFilesMenuTemplate.nib; path = RecentFilesMenuTemplate.nib; sourceTree = "SOURCE_ROOT"; };
 		9385973BB68033C95938BAE7 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Common.h; path = ../../Source/Common.h; sourceTree = "SOURCE_ROOT"; };
@@ -49,8 +48,7 @@
 		BB896A6B4FADF1C8E2A8A78E = {isa = PBXGroup; children = (
 					93DBBE0D39CAF866DED3A2C1,
 					9FECCCA8BCAEBEDCC22CC3E8,
-					099D9AEFE3B7A6853326116F,
-					7171B814D3C72330858DE429, ); name = Network; sourceTree = "<group>"; };
+					099D9AEFE3B7A6853326116F, ); name = Network; sourceTree = "<group>"; };
 		87FB19D6B8DD0D9115CB583D = {isa = PBXGroup; children = (
 					620BAE57F65D39ACEED058B9,
 					2E321830528E38A62D5E4518,

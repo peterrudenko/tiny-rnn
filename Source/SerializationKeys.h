@@ -47,11 +47,6 @@ namespace TinyRNN
             static const std::string Uuid = "Uuid";
             static const std::string Name = "Name";
             
-            static const std::string TrainingContext = "TrainingContext";
-            static const std::string TrainingNeuronContext = "TrainingNeuronContext";
-            static const std::string NeuronContexts = "NeuronContexts";
-            static const std::string TrainingConnectionContext = "TrainingConnectionContext";
-            static const std::string ConnectionContexts = "ConnectionContexts";
             static const std::string NeuronUuid = "NeuronUuid";
             static const std::string ConnectionUuid = "ConnectionUuid";
             
