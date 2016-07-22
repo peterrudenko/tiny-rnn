@@ -1,7 +1,8 @@
 TinyRNN [![Build Status](https://travis-ci.org/peterrudenko/TinyRNN.svg?branch=master)](https://travis-ci.org/peterrudenko/TinyRNN?branch=master) [![Coverage Status](https://coveralls.io/repos/peterrudenko/TinyRNN/badge.svg?branch=master&service=github)](https://coveralls.io/github/peterrudenko/TinyRNN?branch=master)
 ========
 
-TinyRNN is a lightweight **header-only C++11 library** for building **deep recurrent neural networks** of any architecture from multilayered perceptrons to [LSTM](https://en.wikipedia.org/wiki/Long_short-term_memory)-like RNN's with **fully serialized** network topology and training state. It comes with no external dependencies, but optionally it can be built with an ability to hardcode [OpenCL](https://en.wikipedia.org/wiki/OpenCL) kernels for **GPU-accelerated training** (usually up to 10x faster).
+TinyRNN is a lightweight **header-only C++11 library** for building **deep recurrent neural networks** of any architecture from multilayered perceptrons to [LSTM](https://en.wikipedia.org/wiki/Long_short-term_memory)-like RNN's.
+
 
 ###We need to go deeper
 // work in progress, todo some examples

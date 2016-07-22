@@ -27,6 +27,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <cstring>
 #include <sstream>
 #include <map>
 #include <unordered_map>
@@ -38,10 +39,6 @@ namespace TinyRNN
     using Index = uint32_t;
     using Value = float;
 } // namespace TinyRNN
-
-#if TINYRNN_OPENCL_ACCELERATION
-#include "OpenCL/cl.hpp"
-#endif
 
 #define TINYRNN_DISALLOW_COPY_AND_ASSIGN(TypeName) \
     TypeName(const TypeName &) = delete;\

@@ -308,7 +308,7 @@ namespace TinyRNN
         
         this->memory.resize(memorySize);
         const std::vector<unsigned char> &memoryDecoded = context->decodeBase64(memoryEncoded);
-        memcpy(this->memory.data(), memoryDecoded.data(), sizeof(Value) * memorySize);
+        std::memcpy(this->memory.data(), memoryDecoded.data(), sizeof(Value) * memorySize);
         
         if (auto mappingNode = context->getChildContext(Keys::Unrolled::VariablesMapping))
         {

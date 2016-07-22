@@ -27,7 +27,7 @@
 
 using namespace TinyRNN;
 
-static const Value kTrainingRate = 0.05f;
+static const Value kTrainingRate = 0.075f;
 
 SCENARIO("A perceptron can be trained with a xor function", "[training]")
 {
@@ -65,11 +65,11 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
                     network->feed({0.0, 1.0});
                     network->train(kTrainingRate, {1.0});
                     
-                    network->feed({1.0, 0.0});
-                    network->train(kTrainingRate, {1.0});
-                    
                     network->feed({0.0, 0.0});
                     network->train(kTrainingRate, {0.0});
+                    
+                    network->feed({1.0, 0.0});
+                    network->train(kTrainingRate, {1.0});
                     
                     network->feed({1.0, 1.0});
                     network->train(kTrainingRate, {0.0});
@@ -105,7 +105,6 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
             network->getContext()->clear();
             
             UnrolledNetwork::Ptr vmNetwork = network->toVM();
-            vmNetwork->compile();
             
             {
                 const ScopedTimer timer("Training VM network");
@@ -115,11 +114,11 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
                     vmNetwork->feed({0.0, 1.0});
                     vmNetwork->train(kTrainingRate, {1.0});
                     
-                    vmNetwork->feed({1.0, 0.0});
-                    vmNetwork->train(kTrainingRate, {1.0});
-                    
                     vmNetwork->feed({0.0, 0.0});
                     vmNetwork->train(kTrainingRate, {0.0});
+                    
+                    vmNetwork->feed({1.0, 0.0});
+                    vmNetwork->train(kTrainingRate, {1.0});
                     
                     vmNetwork->feed({1.0, 1.0});
                     vmNetwork->train(kTrainingRate, {0.0});
@@ -220,7 +219,6 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
         const int numIterations = RANDOM(2000, 3000);
         Network::Ptr network = Network::Prefabs::feedForward(RANDOMNAME(), 1, { 32, 16, 8, 4, 2 }, 1);
         UnrolledNetwork::Ptr vmNetwork = network->toVM();
-        vmNetwork->compile();
         
         WHEN("The network is trained with some random number of iterations")
         {
@@ -255,7 +253,6 @@ SCENARIO("Network can be recovered back from the trained unrolled version", "[tr
         Network::Ptr network = Network::Prefabs::longShortTermMemory(networkName, 2, {3, 3}, 1);
         
         UnrolledNetwork::Ptr vmNetwork = network->toVM();
-        vmNetwork->compile();
         
         WHEN("The unrolled network is trained and the usual network context is restored from the unrolled one")
         {

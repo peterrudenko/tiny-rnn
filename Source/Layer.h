@@ -430,8 +430,6 @@ namespace TinyRNN
         }
     }
     
-//#if TINYRNN_OPENCL_ACCELERATION
-    
     //===------------------------------------------------------------------===//
     // Batch hardcoding stuff
     //===------------------------------------------------------------------===//
@@ -457,8 +455,6 @@ namespace TinyRNN
             context->restoreNeuronState(neuron);
         }
     }
-    
-//#endif
     
 } // namespace TinyRNN
 

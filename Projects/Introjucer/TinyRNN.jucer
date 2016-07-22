@@ -55,7 +55,7 @@
     </GROUP>
   </MAINGROUP>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="../MacOSX" extraFrameworks="OpenCL" extraDefs="TINYRNN_OPENCL_ACCELERATION=1">
+    <XCODE_MAC targetFolder="../MacOSX" extraFrameworks="OpenCL" extraDefs="">
       <CONFIGURATIONS>
         <CONFIGURATION name="Debug" osxSDK="default" osxCompatibility="10.10 SDK" osxArchitecture="default"
                        isDebug="1" optimisation="1" targetName="TinyRNN" linkTimeOptimisation="0"/>

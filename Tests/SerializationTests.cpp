@@ -251,7 +251,6 @@ SCENARIO("Unrolled network can be serialized and deserialized correctly", "[seri
         REQUIRE(network->getName() == networkName);
         
         UnrolledNetwork::Ptr vmNetwork = network->toVM();
-        vmNetwork->compile();
         
         const int numTrainingIterations = RANDOM(100, 1000);
         const Value r1 = RANDOM(0.0, 1.0);
@@ -271,7 +270,6 @@ SCENARIO("Unrolled network can be serialized and deserialized correctly", "[seri
         {
             UnrolledNetwork::Ptr vmRecreatedNetwork(new UnrolledNetwork(vmNetwork->getContext()));
             serializer.deserialize(vmRecreatedNetwork, serializedTopology);
-            vmRecreatedNetwork->compile();
             const std::string &reserializedTopology = serializer.serialize(vmRecreatedNetwork, Keys::Unrolled::Network);
             
             THEN("The serialization results should be equal")
@@ -297,6 +295,38 @@ SCENARIO("Unrolled network can be serialized and deserialized correctly", "[seri
                         REQUIRE(error < 0.01);
                     }
                 }
+            }
+        }
+    }
+    
+    GIVEN("Serialized training state of a randomly trained unrolled network")
+    {
+        const int layerSize = RANDOM(5, 15);
+        const auto network = Network::Prefabs::feedForward(RANDOMNAME(), 3, {layerSize}, 3);
+        const auto vmNetwork = network->toVM();
+        
+        const int numTrainingIterations = RANDOM(100, 1000);
+        const Value r1 = RANDOM(0.0, 1.0);
+        const Value r2 = RANDOM(0.0, 1.0);
+        const Value r3 = RANDOM(0.0, 1.0);
+        for (int i = 0; i < numTrainingIterations; ++i)
+        {
+            vmNetwork->feed({ RANDOM(0.0, 1.0), RANDOM(0.0, 1.0), RANDOM(0.0, 1.0) });
+            vmNetwork->train(kTrainingRate, { r1, r2, r3 });
+        }
+        
+        XMLSerializer serializer;
+        const std::string &serializedTrainingState = serializer.serialize(vmNetwork->getContext(), Keys::Unrolled::TrainingContext);
+        
+        WHEN("A new state is deserialized from that data and serialized back")
+        {
+            UnrolledTrainingContext::Ptr recreatedContext(new UnrolledTrainingContext());
+            serializer.deserialize(recreatedContext, serializedTrainingState);
+            const std::string &reserializedState = serializer.serialize(recreatedContext, Keys::Unrolled::TrainingContext);
+            
+            THEN("The serialization results should be equal")
+            {
+                REQUIRE(serializedTrainingState == reserializedState);
             }
         }
     }

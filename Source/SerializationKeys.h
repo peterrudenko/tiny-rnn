@@ -140,9 +140,6 @@ namespace TinyRNN
             static const std::string Indices = "Indices";
             static const std::string IndicesSize = "IndicesSize";
             
-            static const std::string FullSource = "FullSource";
-            static const std::string EntryPoint = "EntryPoint";
-            
             static const std::string VariablesMapping = "VariablesMapping";
             static const std::string InputsMapping = "InputsMapping";
             static const std::string OutputsMapping = "OutputsMapping";
