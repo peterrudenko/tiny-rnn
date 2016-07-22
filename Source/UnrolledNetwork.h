@@ -154,7 +154,8 @@ namespace TinyRNN
                     SKIP(1);
                     break;
                 case VMProgram::Clip:
-                    X(0) = std::max(-1.f, std::min(X(0), 1.f));
+                    X(0) = std::max(Value(-TINYRNN_GRADIENT_CLIPPING_THRESHOLD),
+                                    std::min(X(0), Value(TINYRNN_GRADIENT_CLIPPING_THRESHOLD)));
                     SKIP(1);
                     break;
                 case VMProgram::Activation:

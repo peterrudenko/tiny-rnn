@@ -519,7 +519,7 @@ namespace TinyRNN
                 gradient += neuronData->errorResponsibility * this->extended[neuronUuid][inputConnectionUuid];
             }
             
-            const auto clippedGradient = clip(gradient, -1.f, 1.f);
+            const auto clippedGradient = clip(gradient, -TINYRNN_GRADIENT_CLIPPING_THRESHOLD, TINYRNN_GRADIENT_CLIPPING_THRESHOLD);
             auto inputConnectionData = inputConnection->getTrainingData();
             inputConnectionData->weight += rate * clippedGradient; // adjust weights - aka learn
         }

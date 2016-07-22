@@ -33,6 +33,8 @@
 #include <unordered_map>
 #include <math.h>
 
+#define TINYRNN_GRADIENT_CLIPPING_THRESHOLD 1.0
+
 namespace TinyRNN
 {
     using Id = uint32_t;
