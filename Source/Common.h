@@ -32,6 +32,8 @@
 #include <unordered_map>
 #include <math.h>
 
+//#define TINYRNN_OPENCL_ACCELERATION 0
+
 namespace TinyRNN
 {
     using Id = uint32_t;

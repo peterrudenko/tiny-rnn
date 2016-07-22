@@ -289,7 +289,9 @@ namespace TinyRNN
         uint32_t i = 0; // index number
         char command = 0;
         
+#define I(INDEX) (indices[i + INDEX])
 #define X(INDEX) (registers[indices[i + INDEX]])
+#define SKIP(NUMBER) (i += NUMBER)
         
         while (command != VMProgram::End)
         {
@@ -297,68 +299,83 @@ namespace TinyRNN
             {
                 case VMProgram::Zero:
                     X(0) = 0;
-                    i += 1;
+                    SKIP(1);
                     break;
                 case VMProgram::Clip:
                     X(0) = std::max(-1.f, std::min(X(0), 1.f));
-                    i += 1;
+                    SKIP(1);
                     break;
                 case VMProgram::Activation:
                     X(0) = X(1) > 0.0 ? X(1) : (0.01 * X(1));
-                    i += 2;
+                    SKIP(2);
                     break;
                 case VMProgram::Derivative:
                     X(0) = X(1) > 0.0 ? 1.0 : 0.01;
-                    i += 2;
+                    SKIP(2);
                     break;
                 case VMProgram::AAP:
                     X(0) = X(0) + X(1) * X(2);
-                    i += 3;
+                    SKIP(3);
                     break;
                 case VMProgram::AAPP:
                     X(0) = X(0) + X(1) * X(2) * X(3);
-                    i += 4;
+                    SKIP(4);
                     break;
                 case VMProgram::A:
                     X(0) = X(1);
-                    i += 2;
+                    SKIP(2);
                     break;
                 case VMProgram::AS:
                     X(0) = X(1) + X(2);
-                    i += 3;
+                    SKIP(3);
                     break;
                 case VMProgram::AD:
                     X(0) = X(1) - X(2);
-                    i += 3;
+                    SKIP(3);
                     break;
                 case VMProgram::AP:
                     X(0) = X(1) * X(2);
-                    i += 3;
+                    SKIP(3);
                     break;
                 case VMProgram::APP:
                     X(0) = X(1) * X(2) * X(3);
-                    i += 4;
+                    SKIP(4);
                     break;
                 case VMProgram::APS:
                     X(0) = X(1) * X(2) + X(3);
-                    i += 4;
+                    SKIP(4);
                     break;
                 case VMProgram::APSP:
                     X(0) = X(1) * X(2) + X(3) * X(4);
-                    i += 5;
+                    SKIP(5);
                     break;
                 case VMProgram::APPS:
                     X(0) = X(1) * X(2) * X(3) + X(4);
-                    i += 5;
+                    SKIP(5);
                     break;
                 case VMProgram::APPSP:
                     X(0) = X(1) * X(2) * X(3) + X(4) * X(5);
-                    i += 6;
+                    SKIP(6);
                     break;
                 case VMProgram::APPSPP:
                     X(0) = X(1) * X(2) * X(3) + X(4) * X(5) * X(6);
-                    i += 7;
+                    SKIP(7);
                     break;
+                case VMProgram::FeedState:
+                {
+                    const auto loopCount = I(0);
+                    const auto stateIndex = I(1);
+                    SKIP(2);
+                    
+                    for (Index loop = 0; loop < loopCount; ++loop)
+                    {
+                        registers[stateIndex] = registers[stateIndex] + X(0) * X(1) * X(2);
+                        SKIP(3);
+                    }
+                    
+                    break;
+                }
+                    
                 default:
                     break;
             }
@@ -371,7 +388,7 @@ namespace TinyRNN
     uint i = 0;\
     char command = 0;\
     \
-    while (command != 16)\
+    while (command != 127)\
     {\
         switch (command = commands[c++])\
         {\
@@ -453,6 +470,18 @@ namespace TinyRNN
             case 15: {\
                 x[id[i+0]] = x[id[i+1]] * x[id[i+2]] * x[id[i+3]] + x[id[i+4]] * x[id[i+5]] * x[id[i+6]];\
                 i += 7;\
+                break;\
+            }\
+            case 16:\
+            {\
+                const uint loopCount = id[i+0];\
+                const uint stateIndex = id[i+1];\
+                i += 2;\
+                for (uint loop = 0; loop < loopCount; ++loop)\
+                {\
+                    x[id[stateIndex]] = x[id[stateIndex]] + (x[id[i+0]] * x[id[i+1]] * x[id[i+2]]);\
+                    i += 3;\
+                }\
                 break;\
             }\
         }\

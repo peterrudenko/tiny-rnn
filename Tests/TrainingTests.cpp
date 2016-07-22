@@ -27,7 +27,7 @@
 
 using namespace TinyRNN;
 
-static const Value kTrainingRate = 0.05f;
+static const Value kTrainingRate = 0.075f;
 
 SCENARIO("A perceptron can be trained with a xor function", "[training]")
 {
@@ -65,11 +65,11 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
                     network->feed({0.0, 1.0});
                     network->train(kTrainingRate, {1.0});
                     
-                    network->feed({1.0, 0.0});
-                    network->train(kTrainingRate, {1.0});
-                    
                     network->feed({0.0, 0.0});
                     network->train(kTrainingRate, {0.0});
+                    
+                    network->feed({1.0, 0.0});
+                    network->train(kTrainingRate, {1.0});
                     
                     network->feed({1.0, 1.0});
                     network->train(kTrainingRate, {0.0});
@@ -115,11 +115,11 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
                     vmNetwork->feed({0.0, 1.0});
                     vmNetwork->train(kTrainingRate, {1.0});
                     
-                    vmNetwork->feed({1.0, 0.0});
-                    vmNetwork->train(kTrainingRate, {1.0});
-                    
                     vmNetwork->feed({0.0, 0.0});
                     vmNetwork->train(kTrainingRate, {0.0});
+                    
+                    vmNetwork->feed({1.0, 0.0});
+                    vmNetwork->train(kTrainingRate, {1.0});
                     
                     vmNetwork->feed({1.0, 1.0});
                     vmNetwork->train(kTrainingRate, {0.0});

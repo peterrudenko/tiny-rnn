@@ -58,10 +58,16 @@ namespace TinyRNN
             APPS = 13,          // x[1] = x[2] * x[3] * x[4] + x[5];
             APPSP = 14,         // x[1] = x[2] * x[3] * x[4] + x[5] * x[6];
             APPSPP = 15,        // x[1] = x[2] * x[3] * x[4] + x[5] * x[6] * x[7];
-            End = 16
+            FeedState = 16,     // Loops AAPP:
+                                // for (x[1] number of iterations) {
+                                //     x[2] += x[3] * x[4] * x[5];
+                                //     x[2] += x[6] * x[7] * x[8];
+                                // }
+            End = 127
         };
         
         friend VMProgram &operator << (VMProgram &i, Index index);
+        friend VMProgram &operator << (VMProgram &i, size_t index);
         friend VMProgram &operator << (VMProgram &i, Operation operation);
         
         std::vector<char> commands;
@@ -105,6 +111,12 @@ namespace TinyRNN
     //===------------------------------------------------------------------===//
     
     inline VMProgram &operator << (VMProgram &i, Index index)
+    {
+        i.indices.push_back(index);
+        return i;
+    }
+    
+    inline VMProgram &operator << (VMProgram &i, size_t index)
     {
         i.indices.push_back(index);
         return i;
@@ -210,6 +222,9 @@ namespace TinyRNN
                 vm->feedProgram << VMProgram::A << stateVar << biasVar;
             }
             
+            
+            vm->feedProgram << VMProgram::FeedState << target->incomingConnections.size() << stateVar;
+            
             for (auto &i : target->incomingConnections)
             {
                 const Neuron::Connection::Ptr inputConnection = i.second;
@@ -225,18 +240,24 @@ namespace TinyRNN
                 context->allocateOrReuseVariable(inputConnectionData->weight,
                                                  {inputConnection->getUuid(), Keys::Mapping::Weight});
                 
-                if (inputConnection->getGateNeuron() != nullptr)
-                {
-                    const Index inputGainVar =
-                    context->allocateOrReuseVariable(inputConnectionData->gain,
-                                                     {inputConnection->getUuid(), Keys::Mapping::Gain});
-                    
-                    vm->feedProgram << VMProgram::AAPP << stateVar << inputActivationVar << inputWeightVar << inputGainVar;
-                }
-                else
-                {
-                    vm->feedProgram << VMProgram::AAP << stateVar << inputActivationVar << inputWeightVar;
-                }
+//                if (inputConnection->getGateNeuron() != nullptr)
+//                {
+//                    const Index inputGainVar =
+//                    context->allocateOrReuseVariable(inputConnectionData->gain,
+//                                                     {inputConnection->getUuid(), Keys::Mapping::Gain});
+//                    
+//                    vm->feedProgram << VMProgram::AAPP << stateVar << inputActivationVar << inputWeightVar << inputGainVar;
+//                }
+//                else
+//                {
+//                    vm->feedProgram << VMProgram::AAP << stateVar << inputActivationVar << inputWeightVar;
+//                }
+                
+                const Index inputGainVar =
+                context->allocateOrReuseVariable(inputConnectionData->gain,
+                                                 {inputConnection->getUuid(), Keys::Mapping::Gain});
+                
+                vm->feedProgram << inputActivationVar << inputWeightVar << inputGainVar;
             }
             
             // eq. 16
