@@ -32,18 +32,12 @@
 #include <unordered_map>
 #include <math.h>
 
-//#define TINYRNN_OPENCL_ACCELERATION 0
-
 namespace TinyRNN
 {
     using Id = uint32_t;
     using Index = uint32_t;
     using Value = float;
 } // namespace TinyRNN
-
-#if TINYRNN_OPENCL_ACCELERATION
-#include "OpenCL/cl.hpp"
-#endif
 
 #define TINYRNN_DISALLOW_COPY_AND_ASSIGN(TypeName) \
     TypeName(const TypeName &) = delete;\

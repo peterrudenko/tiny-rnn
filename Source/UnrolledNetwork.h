@@ -45,8 +45,6 @@ namespace TinyRNN
         explicit UnrolledNetwork(UnrolledTrainingContext::Ptr targetContext);
         UnrolledNetwork(UnrolledTrainingContext::Ptr targetContext, VMLayers targetLayers);
         
-        bool compile();
-        
         UnrolledTrainingContext::Ptr getContext() const noexcept;
         
         UnrolledTrainingContext::RawData feed(const UnrolledTrainingContext::RawData &values);
@@ -62,21 +60,6 @@ namespace TinyRNN
         UnrolledTrainingContext::Ptr trainingContext;
         
     private:
-        
-#if TINYRNN_OPENCL_ACCELERATION
-        
-        cl::Device clDevice;
-        cl::Context clContext;
-        cl::Program clProgram;
-        cl::CommandQueue clQueue;
-        
-        cl::Buffer clMemoryBuffer;
-        cl::Buffer clInputsBuffer;
-        cl::Buffer clOutputsBuffer;
-        cl::Buffer clTargetsBuffer;
-        cl::Buffer clRateBuffer;
-        
-#endif
       
         class Kernel final : public SerializedObject
         {
@@ -92,12 +75,6 @@ namespace TinyRNN
             
             std::vector<char> commands;
             std::vector<Index> indices; // Index is the same type as cl_uint
-            
-#if TINYRNN_OPENCL_ACCELERATION
-            cl::Kernel clKernel;
-            cl::Buffer clCommandsBuffer;
-            cl::Buffer clIndicesBuffer;
-#endif
             
         public:
             
@@ -157,117 +134,10 @@ namespace TinyRNN
     {
         const ScopedTimer timer("UnrolledNetwork::initialize");
         
-#if TINYRNN_OPENCL_ACCELERATION
-        
-        std::vector<cl::Platform> allPlatforms;
-        cl::Platform::get(&allPlatforms);
-        
-        if (allPlatforms.size() == 0)
-        {
-            std::cout << "No OpenCL platforms found!\n";
-            return false;
-        }
-        
-        const cl::Platform defaultPlatform = allPlatforms.front();
-        std::cout << "OpenCL platform: " << defaultPlatform.getInfo<CL_PLATFORM_NAME>() << "\n";
-        
-        std::vector<cl::Device> allDevices;
-        defaultPlatform.getDevices(CL_DEVICE_TYPE_ALL, &allDevices);
-        
-        if (allDevices.empty())
-        {
-            std::cout << "No OpenCL devices found!\n";
-            return false;
-        }
-        
-        this->clDevice = allDevices.front();
-        std::cout << "Using OpenCL device: " << this->clDevice.getInfo<CL_DEVICE_NAME>() << "\n";
-        
-        this->clContext = cl::Context(this->clDevice);
-        
-#endif
-        
         this->feedKernel = this->compileFeedKernel(targetLayers);
         this->trainKernel = this->compileTrainKernel(targetLayers);
         
         return true;
-    }
-    
-    inline bool UnrolledNetwork::compile()
-    {
-        const ScopedTimer timer("UnrolledNetwork::compile");
-        
-#if TINYRNN_OPENCL_ACCELERATION
-        
-        cl::Program::Sources clSources;
-        clSources.push_back({this->feedKernel->fullSource.c_str(), this->feedKernel->fullSource.length()});
-        clSources.push_back({this->trainKernel->fullSource.c_str(), this->trainKernel->fullSource.length()});
-        
-        this->clProgram = cl::Program(this->clContext, clSources);
-        
-        if (this->clProgram.build({this->clDevice}) != CL_SUCCESS)
-        {
-            std::cout << " Error building: " << this->clProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(this->clDevice) << std::endl;
-            return false;
-        }
-        else
-        {
-            std::cout << "Build ok, variables count: " << this->trainingContext->getMemory().size() << std::endl;
-        }
-        
-        {
-            const ScopedTimer feedTimer("Compiling feed kernel");
-            this->feedKernel->clKernel = cl::Kernel(this->clProgram, this->feedKernel->entryPoint.c_str());
-            
-            this->feedKernel->clCommandsBuffer =
-            cl::Buffer(this->clContext,
-                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                       sizeof(char) * this->feedKernel->commands.size(),
-                       (void *)this->feedKernel->commands.data());
-            
-            this->feedKernel->clIndicesBuffer =
-            cl::Buffer(this->clContext,
-                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                       sizeof(Index) * this->feedKernel->indices.size(),
-                       (void *)this->feedKernel->indices.data());
-
-            this->feedKernel->isBuilt = true;
-        }
-        
-        {
-            const ScopedTimer trainTimer("Compiling train kernel");
-            this->trainKernel->clKernel = cl::Kernel(this->clProgram, this->trainKernel->entryPoint.c_str());
-            
-            this->trainKernel->clCommandsBuffer =
-            cl::Buffer(this->clContext,
-                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                       sizeof(char) * this->trainKernel->commands.size(),
-                       (void *)this->trainKernel->commands.data());
-            
-            this->trainKernel->clIndicesBuffer =
-            cl::Buffer(this->clContext,
-                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                       sizeof(Index) * this->trainKernel->indices.size(),
-                       (void *)this->trainKernel->indices.data());
-            
-            this->trainKernel->isBuilt = true;
-        }
-        
-        this->clQueue = cl::CommandQueue(this->clContext, this->clDevice);
-        
-        this->clMemoryBuffer =
-        cl::Buffer(this->clContext,
-                   CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-                   sizeof(Value) * this->trainingContext->getMemory().size(),
-                   (void *)this->trainingContext->getMemory().data());
-        
-        return true;
-        
-#else
-        
-        return false;
-        
-#endif
     }
     
 #define VALUE_STRING std::string((sizeof(Value) == sizeof(double)) ? "double" : "float")
@@ -626,28 +496,6 @@ namespace TinyRNN
                   this->trainingContext->getOutputs().end(),
                   0.0);
         
-#if TINYRNN_OPENCL_ACCELERATION
-        
-        this->clInputsBuffer = cl::Buffer(this->clContext,
-                                          CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                          sizeof(Value) * inputs.size(),
-                                          (void *)inputs.data());
-        
-        this->clOutputsBuffer = cl::Buffer(this->clContext,
-                                           CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
-                                           sizeof(Value) * this->trainingContext->getOutputs().size(),
-                                           (void *)this->trainingContext->getOutputs().data());
-        
-        this->feedKernel->clKernel.setArg(0, this->clInputsBuffer);
-        this->feedKernel->clKernel.setArg(1, this->clOutputsBuffer);
-        this->feedKernel->clKernel.setArg(2, this->feedKernel->clCommandsBuffer);
-        this->feedKernel->clKernel.setArg(3, this->feedKernel->clIndicesBuffer);
-        this->feedKernel->clKernel.setArg(4, this->clMemoryBuffer);
-        this->clQueue.enqueueNDRangeKernel(this->feedKernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
-        this->clQueue.finish();
-        
-#else
-        
         const auto &inputIds = this->trainingContext->getInputVariables();
         for (size_t i = 0; i < inputIds.size(); ++i)
         {
@@ -664,35 +512,11 @@ namespace TinyRNN
             this->trainingContext->getOutputs()[i] = this->trainingContext->getMemory()[outputIds[i]];
         }
         
-#endif
-        
         return this->trainingContext->getOutputs();
     }
     
     inline void UnrolledNetwork::train(Value rate, const UnrolledTrainingContext::RawData &targets)
     {
-#if TINYRNN_OPENCL_ACCELERATION
-        
-        this->clTargetsBuffer = cl::Buffer(this->clContext,
-                                           CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                           sizeof(Value) * targets.size(),
-                                           (void *)targets.data());
-        
-        this->clRateBuffer = cl::Buffer(this->clContext,
-                                        CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                        sizeof(Value),
-                                        (void *)&rate);
-        
-        this->trainKernel->clKernel.setArg(0, this->clRateBuffer);
-        this->trainKernel->clKernel.setArg(1, this->clTargetsBuffer);
-        this->trainKernel->clKernel.setArg(2, this->trainKernel->clCommandsBuffer);
-        this->trainKernel->clKernel.setArg(3, this->trainKernel->clIndicesBuffer);
-        this->trainKernel->clKernel.setArg(4, this->clMemoryBuffer);
-        this->clQueue.enqueueNDRangeKernel(this->trainKernel->clKernel, cl::NullRange, cl::NDRange(1), cl::NullRange);
-        this->clQueue.finish();
-        
-#else
-        
         const auto &targetIds = this->trainingContext->getTargetVariables();
         for (size_t i = 0; i < targetIds.size(); ++i)
         {
@@ -705,8 +529,6 @@ namespace TinyRNN
         vmProcess(this->trainKernel->commands.data(),
                   this->trainKernel->indices.data(),
                   this->trainingContext->getMemory().data());
-        
-#endif
     }
     
     //===------------------------------------------------------------------===//
@@ -729,8 +551,6 @@ namespace TinyRNN
             this->trainKernel = Kernel::Ptr(new Kernel());
             this->trainKernel->deserialize(trainKernelNode);
         }
-        
-        this->compile();
     }
     
     inline void UnrolledNetwork::serialize(SerializationContext::Ptr context) const

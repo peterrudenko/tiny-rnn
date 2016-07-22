@@ -251,7 +251,6 @@ SCENARIO("Unrolled network can be serialized and deserialized correctly", "[seri
         REQUIRE(network->getName() == networkName);
         
         UnrolledNetwork::Ptr vmNetwork = network->toVM();
-        vmNetwork->compile();
         
         const int numTrainingIterations = RANDOM(100, 1000);
         const Value r1 = RANDOM(0.0, 1.0);
@@ -271,7 +270,6 @@ SCENARIO("Unrolled network can be serialized and deserialized correctly", "[seri
         {
             UnrolledNetwork::Ptr vmRecreatedNetwork(new UnrolledNetwork(vmNetwork->getContext()));
             serializer.deserialize(vmRecreatedNetwork, serializedTopology);
-            vmRecreatedNetwork->compile();
             const std::string &reserializedTopology = serializer.serialize(vmRecreatedNetwork, Keys::Unrolled::Network);
             
             THEN("The serialization results should be equal")
