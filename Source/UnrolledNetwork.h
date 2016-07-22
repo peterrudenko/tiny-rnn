@@ -569,14 +569,14 @@ namespace TinyRNN
         const auto &commandsDecoded = context->decodeBase64(commandsEncoded);
         
         this->commands.resize(commandsSize);
-        memcpy(this->commands.data(), commandsDecoded.data(), sizeof(char) * commandsSize);
+        std::memcpy(this->commands.data(), commandsDecoded.data(), sizeof(char) * commandsSize);
         
         const std::string &indicesEncoded = context->getStringProperty(Keys::Unrolled::Indices);
         const size_t indicesSize = context->getNumberProperty(Keys::Unrolled::IndicesSize);
         const auto &indicesDecoded = context->decodeBase64(indicesEncoded);
         
         this->indices.resize(indicesSize);
-        memcpy(this->indices.data(), indicesDecoded.data(), sizeof(Index) * indicesSize);
+        std::memcpy(this->indices.data(), indicesDecoded.data(), sizeof(Index) * indicesSize);
         
         this->entryPoint = context->getStringProperty(Keys::Unrolled::EntryPoint);
         this->fullSource = context->getStringProperty(Keys::Unrolled::FullSource);
