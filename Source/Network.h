@@ -434,7 +434,7 @@ namespace TinyRNN
                                                               int outputLayerSize)
     {
         Layer::Ptr inputLayer(new Layer(inputLayerSize, Neuron::Sigmoid));
-        Layer::Ptr outputLayer(new Layer(outputLayerSize, Neuron::LeakyReLU));
+        Layer::Ptr outputLayer(new Layer(outputLayerSize, Neuron::Sigmoid));
         
         const int numHiddenLayers = hiddenLayersSizes.size();
         Layer::Vector hiddenLayers;

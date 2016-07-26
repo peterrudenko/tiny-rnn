@@ -27,13 +27,13 @@
 
 using namespace TinyRNN;
 
-static const Value kTrainingRate = 0.075f;
+static const Value kTrainingRate = 0.2f;
 
 SCENARIO("A perceptron can be trained with a xor function", "[training]")
 {
     GIVEN("A single-layer perceptron")
     {
-        const int numIterations = RANDOM(1500, 2000);
+        const int numIterations = RANDOM(2500, 3000);
         const auto networkName = RANDOMNAME();
         const auto contextName = RANDOMNAME();
         

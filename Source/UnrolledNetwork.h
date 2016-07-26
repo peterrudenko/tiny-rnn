@@ -31,6 +31,9 @@
 #include "ScopedTimer.h"
 #include "SerializedObject.h"
 
+#include <ctime>
+#include <cstdlib>
+
 namespace TinyRNN
 {
     class UnrolledNetwork final : public SerializedObject
@@ -121,6 +124,8 @@ namespace TinyRNN
     {
         const ScopedTimer timer("UnrolledNetwork::initialize");
         
+        srand(time(0));
+        
         this->feedKernel = this->compileFeedKernel(targetLayers);
         this->trainKernel = this->compileTrainKernel(targetLayers);
         
@@ -133,6 +138,8 @@ namespace TinyRNN
     // Compiling all the expressions
     //===------------------------------------------------------------------===//
     
+    static bool kVMUsesDropout = true;
+    
     static void vmProcess(const char *commands,
                           const Index *indices,
                           Value *registers)
@@ -144,6 +151,10 @@ namespace TinyRNN
 #define I(INDEX) (indices[i + INDEX])
 #define X(INDEX) (registers[indices[i + INDEX]])
 #define SKIP(NUMBER) (i += NUMBER)
+        
+        // At test time, dont droupout,
+        // But scale activation by p (the probability of dropout)
+        const Value dropout = kVMUsesDropout ? Value(rand() % 2) : Value(0.5);
         
         while (command != VMProgram::End)
         {
@@ -167,7 +178,7 @@ namespace TinyRNN
                     i += 2;
                     break;
                 case VMProgram::ActivationLeakyReLU:
-                    X(0) = X(1) > 0.0 ? X(1) : (0.01 * X(1));
+                    X(0) = Value(dropout) * (X(1) > 0.0 ? X(1) : (0.01 * X(1)));
                     SKIP(2);
                     break;
                 case VMProgram::DerivativeLeakyReLU:
@@ -321,11 +332,17 @@ namespace TinyRNN
             this->trainingContext->getOutputs()[i] = this->trainingContext->getMemory()[outputIds[i]];
         }
         
+        // Set not to use dropout next time we feed forward
+        // Will be reset back to true in train()
+        kVMUsesDropout = false;
+        
         return this->trainingContext->getOutputs();
     }
     
     inline void UnrolledNetwork::train(Value rate, const UnrolledTrainingContext::RawData &targets)
     {
+        kVMUsesDropout = true;
+        
         const auto &targetIds = this->trainingContext->getTargetVariables();
         for (size_t i = 0; i < targetIds.size(); ++i)
         {

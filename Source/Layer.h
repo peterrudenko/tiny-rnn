@@ -42,7 +42,7 @@ namespace TinyRNN
         
     public:
         
-        Layer(int numNeurons, Neuron::ActivationType activation = Neuron::LeakyReLU);
+        Layer(int numNeurons, Neuron::ActivationType activation = Neuron::Sigmoid);
         Layer(int numNeurons, Value bias, Neuron::ActivationType activation);
         
         std::string getName() const noexcept;
