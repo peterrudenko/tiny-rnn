@@ -54,11 +54,12 @@ namespace TinyRNN
             static const std::string Gain = "Gain";
             
             static const std::string Bias = "Bias";
+            static const std::string ActivationType = "ActivationType";
             static const std::string Activation = "Activation";
             static const std::string Derivative = "Derivative";
             static const std::string State = "State";
             static const std::string OldState = "OldState";
-            
+
             static const std::string ErrorResponsibility = "ErrorResponsibility";
             static const std::string ProjectedActivity = "ProjectedActivity";
             static const std::string GatingActivity = "GatingActivity";

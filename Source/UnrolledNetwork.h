@@ -158,11 +158,19 @@ namespace TinyRNN
                                     std::min(X(0), Value(TINYRNN_GRADIENT_CLIPPING_THRESHOLD)));
                     SKIP(1);
                     break;
-                case VMProgram::Activation:
+                case VMProgram::ActivationSigmoid:
+                    X(0) = (1.0 / (1.0 + exp(-X(1))));
+                    i += 2;
+                    break;
+                case VMProgram::DerivativeSigmoid:
+                    X(0) = X(1) * (1.0 - X(1));
+                    i += 2;
+                    break;
+                case VMProgram::ActivationLeakyReLU:
                     X(0) = X(1) > 0.0 ? X(1) : (0.01 * X(1));
                     SKIP(2);
                     break;
-                case VMProgram::Derivative:
+                case VMProgram::DerivativeLeakyReLU:
                     X(0) = X(1) > 0.0 ? 1.0 : 0.01;
                     SKIP(2);
                     break;

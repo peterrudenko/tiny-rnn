@@ -99,8 +99,16 @@ namespace TinyRNN
         
     public:
         
-        Neuron();
-        Neuron(Value defaultBias);
+        enum ActivationType
+        {
+            // Outputs a value between 0 and 1, useful for gates
+            Sigmoid = 0,
+            // Used as default, computationally less complex
+            LeakyReLU = 1
+        };
+        
+        explicit Neuron(ActivationType defaultActivation = LeakyReLU);
+        Neuron(Value defaultBias, ActivationType defaultActivation = Sigmoid);
         
         Id getUuid() const noexcept;
         Connection::HashMap getOutgoingConnections() const;
@@ -138,6 +146,8 @@ namespace TinyRNN
         
         Id uuid;
         
+        ActivationType activationType;
+        
         Value bias;
         Value activation;
         Value derivative;
@@ -154,6 +164,8 @@ namespace TinyRNN
         
         static Value activationReLU(Value x);
         static Value derivativeReLU(Value x);
+        static Value activationSigmoid(Value x);
+        static Value derivativeSigmoid(Value x);
         
         Connection::HashMap incomingConnections;
         Connection::HashMap outgoingConnections;
@@ -191,8 +203,9 @@ namespace TinyRNN
     // Neuron implementation
     //===------------------------------------------------------------------===//
     
-    inline Neuron::Neuron() :
+    inline Neuron::Neuron(ActivationType defaultActivation) :
     uuid(Uuid::generateId()),
+    activationType(defaultActivation),
     bias(0.0),
     activation(0.0),
     derivative(0.0),
@@ -205,8 +218,9 @@ namespace TinyRNN
         this->setRandomBias();
     }
     
-    inline Neuron::Neuron(Value defaultBias) :
+    inline Neuron::Neuron(Value defaultBias, ActivationType defaultActivation) :
     uuid(Uuid::generateId()),
+    activationType(defaultActivation),
     bias(defaultBias),
     activation(0.0),
     derivative(0.0),
@@ -356,11 +370,17 @@ namespace TinyRNN
             this->state += inputConnection->getInputNeuron()->activation * inputConnection->weight * inputConnection->gain;
         }
         
-        // eq. 16
-        this->activation = Neuron::activationReLU(this->state);
-        
-        // f'(s)
-        this->derivative = Neuron::derivativeReLU(this->state);
+        switch (this->activationType)
+        {
+            case Sigmoid:
+                this->activation = Neuron::activationSigmoid(this->state);
+                this->derivative = Neuron::derivativeSigmoid(this->state);
+                break;
+            case LeakyReLU:
+                this->activation = Neuron::activationReLU(this->state);
+                this->derivative = Neuron::derivativeReLU(this->state);
+                break;
+        }
         
         // update traces
         EligibilityMap influences;
@@ -549,6 +569,17 @@ namespace TinyRNN
         return x > 0.0 ? 1.0 : 0.01;
     }
     
+    inline Value Neuron::activationSigmoid(Value x)
+    {
+        return 1.0 / (1.0 + exp(-x));
+    }
+    
+    inline Value Neuron::derivativeSigmoid(Value x)
+    {
+        const Value fx = Neuron::activationSigmoid(x);
+        return fx * (1.0 - fx);
+    }
+    
     //===------------------------------------------------------------------===//
     // Const stuff
     //===------------------------------------------------------------------===//
@@ -647,6 +678,7 @@ namespace TinyRNN
     {
         this->uuid = context->getNumberProperty(Keys::Core::Uuid);
         // selfconnection will be restored in network deserialization
+        this->activationType = ActivationType(context->getNumberProperty(Keys::Core::ActivationType));
         this->bias = context->getRealProperty(Keys::Core::Bias);
         this->activation = context->getRealProperty(Keys::Core::Activation);
         this->derivative = context->getRealProperty(Keys::Core::Derivative);
@@ -660,6 +692,7 @@ namespace TinyRNN
     inline void Neuron::serialize(SerializationContext::Ptr context) const
     {
         context->setNumberProperty(this->uuid, Keys::Core::Uuid);
+        context->setNumberProperty(this->activationType, Keys::Core::ActivationType);
         context->setRealProperty(this->bias, Keys::Core::Bias);
         context->setRealProperty(this->activation, Keys::Core::Activation);
         context->setRealProperty(this->derivative, Keys::Core::Derivative);

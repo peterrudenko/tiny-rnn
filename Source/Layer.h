@@ -42,8 +42,8 @@ namespace TinyRNN
         
     public:
         
-        explicit Layer(int numNeurons);
-        Layer(int numNeurons, Value bias);
+        Layer(int numNeurons, Neuron::ActivationType activation = Neuron::LeakyReLU);
+        Layer(int numNeurons, Value bias, Neuron::ActivationType activation);
         
         std::string getName() const noexcept;
         Id getUuid() const noexcept;
@@ -102,22 +102,24 @@ namespace TinyRNN
     // Layer implementation
     //===------------------------------------------------------------------===//
     
-    inline Layer::Layer(int numNeurons) :
+    inline Layer::Layer(int numNeurons, Neuron::ActivationType activation) :
     uuid(Uuid::generateId())
     {
+        this->neurons.reserve(numNeurons);
         for (int i = 0; i < numNeurons; ++i)
         {
-            Neuron::Ptr neuron(new Neuron());
+            Neuron::Ptr neuron(new Neuron(activation));
             this->neurons.push_back(neuron);
         }
     }
     
-    inline Layer::Layer(int numNeurons, Value bias) :
+    inline Layer::Layer(int numNeurons, Value bias, Neuron::ActivationType activation) :
     uuid(Uuid::generateId())
     {
+        this->neurons.reserve(numNeurons);
         for (int i = 0; i < numNeurons; ++i)
         {
-            Neuron::Ptr neuron(new Neuron(bias));
+            Neuron::Ptr neuron(new Neuron(bias, activation));
             this->neurons.push_back(neuron);
         }
     }

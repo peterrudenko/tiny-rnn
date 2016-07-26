@@ -433,8 +433,8 @@ namespace TinyRNN
                                                               const std::vector<int> &hiddenLayersSizes,
                                                               int outputLayerSize)
     {
-        Layer::Ptr inputLayer(new Layer(inputLayerSize));
-        Layer::Ptr outputLayer(new Layer(outputLayerSize));
+        Layer::Ptr inputLayer(new Layer(inputLayerSize, Neuron::Sigmoid));
+        Layer::Ptr outputLayer(new Layer(outputLayerSize, Neuron::LeakyReLU));
         
         const int numHiddenLayers = hiddenLayersSizes.size();
         Layer::Vector hiddenLayers;
@@ -444,10 +444,10 @@ namespace TinyRNN
         {
             const int size = hiddenLayersSizes[i];
             
-            Layer::Ptr inputGate(new Layer(size, 1.0));
-            Layer::Ptr forgetGate(new Layer(size, 1.0));
-            Layer::Ptr memoryCell(new Layer(size));
-            Layer::Ptr outputGate(new Layer(size, 1.0));
+            Layer::Ptr inputGate(new Layer(size, 1.0, Neuron::Sigmoid));
+            Layer::Ptr forgetGate(new Layer(size, 1.0, Neuron::Sigmoid));
+            Layer::Ptr memoryCell(new Layer(size, Neuron::LeakyReLU));
+            Layer::Ptr outputGate(new Layer(size, 1.0, Neuron::Sigmoid));
             
             hiddenLayers.push_back(inputGate);
             hiddenLayers.push_back(forgetGate);
