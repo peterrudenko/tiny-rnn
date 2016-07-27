@@ -27,7 +27,7 @@
 
 using namespace TinyRNN;
 
-static const Value kTrainingRate = 0.2f;
+static const Value kTrainingRate = 0.25f;
 
 SCENARIO("A perceptron can be trained with a xor function", "[training]")
 {
@@ -38,7 +38,7 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
         const auto contextName = RANDOMNAME();
         
         Layer::Ptr inputLayer(new Layer(2));
-        Layer::Ptr hiddenLayer(new Layer(10));
+        Layer::Ptr hiddenLayer(new Layer(20));
         Layer::Ptr outputLayer(new Layer(1));
         
         REQUIRE(inputLayer->getUuid() != hiddenLayer->getUuid());

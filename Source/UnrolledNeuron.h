@@ -42,32 +42,41 @@ namespace TinyRNN
             // S  - Sum
             // D  - Difference
             
-            Zero = 0,                   // x[1] = 0
-            Clip = 1,                   // x[1] = clip(x[1], -1.0, 1.0)
-
-            ActivationSigmoid = 2,      // x[1] = (1.0 / (1.0 + exp(-x[2])));           where x[2] is state
-            DerivativeSigmoid = 3,      // x[1] = x[2] * (1.0 - x[2]);                  where x[2] is activation
-            ActivationLeakyReLU = 4,    // x[1] = x[2] > 0.0 ? x[2] : (0.01 * x[2]);    where x[2] is state
-            DerivativeLeakyReLU = 5,    // x[1] = x[2] > 0.0 ? 1.0 : 0.01;              where x[2] is state
+            Zero,                           // x[1] = 0
+            Clip,                           // x[1] = clip(x[1], -1.0, 1.0)
             
-            AAP = 6,                    // x[1] += x[2] * x[3];
-            AAPP = 7,                   // x[1] += x[2] * x[3] * x[4];
-            A = 8,                      // x[1] = x[2]
-            AS = 9,                     // x[1] = x[2] + x[3];
-            AD = 10,                    // x[1] = x[2] - x[3];
-            AP = 11,                    // x[1] = x[2] * x[3];
-            APP = 12,                   // x[1] = x[2] * x[3] * x[4];
-            APS = 13,                   // x[1] = x[2] * x[3] + x[4];
-            APSP = 14,                  // x[1] = x[2] * x[3] + x[4] * x[5];
-            APPS = 15,                  // x[1] = x[2] * x[3] * x[4] + x[5];
-            APPSP = 16,                 // x[1] = x[2] * x[3] * x[4] + x[5] * x[6];
-            APPSPP = 17,                // x[1] = x[2] * x[3] * x[4] + x[5] * x[6] * x[7];
+            ActivationSigmoid,              // x[1] = (1.0 / (1.0 + exp(-x[2])));           where x[2] is state
+            DerivativeSigmoid,              // x[1] = x[2] * (1.0 - x[2]);                  where x[2] is activation
+            DropoutActivationSigmoid,       // same, but with 0.5 chance of dropout
             
-            FeedState = 18,             // Loops AAPP:
-                                        // for (x[1] number of iterations) {
-                                        //     x[2] += x[3] * x[4] * x[5];
-                                        //     x[2] += x[6] * x[7] * x[8];
-                                        // }
+            
+            ActivationTanh,                 // eP = exp(x[2]); eN = 1.0 / eP;
+                                            // x[1] = (eP - eN) / (eP + eN);                where x[2] is state
+            DerivativeTanh,                 // x[1] = 1.0 - (x[2] * x[2]);                  where x[2] is activation
+            DropoutActivationTanh,          // same, but with 0.5 chance of dropout
+            
+            ActivationLeakyReLU,            // x[1] = x[2] > 0.0 ? x[2] : (0.01 * x[2]);    where x[2] is state
+            DerivativeLeakyReLU,            // x[1] = x[2] > 0.0 ? 1.0 : 0.01;              where x[2] is state
+            DropoutActivationLeakyReLU,     // same, but with 0.5 chance of dropout
+            
+            AAP,                            // x[1] += x[2] * x[3];
+            AAPP,                           // x[1] += x[2] * x[3] * x[4];
+            A,                              // x[1] = x[2]
+            AS,                             // x[1] = x[2] + x[3];
+            AD,                             // x[1] = x[2] - x[3];
+            AP,                             // x[1] = x[2] * x[3];
+            APP,                            // x[1] = x[2] * x[3] * x[4];
+            APS,                            // x[1] = x[2] * x[3] + x[4];
+            APSP,                           // x[1] = x[2] * x[3] + x[4] * x[5];
+            APPS,                           // x[1] = x[2] * x[3] * x[4] + x[5];
+            APPSP,                          // x[1] = x[2] * x[3] * x[4] + x[5] * x[6];
+            APPSPP,                         // x[1] = x[2] * x[3] * x[4] + x[5] * x[6] * x[7];
+            
+            FeedState,                      // Loops AAPP:
+                                            // for (x[1] number of iterations) {
+                                            //     x[2] += x[3] * x[4] * x[5];
+                                            //     x[2] += x[6] * x[7] * x[8];
+                                            // }
             
             End = 127
         };
@@ -249,13 +258,29 @@ namespace TinyRNN
             switch (target->activationType)
             {
                 case Neuron::Sigmoid:
-                    vm->feedProgram << VMProgram::ActivationSigmoid << activationVar << stateVar;
+                {
+                    const VMProgram::Operation activationOperation = //VMProgram::ActivationSigmoid;
+                    (asInput || asOutput || target->isGate()) ? VMProgram::ActivationSigmoid : VMProgram::DropoutActivationSigmoid;
+                    vm->feedProgram << activationOperation << activationVar << stateVar;
                     vm->feedProgram << VMProgram::DerivativeSigmoid << derivativeVar << activationVar;
                     break;
+                }
+                case Neuron::Tanh:
+                {
+                    const VMProgram::Operation activationOperation = //VMProgram::ActivationTanh;
+                    (asInput || asOutput || target->isGate()) ? VMProgram::ActivationTanh : VMProgram::DropoutActivationTanh;
+                    vm->feedProgram << activationOperation << activationVar << stateVar;
+                    vm->feedProgram << VMProgram::DerivativeTanh << derivativeVar << activationVar;
+                    break;
+                }
                 case Neuron::LeakyReLU:
-                    vm->feedProgram << VMProgram::ActivationLeakyReLU << activationVar << stateVar;
+                {
+                    const VMProgram::Operation activationOperation = //VMProgram::ActivationLeakyReLU;
+                    (asInput || asOutput || target->isGate()) ? VMProgram::ActivationLeakyReLU : VMProgram::DropoutActivationLeakyReLU;
+                    vm->feedProgram << activationOperation << activationVar << stateVar;
                     vm->feedProgram << VMProgram::DerivativeLeakyReLU << derivativeVar << stateVar;
                     break;
+                }
             }
             
             if (! asConst)

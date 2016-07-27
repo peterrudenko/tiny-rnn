@@ -30,7 +30,7 @@
 
 using namespace TinyRNN;
 
-static const Value kTrainingRate = 0.05;
+static const Value kTrainingRate = 0.25;
 
 class XMLSerializationContext final : public SerializationContext
 {

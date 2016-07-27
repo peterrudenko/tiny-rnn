@@ -101,18 +101,18 @@ namespace TinyRNN
         
         enum ActivationType
         {
-            // Outputs a value between 0 and 1, useful for gates
-            Sigmoid = 0,
-            // Used as default, computationally less complex
-            LeakyReLU = 1
+            Sigmoid,    // Outputs a value between 0 and 1, useful for gates
+            Tanh,
+            LeakyReLU   // Computationally less complex, no vanishing gradient
         };
         
-        explicit Neuron(ActivationType defaultActivation = LeakyReLU);
+        explicit Neuron(ActivationType defaultActivation = Tanh);
         Neuron(Value defaultBias, ActivationType defaultActivation = Sigmoid);
         
         Id getUuid() const noexcept;
         Connection::HashMap getOutgoingConnections() const;
         
+        bool isGate() const noexcept;
         bool isSelfConnected() const noexcept;
         bool isConnectedTo(Neuron::Ptr other) const;
         Connection::Ptr getSelfConnection() const noexcept;
@@ -159,13 +159,17 @@ namespace TinyRNN
         Value projectedActivity;
         Value gatingActivity;
         
+        bool isGatingAnyConnection;
+        
         void feedWithRandomBias(Value signal);
         void setRandomBias();
         
-        static Value activationReLU(Value x);
-        static Value derivativeReLU(Value x);
         static Value activationSigmoid(Value x);
         static Value derivativeSigmoid(Value x);
+        static Value activationTanh(Value x);
+        static Value derivativeTanh(Value x);
+        static Value activationReLU(Value x);
+        static Value derivativeReLU(Value x);
         
         Connection::HashMap incomingConnections;
         Connection::HashMap outgoingConnections;
@@ -213,7 +217,8 @@ namespace TinyRNN
     oldState(0.0),
     errorResponsibility(0.0),
     projectedActivity(0.0),
-    gatingActivity(0.0)
+    gatingActivity(0.0),
+    isGatingAnyConnection(false)
     {
         this->setRandomBias();
     }
@@ -228,7 +233,8 @@ namespace TinyRNN
     oldState(0.0),
     errorResponsibility(0.0),
     projectedActivity(0.0),
-    gatingActivity(0.0)
+    gatingActivity(0.0),
+    isGatingAnyConnection(false)
     {
     }
     
@@ -330,6 +336,8 @@ namespace TinyRNN
         
         this->influences[targetNeuron->getUuid()][connection->getUuid()] = connection;
         
+        this->isGatingAnyConnection = true;
+        
         // set gater
         connection->setGate(this->shared_from_this());
     }
@@ -375,6 +383,10 @@ namespace TinyRNN
             case Sigmoid:
                 this->activation = Neuron::activationSigmoid(this->state);
                 this->derivative = Neuron::derivativeSigmoid(this->state);
+                break;
+            case Tanh:
+                this->activation = Neuron::activationTanh(this->state);
+                this->derivative = Neuron::derivativeTanh(this->state);
                 break;
             case LeakyReLU:
                 this->activation = Neuron::activationReLU(this->state);
@@ -558,17 +570,6 @@ namespace TinyRNN
         this->bias += rate * this->errorResponsibility;
     }
     
-    // Leaky ReLU ^_^
-    inline Value Neuron::activationReLU(Value x)
-    {
-        return x > 0.0 ? x : (0.01 * x);
-    }
-    
-    inline Value Neuron::derivativeReLU(Value x)
-    {
-        return x > 0.0 ? 1.0 : 0.01;
-    }
-    
     inline Value Neuron::activationSigmoid(Value x)
     {
         return 1.0 / (1.0 + exp(-x));
@@ -580,9 +581,39 @@ namespace TinyRNN
         return fx * (1.0 - fx);
     }
     
+    inline Value Neuron::activationTanh(Value x)
+    {
+        const Value eP = exp(x);
+        const Value eN = 1.0 / eP;
+        return (eP - eN) / (eP + eN);
+    }
+    
+    inline Value Neuron::derivativeTanh(Value x)
+    {
+        const Value activation = Neuron::activationTanh(x);
+        return 1.0 - (activation * activation);
+    }
+    
+    inline Value Neuron::activationReLU(Value x)
+    {
+        return x > 0.0 ? x : (0.01 * x);
+    }
+    
+    inline Value Neuron::derivativeReLU(Value x)
+    {
+        return x > 0.0 ? 1.0 : 0.01;
+    }
+    
+
+    
     //===------------------------------------------------------------------===//
     // Const stuff
     //===------------------------------------------------------------------===//
+    
+    inline bool Neuron::isGate() const noexcept
+    {
+        return this->isGatingAnyConnection;
+    }
     
     inline bool Neuron::isSelfConnected() const noexcept
     {
