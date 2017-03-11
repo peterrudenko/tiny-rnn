@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2015 Peter Rudenko
+    Copyright (c) 2016 Peter Rudenko
 
     Permission is hereby granted, free of charge, to any person obtaining
     a copy of this software and associated documentation files (the "Software"),
@@ -47,11 +47,6 @@ namespace TinyRNN
             static const std::string Uuid = "Uuid";
             static const std::string Name = "Name";
             
-            static const std::string TrainingContext = "TrainingContext";
-            static const std::string TrainingNeuronContext = "TrainingNeuronContext";
-            static const std::string NeuronContexts = "NeuronContexts";
-            static const std::string TrainingConnectionContext = "TrainingConnectionContext";
-            static const std::string ConnectionContexts = "ConnectionContexts";
             static const std::string NeuronUuid = "NeuronUuid";
             static const std::string ConnectionUuid = "ConnectionUuid";
             
@@ -59,11 +54,12 @@ namespace TinyRNN
             static const std::string Gain = "Gain";
             
             static const std::string Bias = "Bias";
+            static const std::string ActivationType = "ActivationType";
             static const std::string Activation = "Activation";
             static const std::string Derivative = "Derivative";
             static const std::string State = "State";
             static const std::string OldState = "OldState";
-            
+
             static const std::string ErrorResponsibility = "ErrorResponsibility";
             static const std::string ProjectedActivity = "ProjectedActivity";
             static const std::string GatingActivity = "GatingActivity";

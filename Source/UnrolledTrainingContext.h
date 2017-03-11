@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2015 Peter Rudenko
+    Copyright (c) 2016 Peter Rudenko
 
     Permission is hereby granted, free of charge, to any person obtaining
     a copy of this software and associated documentation files (the "Software"),
@@ -232,17 +232,15 @@ namespace TinyRNN
     
     inline void UnrolledTrainingContext::restoreNeuronState(Neuron::Ptr target)
     {
-        auto targetData = target->getTrainingData();
+        const Value bias = this->evaluateVariable({target->getUuid(), Keys::Mapping::Bias}, target->bias);
+        const Value state = this->evaluateVariable({target->getUuid(), Keys::Mapping::State}, target->state);
+        const Value oldState = this->evaluateVariable({target->getUuid(), Keys::Mapping::OldState}, target->oldState);
+        const Value activation = this->evaluateVariable({target->getUuid(), Keys::Mapping::Activation}, target->activation);
         
-        const Value bias = this->evaluateVariable({target->getUuid(), Keys::Mapping::Bias}, targetData->bias);
-        const Value state = this->evaluateVariable({target->getUuid(), Keys::Mapping::State}, targetData->state);
-        const Value oldState = this->evaluateVariable({target->getUuid(), Keys::Mapping::OldState}, targetData->oldState);
-        const Value activation = this->evaluateVariable({target->getUuid(), Keys::Mapping::Activation}, targetData->activation);
-        
-        targetData->bias = bias;
-        targetData->state = state;
-        targetData->oldState = oldState;
-        targetData->activation = activation;
+        target->bias = bias;
+        target->state = state;
+        target->oldState = oldState;
+        target->activation = activation;
         
         for (auto &i : target->eligibility)
         {
@@ -273,25 +271,23 @@ namespace TinyRNN
         {
             auto outgoingConnection = i.second;
             auto outgoingConnectionUuid = i.first;
-            auto outgoingConnectionData = outgoingConnection->getTrainingData();
             
-            outgoingConnectionData->weight = this->evaluateVariable({outgoingConnectionUuid, Keys::Mapping::Weight},
-                                                                    outgoingConnectionData->weight);
+            outgoingConnection->weight = this->evaluateVariable({outgoingConnectionUuid, Keys::Mapping::Weight},
+                                                                outgoingConnection->weight);
             
-            outgoingConnectionData->gain = this->evaluateVariable({outgoingConnectionUuid, Keys::Mapping::Gain},
-                                                                  outgoingConnectionData->gain);
+            outgoingConnection->gain = this->evaluateVariable({outgoingConnectionUuid, Keys::Mapping::Gain},
+                                                              outgoingConnection->gain);
         }
         
         if (target->isSelfConnected())
         {
             auto selfConnection = target->getSelfConnection();
-            auto selfConnectionData = selfConnection->getTrainingData();
             
-            selfConnectionData->weight = this->evaluateVariable({selfConnection->getUuid(), Keys::Mapping::Weight},
-                                                                selfConnectionData->weight);
+            selfConnection->weight = this->evaluateVariable({selfConnection->getUuid(), Keys::Mapping::Weight},
+                                                            selfConnection->weight);
             
-            selfConnectionData->gain = this->evaluateVariable({selfConnection->getUuid(), Keys::Mapping::Gain},
-                                                              selfConnectionData->gain);
+            selfConnection->gain = this->evaluateVariable({selfConnection->getUuid(), Keys::Mapping::Gain},
+                                                          selfConnection->gain);
         }
     }
     

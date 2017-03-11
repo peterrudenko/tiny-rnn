@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2015 Peter Rudenko
+    Copyright (c) 2016 Peter Rudenko
 
     Permission is hereby granted, free of charge, to any person obtaining
     a copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
 #include "ScopedMemoryBlock.h"
 #include "ScopedTimer.h"
 #include "SerializedObject.h"
+
+#include <ctime>
+#include <cstdlib>
 
 namespace TinyRNN
 {
@@ -121,6 +124,8 @@ namespace TinyRNN
     {
         const ScopedTimer timer("UnrolledNetwork::initialize");
         
+        srand(time(0));
+        
         this->feedKernel = this->compileFeedKernel(targetLayers);
         this->trainKernel = this->compileTrainKernel(targetLayers);
         
@@ -132,6 +137,8 @@ namespace TinyRNN
     //===------------------------------------------------------------------===//
     // Compiling all the expressions
     //===------------------------------------------------------------------===//
+    
+    static bool kVMUsesDropout = true;
     
     static void vmProcess(const char *commands,
                           const Index *indices,
@@ -145,6 +152,10 @@ namespace TinyRNN
 #define X(INDEX) (registers[indices[i + INDEX]])
 #define SKIP(NUMBER) (i += NUMBER)
         
+        // At test time, do not droupout,
+        // But scale activation by p (the probability of dropout, 0.5 for now)
+        const Value dropout = kVMUsesDropout ? Value(rand() % 2) : Value(0.5);
+        
         while (command != VMProgram::End)
         {
             switch (command = commands[c++])
@@ -154,17 +165,58 @@ namespace TinyRNN
                     SKIP(1);
                     break;
                 case VMProgram::Clip:
-                    X(0) = std::max(-1.f, std::min(X(0), 1.f));
+                    X(0) = std::max(Value(-TINYRNN_GRADIENT_CLIPPING_THRESHOLD),
+                                    std::min(X(0), Value(TINYRNN_GRADIENT_CLIPPING_THRESHOLD)));
                     SKIP(1);
                     break;
-                case VMProgram::Activation:
+                    
+                case VMProgram::ActivationSigmoid:
+                    X(0) = (1.0 / (1.0 + exp(-X(1))));
+                    i += 2;
+                    break;
+                case VMProgram::DropoutActivationSigmoid:
+                    X(0) = Value(dropout) * (1.0 / (1.0 + exp(-X(1))));
+                    i += 2;
+                    break;
+                case VMProgram::DerivativeSigmoid:
+                    X(0) = X(1) * (1.0 - X(1));
+                    i += 2;
+                    break;
+                    
+                case VMProgram::ActivationTanh:
+                {
+                    const Value eP = exp(X(1));
+                    const Value eN = 1.0 / eP;
+                    X(0) = (eP - eN) / (eP + eN);
+                    i += 2;
+                    break;
+                }
+                case VMProgram::DropoutActivationTanh:
+                {
+                    const Value eP = exp(X(1));
+                    const Value eN = 1.0 / eP;
+                    X(0) = Value(dropout) * ((eP - eN) / (eP + eN));
+                    i += 2;
+                    break;
+                }
+                case VMProgram::DerivativeTanh:
+                    X(0) = 1.0 - (X(1) * X(1));
+                    i += 2;
+                    break;
+                    
+                case VMProgram::ActivationLeakyReLU:
                     X(0) = X(1) > 0.0 ? X(1) : (0.01 * X(1));
                     SKIP(2);
                     break;
-                case VMProgram::Derivative:
+                case VMProgram::DropoutActivationLeakyReLU:
+                    X(0) = Value(dropout) * (X(1) > 0.0 ? X(1) : (0.01 * X(1)));
+                    SKIP(2);
+                    break;
+                case VMProgram::DerivativeLeakyReLU:
                     X(0) = X(1) > 0.0 ? 1.0 : 0.01;
                     SKIP(2);
                     break;
+                    
                 case VMProgram::AAP:
                     X(0) = X(0) + X(1) * X(2);
                     SKIP(3);
@@ -213,6 +265,7 @@ namespace TinyRNN
                     X(0) = X(1) * X(2) * X(3) + X(4) * X(5) * X(6);
                     SKIP(7);
                     break;
+                    
                 case VMProgram::FeedState:
                 {
                     const auto loopCount = I(0);
@@ -312,11 +365,17 @@ namespace TinyRNN
             this->trainingContext->getOutputs()[i] = this->trainingContext->getMemory()[outputIds[i]];
         }
         
+        // Set not to use dropout next time we feed forward
+        // Will be reset back to true in train()
+        kVMUsesDropout = false;
+        
         return this->trainingContext->getOutputs();
     }
     
     inline void UnrolledNetwork::train(Value rate, const UnrolledTrainingContext::RawData &targets)
     {
+        kVMUsesDropout = true;
+        
         const auto &targetIds = this->trainingContext->getTargetVariables();
         for (size_t i = 0; i < targetIds.size(); ++i)
         {

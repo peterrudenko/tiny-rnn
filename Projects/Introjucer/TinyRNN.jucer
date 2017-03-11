@@ -17,8 +17,6 @@
         <FILE id="IqD0qC" name="Network.h" compile="0" resource="0" file="../../Source/Network.h"/>
         <FILE id="B45LBw" name="Layer.h" compile="0" resource="0" file="../../Source/Layer.h"/>
         <FILE id="Fwl423" name="Neuron.h" compile="0" resource="0" file="../../Source/Neuron.h"/>
-        <FILE id="XVAQSE" name="TrainingContext.h" compile="0" resource="0"
-              file="../../Source/TrainingContext.h"/>
       </GROUP>
       <GROUP id="{F2DEDA53-1230-630C-0024-A35C4195E930}" name="Serialization">
         <FILE id="sMkGMF" name="SerializedObject.h" compile="0" resource="0"

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2015 Peter Rudenko
+    Copyright (c) 2016 Peter Rudenko
 
     Permission is hereby granted, free of charge, to any person obtaining
     a copy of this software and associated documentation files (the "Software"),
@@ -29,7 +29,6 @@
 #include "Layer.h"
 #include "ScopedTimer.h"
 #include "SerializedObject.h"
-#include "TrainingContext.h"
 #include "UnrolledNetwork.h"
 #include "UnrolledTrainingContext.h"
 
@@ -44,18 +43,15 @@ namespace TinyRNN
         
     public:
         
-        explicit Network(TrainingContext::Ptr targetContext);
+        Network();
         
         Network(const std::string &networkName,
-                TrainingContext::Ptr targetContext,
                 Layer::Ptr inputLayer,
                 Layer::Vector hiddenLayers,
                 Layer::Ptr outputLayer);
         
         std::string getName() const noexcept;
         Id getUuid() const noexcept;
-        
-        TrainingContext::Ptr getContext() const noexcept;
         
         // Feed the input layer, process the rest and get result values from the output
         Neuron::Values feed(const Neuron::Values &input);
@@ -105,8 +101,6 @@ namespace TinyRNN
         Layer::Vector hiddenLayers;
         Layer::Ptr outputLayer;
         
-        TrainingContext::Ptr context;
-        
     private:
         
         Neuron::Connection::SortedMap findAllConnections() const;
@@ -121,14 +115,12 @@ namespace TinyRNN
     // Network implementation
     //===------------------------------------------------------------------===//
     
-    inline Network::Network(TrainingContext::Ptr targetContext) :
-    uuid(Uuid::generateId()),
-    context(targetContext)
+    inline Network::Network() :
+    uuid(Uuid::generateId())
     {
     }
     
     inline Network::Network(const std::string &networkName,
-                     TrainingContext::Ptr targetContext,
                      Layer::Ptr targetInputLayer,
                      Layer::Vector targetHiddenLayers,
                      Layer::Ptr targetOutputLayer) :
@@ -136,8 +128,7 @@ namespace TinyRNN
     uuid(Uuid::generateId()),
     inputLayer(targetInputLayer),
     hiddenLayers(targetHiddenLayers),
-    outputLayer(targetOutputLayer),
-    context(targetContext)
+    outputLayer(targetOutputLayer)
     {
     }
     
@@ -149,11 +140,6 @@ namespace TinyRNN
     inline Id Network::getUuid() const noexcept
     {
         return this->uuid;
-    }
-    
-    inline TrainingContext::Ptr Network::getContext() const noexcept
-    {
-        return this->context;
     }
     
     //===------------------------------------------------------------------===//
@@ -223,12 +209,12 @@ namespace TinyRNN
         
         this->inputLayer.reset();
         SerializationContext::Ptr inputLayerNode(context->getChildContext(Keys::Core::InputLayer));
-        this->inputLayer = Layer::Ptr(new Layer(this->context, 0));
+        this->inputLayer = Layer::Ptr(new Layer(0));
         this->inputLayer->deserialize(inputLayerNode);
         
         this->outputLayer.reset();
         SerializationContext::Ptr outputLayerNode(context->getChildContext(Keys::Core::OutputLayer));
-        this->outputLayer = Layer::Ptr(new Layer(this->context, 0));
+        this->outputLayer = Layer::Ptr(new Layer(0));
         this->outputLayer->deserialize(outputLayerNode);
         
         this->hiddenLayers.clear();
@@ -237,7 +223,7 @@ namespace TinyRNN
         for (size_t i = 0; i < allHiddenLayersNode->getNumChildrenContexts(); ++i)
         {
             SerializationContext::Ptr hiddenLayerNode(allHiddenLayersNode->getChildContext(i));
-            Layer::Ptr layer(new Layer(this->context, 0));
+            Layer::Ptr layer(new Layer(0));
             layer->deserialize(hiddenLayerNode);
             this->hiddenLayers.push_back(layer);
         }
@@ -248,7 +234,7 @@ namespace TinyRNN
         {
             SerializationContext::Ptr connectionNode(connectionsNode->getChildContext(i));
             
-            Neuron::Connection::Ptr connection(new Neuron::Connection(this->context));
+            Neuron::Connection::Ptr connection(new Neuron::Connection());
             connection->deserialize(connectionNode);
             
             const Id inputNeuronUuid = connectionNode->getNumberProperty(Keys::Core::InputNeuronUuid);
@@ -413,16 +399,14 @@ namespace TinyRNN
                                                       const std::vector<int> &hiddenLayersSizes,
                                                       int outputLayerSize)
     {
-        TrainingContext::Ptr context(new TrainingContext(name));
-        
-        Layer::Ptr inputLayer = Layer::Ptr(new Layer(context, inputLayerSize));
+        Layer::Ptr inputLayer = Layer::Ptr(new Layer(inputLayerSize));
         
         std::vector<Layer::Ptr> hiddenLayers;
         Layer::Ptr prevHiddenLayer = nullptr;
         
         for (size_t i = 0; i < hiddenLayersSizes.size(); ++i)
         {
-            Layer::Ptr hiddenLayer = Layer::Ptr(new Layer(context, hiddenLayersSizes[i]));
+            Layer::Ptr hiddenLayer = Layer::Ptr(new Layer(hiddenLayersSizes[i]));
             
             if (i == 0)
             {
@@ -437,10 +421,10 @@ namespace TinyRNN
             hiddenLayers.push_back(hiddenLayer);
         }
         
-        Layer::Ptr outputLayer(new Layer(context, outputLayerSize));
+        Layer::Ptr outputLayer(new Layer(outputLayerSize));
         prevHiddenLayer->connectAllToAll(outputLayer);
         
-        Network::Ptr network = Network::Ptr(new Network(name, context, inputLayer, hiddenLayers, outputLayer));
+        Network::Ptr network = Network::Ptr(new Network(name, inputLayer, hiddenLayers, outputLayer));
         return network;
     }
     
@@ -449,10 +433,8 @@ namespace TinyRNN
                                                               const std::vector<int> &hiddenLayersSizes,
                                                               int outputLayerSize)
     {
-        TrainingContext::Ptr context(new TrainingContext(name));
-        
-        Layer::Ptr inputLayer(new Layer(context, inputLayerSize));
-        Layer::Ptr outputLayer(new Layer(context, outputLayerSize));
+        Layer::Ptr inputLayer(new Layer(inputLayerSize, Neuron::Sigmoid));
+        Layer::Ptr outputLayer(new Layer(outputLayerSize, Neuron::Tanh));
         
         const int numHiddenLayers = hiddenLayersSizes.size();
         Layer::Vector hiddenLayers;
@@ -462,10 +444,10 @@ namespace TinyRNN
         {
             const int size = hiddenLayersSizes[i];
             
-            Layer::Ptr inputGate(new Layer(context, size, 1.0));
-            Layer::Ptr forgetGate(new Layer(context, size, 1.0));
-            Layer::Ptr memoryCell(new Layer(context, size));
-            Layer::Ptr outputGate(new Layer(context, size, 1.0));
+            Layer::Ptr inputGate(new Layer(size, 1.0, Neuron::Sigmoid));
+            Layer::Ptr forgetGate(new Layer(size, 1.0, Neuron::Sigmoid));
+            Layer::Ptr memoryCell(new Layer(size, Neuron::Tanh));
+            Layer::Ptr outputGate(new Layer(size, 1.0, Neuron::Sigmoid));
             
             hiddenLayers.push_back(inputGate);
             hiddenLayers.push_back(forgetGate);
@@ -521,7 +503,7 @@ namespace TinyRNN
         // optional
         inputLayer->connectAllToAll(outputLayer);
         
-        Network::Ptr network = Network::Ptr(new Network(name, context, inputLayer, hiddenLayers, outputLayer));
+        Network::Ptr network = Network::Ptr(new Network(name, inputLayer, hiddenLayers, outputLayer));
         return network;
     }
 }  // namespace TinyRNN
