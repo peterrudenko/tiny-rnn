@@ -3,9 +3,7 @@ TinyRNN [![Build Status](https://travis-ci.org/peterrudenko/TinyRNN.svg?branch=m
 
 TinyRNN is a lightweight **header-only C++11 library** for building **deep recurrent neural networks** of any architecture from multilayered perceptrons to [LSTM](https://en.wikipedia.org/wiki/Long_short-term_memory)-like RNN's.
 
-
-###We need to go deeper
-// work in progress, todo some examples
+Upd. 11.03.2017: TinyRNN is a self-education project and is no longer being maintained.
 
 ###References
 
