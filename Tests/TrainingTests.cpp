@@ -95,53 +95,6 @@ SCENARIO("A perceptron can be trained with a xor function", "[training]")
                 REQUIRE(result4.front() < 0.1);
             }
         }
-        
-        WHEN("The unrolled network is trained with some random number of iterations")
-        {
-            UnrolledNetwork::Ptr vmNetwork = network->toVM();
-            
-            {
-                const ScopedTimer timer("Training VM network");
-                
-                for (int i = 0; i < numIterations; ++i)
-                {
-                    vmNetwork->feed({0.0, 1.0});
-                    vmNetwork->train(kTrainingRate, {1.0});
-                    
-                    vmNetwork->feed({0.0, 0.0});
-                    vmNetwork->train(kTrainingRate, {0.0});
-                    
-                    vmNetwork->feed({1.0, 0.0});
-                    vmNetwork->train(kTrainingRate, {1.0});
-                    
-                    vmNetwork->feed({1.0, 1.0});
-                    vmNetwork->train(kTrainingRate, {0.0});
-                }
-            }
-            
-            THEN("It gives a reasonable output")
-            {
-                const auto result1 = vmNetwork->feed({0.0, 1.0});
-                REQUIRE(result1.size() == 1);
-                INFO(result1.front());
-                REQUIRE(result1.front() > 0.9);
-                
-                const auto result2 = vmNetwork->feed({1.0, 0.0});
-                REQUIRE(result2.size() == 1);
-                INFO(result2.front());
-                REQUIRE(result2.front() > 0.9);
-                
-                const auto result3 = vmNetwork->feed({0.0, 0.0});
-                REQUIRE(result3.size() == 1);
-                INFO(result3.front());
-                REQUIRE(result3.front() < 0.1);
-                
-                const auto result4 = vmNetwork->feed({1.0, 1.0});
-                REQUIRE(result4.size() == 1);
-                INFO(result4.front());
-                REQUIRE(result4.front() < 0.1);
-            }
-        }
     }
 }
 
@@ -234,72 +187,6 @@ SCENARIO("A dbn can be trained to model a random periodic function", "[training]
                     const Value error = meanSquaredErrorCost({f(x, fxSeed)}, result);
                     REQUIRE(error < 0.1);
                 }
-            }
-        }
-    }
-}
-
-SCENARIO("Network can be recovered back from the trained unrolled version", "[training]")
-{
-    GIVEN("LSTM network and its unrolled version")
-    {
-        const auto networkName = RANDOMNAME();
-        Network::Ptr network = Network::Prefabs::longShortTermMemory(networkName, 2, {3, 3}, 1);
-        
-        UnrolledNetwork::Ptr vmNetwork = network->toVM();
-        
-        WHEN("The unrolled network is trained and the usual network context is restored from the unrolled one")
-        {
-            {
-                const ScopedTimer timer("Training unrolled network");
-                const int numIterations = RANDOM(1500, 2000);
-                
-                for (int i = 0; i < numIterations; ++i)
-                {
-                    vmNetwork->feed({0.0, 1.0});
-                    vmNetwork->train(kTrainingRate, {1.0});
-                    
-                    vmNetwork->feed({1.0, 0.0});
-                    vmNetwork->train(kTrainingRate, {1.0});
-                    
-                    vmNetwork->feed({0.0, 0.0});
-                    vmNetwork->train(kTrainingRate, {0.0});
-                    
-                    vmNetwork->feed({1.0, 1.0});
-                    vmNetwork->train(kTrainingRate, {0.0});
-                }
-            }
-            
-            network->restore(vmNetwork->getContext());
-            
-            THEN("The trained network should output sane results")
-            {
-                const auto result1 = vmNetwork->feed({0.0, 1.0});
-                REQUIRE(result1.front() > 0.9);
-                
-                const auto result2 = vmNetwork->feed({1.0, 0.0});
-                REQUIRE(result2.front() > 0.9);
-                
-                const auto result3 = vmNetwork->feed({0.0, 0.0});
-                REQUIRE(result3.front() < 0.1);
-                
-                const auto result4 = vmNetwork->feed({1.0, 1.0});
-                REQUIRE(result4.front() < 0.1);
-            }
-            
-            THEN("The usual network should act like it was trained")
-            {
-                const auto result1 = network->feed({0.0, 1.0});
-                REQUIRE(result1.front() > 0.9);
-                
-                const auto result2 = network->feed({1.0, 0.0});
-                REQUIRE(result2.front() > 0.9);
-                
-                const auto result3 = network->feed({0.0, 0.0});
-                REQUIRE(result3.front() < 0.1);
-                
-                const auto result4 = network->feed({1.0, 1.0});
-                REQUIRE(result4.front() < 0.1);
             }
         }
     }
