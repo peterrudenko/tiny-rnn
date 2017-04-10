@@ -5,11 +5,11 @@ TinyRNN is a lightweight **header-only C++11 library** for building **deep recur
 
 Upd. 11.03.2017: TinyRNN is a self-education project and is no longer being maintained.
 
-###References
+### References
 
 TinyRNN is heavily influenced by [synaptic.js](https://github.com/cazala/synaptic), a javascript library by [Juan Cazala](http://juancazala.com/) based on the paper by Derek D. Monner and James A. Reggia -- ["A generalized LSTM-like training algorithm for second-order recurrent neural networks"](http://www.overcomplete.net/papers/nn2012.pdf).
 
-###The MIT License
+### The MIT License
 
 Copyright © 2015 Peter Rudenko (peter.rudenko@gmail.com)
 
